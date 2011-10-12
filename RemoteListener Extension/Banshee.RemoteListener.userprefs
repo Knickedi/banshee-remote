@@ -1,0 +1,39 @@
+﻿<Properties>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" ctype="Workspace" />
+  <MonoDevelop.Ide.DebuggingService>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService>
+  <MonoDevelop.Ide.Workbench ActiveDocument="Banshee.RemoteListener/RemoteListenerService.cs" ctype="Workbench">
+    <Files>
+      <File FileName="Banshee.RemoteListener/RemoteListenerService.cs" Line="708" Column="4" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State expanded="True">
+          <Node name="Banshee.RemoteListener" expanded="True">
+            <Node name="References">
+              <Option id="ShowAllFiles" value="True" />
+            </Node>
+            <Node name="Banshee.RemoteListener" expanded="True">
+              <Node name="RemoteListenerService.cs" selected="True" />
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+      <Pad Id="ClassPad">
+        <State expanded="True" selected="True">
+          <Node name="Banshee.RemoteListener" expanded="True">
+            <Node name="References" expanded="True">
+              <Node name="System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" expanded="True" />
+            </Node>
+            <Node name="Banshee" expanded="True" />
+          </Node>
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches ctype="PinnedWatchStore" />
+</Properties>

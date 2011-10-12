@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:custom="http://schemas.android.com/apk/res/de.viktorreiser.bansheeremote">
+
+	<CheckBoxPreference
+		android:key="displaysonggenre"
+		android:defaultValue="true"
+		android:title="@string/display_song_genre"
+		android:summaryOn="@string/display_song_genre_on"
+		android:summaryOff="@string/display_song_genre_off" />
+
+	<CheckBoxPreference
+		android:key="displayalbumyear"
+		android:defaultValue="true"
+		android:title="@string/display_album_year"
+		android:summaryOn="@string/display_album_year_on"
+		android:summaryOff="@string/display_album_year_off" />
+
+	<CheckBoxPreference
+		android:key="rememberdefault"
+		android:defaultValue="true"
+		android:title="@string/remember_last_server"
+		android:summaryOn="@string/remember_last_server_on"
+		android:summaryOff="@string/remember_last_server_off" />
+
+	<CheckBoxPreference
+		android:key="stoponcall"
+		android:defaultValue="false"
+		android:title="@string/stop_on_call"
+		android:summaryOn="@string/stop_on_call_on"
+		android:summaryOff="@string/stop_on_call_off" />
+
+	<CheckBoxPreference
+		android:key="volumekeycontrol"
+		android:defaultValue="true"
+		android:title="@string/volume_key_control"
+		android:summaryOn="@string/volume_key_control_on"
+		android:summaryOff="@string/volume_key_control_off" />
+		
+	<de.viktorreiser.toolbox.preference.NumberPickerPreference
+		custom:rangeStart="1"
+		custom:rangeEnd="10"
+		android:defaultValue="1"
+		android:key="wifipollinterval"
+		android:title="@string/wifi_poll_interval"
+		android:summary="@string/wifi_poll_interval_summary" />
+
+	<de.viktorreiser.toolbox.preference.NumberPickerPreference
+		custom:rangeStart="1"
+		custom:rangeEnd="10"
+		android:defaultValue="5"
+		android:key="mobilepollinterval"
+		android:title="@string/mobile_poll_interval"
+		android:summary="@string/mobile_poll_interval_summary" />
+		
+	<CheckBoxPreference
+		android:key="chacheonsd"
+		android:defaultValue="true"
+		android:title="@string/cache_on_sd"
+		android:summaryOn="@string/cache_on_sd_on"
+		android:summaryOff="@string/cache_on_sd_off" />
+
+</PreferenceScreen>

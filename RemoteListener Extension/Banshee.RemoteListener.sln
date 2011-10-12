@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Banshee.RemoteListener", "Banshee.RemoteListener.csproj", "{7D2CE86D-49B2-4B9D-BF7D-4EDC7C3486F3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7D2CE86D-49B2-4B9D-BF7D-4EDC7C3486F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D2CE86D-49B2-4B9D-BF7D-4EDC7C3486F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D2CE86D-49B2-4B9D-BF7D-4EDC7C3486F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D2CE86D-49B2-4B9D-BF7D-4EDC7C3486F3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		StartupItem = Banshee.RemoteListener.csproj
+	EndGlobalSection
+EndGlobal
