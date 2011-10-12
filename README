@@ -1,12 +1,13 @@
 
+android_app
+
+    This folder contains the android app which uses the extension and
+    so enables you to control you player remotely. This app is developed
+    with eclipse.
+
 banshee_extension
 
     This folder contains the banshee remote listener extension which
     enables you to control your player by receiving network socket
     requests. It is developed with MonoDevelop.
 
-android_app
-
-    This folder contains the android app which uses the extension and
-    so enables you to control you player remotely. This app is developed
-    with eclipse.
