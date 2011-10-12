@@ -8,4 +8,5 @@ Extension
 App
 
     The "App" folder contains the android app which uses the extension
-    and so enables you to control you player remotely.
+    and so enables you to control you player remotely. This app is developed
+    with eclipse.
