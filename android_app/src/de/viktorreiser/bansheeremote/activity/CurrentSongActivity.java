@@ -1,21 +1,16 @@
 package de.viktorreiser.bansheeremote.activity;
 
-import java.io.OutputStream;
-
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.drawable.BitmapDrawable;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -33,6 +28,7 @@ import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandle;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Repeat;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Shuffle;
+import de.viktorreiser.bansheeremote.data.BansheeDatabase;
 import de.viktorreiser.bansheeremote.data.BansheeServer;
 import de.viktorreiser.bansheeremote.data.BansheeServerCheckTask;
 import de.viktorreiser.bansheeremote.data.BansheeServerCheckTask.OnBansheeServerCheck;
@@ -230,7 +226,8 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			
 		case 2:
 			if (!mDatabaseSyncRunning) {
-				mConnection.sendCommand(Command.SYNC_DATABASE, Command.SyncDatabase.encodeFileSize());
+				mConnection.sendCommand(Command.SYNC_DATABASE,
+						Command.SyncDatabase.encodeFileSize());
 			}
 			return true;
 			
@@ -597,7 +594,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			mData.volume = Command.PlayerStatus.decodeVolume(response);
 			mData.changeFlag = Command.PlayerStatus.decodeChangeFlag(response);
 			mData.currentSongId = Command.PlayerStatus.decodeSongId(response);
-
+			
 			mStatusPollHandler.updatePseudoPoll();
 			updateComplete(false);
 			
@@ -620,41 +617,36 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		
 		private void handleSyncDatabaseFileSize(byte [] response) {
 			if (response == null) {
-				
-			} else if (Command.SyncDatabase.decodeFileSize(response) == 0) {
-				
+				return;
+			}
+			
+			long dbSize = Command.SyncDatabase.decodeFileSize(response);
+			
+			if (dbSize == 0) {
+				Toast.makeText(CurrentSongActivity.this, R.string.no_sync_db,
+						Toast.LENGTH_LONG).show();
 			} else {
-				long dbSize = mConnection.getServer().getDbSize();
-				BansheeServer same = BansheeServer.getServer(
-						mConnection.getServer().getSameHostId());
-				
-				if (same != null) {
-					dbSize = mConnection.getServer().getDbSize();
+				if (BansheeDatabase.isDatabaseUpToDate(mConnection.getServer(), dbSize)) {
+					Toast.makeText(CurrentSongActivity.this, R.string.up_to_date_sync_db,
+							Toast.LENGTH_SHORT).show();
+				} else {
+					Toast.makeText(CurrentSongActivity.this, R.string.fetching_sync_db,
+							Toast.LENGTH_SHORT).show();
+					mConnection.sendCommand(Command.SYNC_DATABASE,
+							Command.SyncDatabase.encodeFile());
 				}
-				
-				mConnection.sendCommand(Command.SYNC_DATABASE,
-						Command.SyncDatabase.encodeFile());
 			}
 		}
 		
 		private void handleSyncDatabaseFile(byte [] response) {
-			try {
-				if (response == null || response.length < 2) {
-					throw new Exception();
-				}
-				
-				long id = mConnection.getServer().getSameHostId();
-				
-				if (id < 0) {
-					id = mConnection.getServer().getId();
-				}
-				
-				OutputStream os = CurrentSongActivity.this.openFileOutput(id + ".db", 0);
-				os.write(response);
-				os.close();
-			} catch (Exception e) {
-				// TODO add database write error message
-				Toast.makeText(CurrentSongActivity.this, "Error: " + e.getMessage(),
+			if (response == null || response.length < 2) {
+				Toast.makeText(CurrentSongActivity.this, R.string.error_fetching_sync_db,
+						Toast.LENGTH_LONG).show();
+			} else if (!BansheeDatabase.updateDatabase(mConnection.getServer(), response)) {
+				Toast.makeText(CurrentSongActivity.this, R.string.error_writing_sync_db,
+						Toast.LENGTH_LONG).show();
+			} else {
+				Toast.makeText(CurrentSongActivity.this, R.string.error_writing_sync_db,
 						Toast.LENGTH_LONG).show();
 			}
 		}
@@ -702,15 +694,15 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				}
 			}
 		}
-
+		
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
 			case MESSAGE_GET_STATUS:
 				mConnection.sendCommand(Command.PLAYER_STATUS, null);
-				sendEmptyMessageDelayed(MESSAGE_GET_STATUS, 
+				sendEmptyMessageDelayed(MESSAGE_GET_STATUS,
 						App.getPollInterval(NetworkStateBroadcast.isWifiConnected()));
 				break;
-				
+			
 			case MESSAGE_UPDATE_POSITION:
 				if (mmRunning) {
 					mData.currentTime += (System.currentTimeMillis() - mmSeekUpdateStart) / 100;

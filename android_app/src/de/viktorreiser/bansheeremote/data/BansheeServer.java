@@ -104,32 +104,6 @@ public class BansheeServer {
 		return mPort;
 	}
 	
-	/**
-	 * Get ID of banshee server which represents the same server.<br>
-	 * <br>
-	 * For example you could define several different addresses (maybe LAN and Internet) for a
-	 * single banshee server but you won't that they share the same persisted data. So you define
-	 * the ID of the previous defined banshee server and they will share the same persisted database
-	 * and don not need to create it twice.
-	 * 
-	 * @return ID of same banshee server
-	 */
-	public long getSameHostId() {
-		return mSameHostId;
-	}
-	
-	/**
-	 * Get locally stored size of database in bytes.<br>
-	 * <br>
-	 * This will be {@code -1} until you refresh this information with
-	 * {@link #updateServer(BansheeServer, int)}.
-	 * 
-	 * @return database size in bytes
-	 */
-	public long getDbSize() {
-		return mDbSize;
-	}
-	
 	
 	/**
 	 * Get list of created banshee servers.
@@ -277,6 +251,34 @@ public class BansheeServer {
 	public static void setDefaultServer(long id) {
 		getDb().execSQL("UPDATE " + DB.TABLE_NAME + " SET " + DB.DEFAULT
 				+ "= (CASE WHEN " + DB.ID + "=" + id + " THEN 1 ELSE 0 END);");
+	}
+	
+	// PACKAGE ====================================================================================
+	
+	/**
+	 * Get ID of banshee server which represents the same server.<br>
+	 * <br>
+	 * For example you could define several different addresses (maybe LAN and Internet) for a
+	 * single banshee server but you won't that they share the same persisted data. So you define
+	 * the ID of the previous defined banshee server and they will share the same persisted database
+	 * and don not need to create it twice.
+	 * 
+	 * @return ID of same banshee server
+	 */
+	long getSameHostId() {
+		return mSameHostId;
+	}
+	
+	/**
+	 * Get locally stored size of database in bytes.<br>
+	 * <br>
+	 * This will be {@code -1} until you refresh this information with
+	 * {@link #updateServer(BansheeServer, int)}.
+	 * 
+	 * @return database size in bytes
+	 */
+	long getDbSize() {
+		return mDbSize;
 	}
 	
 	// OVERRIDDEN =================================================================================
