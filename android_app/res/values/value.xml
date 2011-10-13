@@ -13,6 +13,8 @@
     <string name="same_db_as">Same banshee database as:</string>
 	<string name="own_db">Own database</string>
 	<string name="sync_db">Sync database</string>
+	<string name="poll_info">Poll info</string>
+	<string name="poll_info_message">A higher value will lower the needed request amount to keep the UI up to date. This saves battery and traffic so is great for mobile network remote. But external(!) player status changes will be reported delayed.</string>
 	
 	<string name="remember_last_server">Remember last server</string>
 	<string name="remember_last_server_on">Will try to contact last chosen server on app start</string>

@@ -10,8 +10,10 @@ import android.content.IntentFilter;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -557,6 +559,8 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				mData.volume = Command.PlayerStatus.decodeVolume(response);
 				mData.changeFlag = Command.PlayerStatus.decodeChangeFlag(response);
 				mData.currentSongId = Command.PlayerStatus.decodeSongId(response);
+
+				mStatusPollHandler.updatePseudoPoll();
 				updateComplete(false);
 				
 				if (mData.changeFlag != mPreviousData.changeFlag) {
@@ -630,19 +634,60 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		}
 	}
 	
-	private class StatusPollHandler extends Handler implements Runnable {
+	private class StatusPollHandler extends Handler {
+		
+		private final int MESSAGE_GET_STATUS = 1;
+		private final int MESSAGE_UPDATE_POSITION = 2;
+		
+		private boolean mmRunning = false;
+		private long mmSeekUpdateStart = 0;
+		
 		
 		public void start() {
-			post(this);
+			mmRunning = true;
+			sendEmptyMessage(MESSAGE_GET_STATUS);
 		}
 		
 		public void stop() {
-			removeCallbacks(this);
+			mmRunning = false;
+			removeMessages(MESSAGE_GET_STATUS);
+			removeMessages(MESSAGE_UPDATE_POSITION);
 		}
 		
-		public void run() {
-			mConnection.sendCommand(Command.PLAYER_STATUS, null);
-			postDelayed(this, App.getPollInterval(NetworkStateBroadcast.isWifiConnected()));
+		public void updatePseudoPoll() {
+			removeMessages(MESSAGE_UPDATE_POSITION);
+			
+			if (mData.playing) {
+				long interval = App.getPollInterval(NetworkStateBroadcast.isWifiConnected());
+				
+				if (interval > 1000) {
+					mmSeekUpdateStart = System.currentTimeMillis();
+					sendEmptyMessageDelayed(MESSAGE_UPDATE_POSITION, 1000);
+				}
+			}
+		}
+
+		public void handleMessage(Message msg) {
+			switch (msg.what) {
+			case MESSAGE_GET_STATUS:
+				mConnection.sendCommand(Command.PLAYER_STATUS, null);
+				sendEmptyMessageDelayed(MESSAGE_GET_STATUS, 
+						App.getPollInterval(NetworkStateBroadcast.isWifiConnected()));
+				break;
+				
+			case MESSAGE_UPDATE_POSITION:
+				if (mmRunning) {
+					mData.currentTime += (System.currentTimeMillis() - mmSeekUpdateStart) / 100;
+					
+					if (mData.totalTime > 0 && mData.currentTime / 10 > mData.totalTime) {
+						mConnection.sendCommand(Command.PLAYER_STATUS, null);
+					} else {
+						mCommandHandler.updateSeekData(false);
+						updatePseudoPoll();
+					}
+				}
+				break;
+			}
 		}
 	}
 }

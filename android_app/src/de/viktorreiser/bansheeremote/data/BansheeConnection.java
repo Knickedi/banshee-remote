@@ -159,7 +159,7 @@ public class BansheeConnection {
 		public static class PlayerStatus {
 			
 			private static byte [] getRequest(byte [] request) {
-				return request.length != 5 ? new byte [] {0, 0, 0, 0, 0} : request;
+				return request == null || request.length != 5 ? new byte [] {0, 0, 0, 0, 0} : request;
 			}
 			
 			public static byte [] encodePlayToggle(byte [] request) {

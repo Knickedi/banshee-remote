@@ -41,7 +41,7 @@
 		
 	<de.viktorreiser.toolbox.preference.NumberPickerPreference
 		custom:rangeStart="1"
-		custom:rangeEnd="10"
+		custom:rangeEnd="30"
 		android:defaultValue="1"
 		android:key="wifipollinterval"
 		android:title="@string/wifi_poll_interval"
@@ -49,7 +49,7 @@
 
 	<de.viktorreiser.toolbox.preference.NumberPickerPreference
 		custom:rangeStart="1"
-		custom:rangeEnd="10"
+		custom:rangeEnd="30"
 		android:defaultValue="5"
 		android:key="mobilepollinterval"
 		android:title="@string/mobile_poll_interval"
