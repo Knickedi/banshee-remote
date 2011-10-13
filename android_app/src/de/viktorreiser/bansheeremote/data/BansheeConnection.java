@@ -686,16 +686,16 @@ public class BansheeConnection {
 		@Override
 		public void run() {
 			while (run) {
-				CommandQueue q = null;
+				CommandQueue queue = null;
 				
 				synchronized (mCommandQueue) {
 					try {
-						q = mCommandQueue.removeLast();
+						queue = mCommandQueue.removeLast();
 					} catch (NoSuchElementException e) {
 					}
 				}
 				
-				if (q == null) {
+				if (queue == null) {
 					try {
 						synchronized (this) {
 							wait();
@@ -703,45 +703,52 @@ public class BansheeConnection {
 					} catch (InterruptedException e) {
 					}
 				} else {
-					final CommandQueue queue = q;
-					final byte [] result = sendRequest(mServer, queue.command.mCode, queue.params);
+					byte [] result = sendRequest(mServer, queue.command.mCode, queue.params);
 					
 					if (result == null || result.length == 0) {
-						if (queue.command == Command.SYNC_DATABASE) {
-							mCommandHandler.post(new Runnable() {
-								public void run() {
-									mHandleCallback.onBansheeCommandHandled(
-											queue.command, queue.params, null);
-								}
-							});
-						}
-						
-						mFailCount++;
-						
-						if (mFailCount >= MAX_FAIL_COMMANDS) {
-							synchronized (mCommandQueue) {
-								run = false;
-								mCommandQueue.clear();
-							}
-							
-							mCommandHandler.post(new Runnable() {
-								public void run() {
-									mHandleCallback.onBansheeCommandHandled(null, null, null);
-								}
-							});
-						}
+						handleFail(queue);
 					} else {
-						mFailCount = 0;
-						
-						mCommandHandler.post(new Runnable() {
-							public void run() {
-								mHandleCallback.onBansheeCommandHandled(
-										queue.command, queue.params, result);
-							}
-						});
+						handleSuccess(queue, result);
 					}
 				}
 			}
+		}
+		
+		private void handleFail(final CommandQueue queue) {
+			if (queue.command == Command.SYNC_DATABASE) {
+				mCommandHandler.post(new Runnable() {
+					public void run() {
+						mHandleCallback.onBansheeCommandHandled(
+								queue.command, queue.params, null);
+					}
+				});
+			}
+			
+			mFailCount++;
+			
+			if (mFailCount >= MAX_FAIL_COMMANDS) {
+				synchronized (mCommandQueue) {
+					run = false;
+					mCommandQueue.clear();
+				}
+				
+				mCommandHandler.post(new Runnable() {
+					public void run() {
+						mHandleCallback.onBansheeCommandHandled(null, null, null);
+					}
+				});
+			}
+		}
+		
+		private void handleSuccess(final CommandQueue queue, final byte [] result) {
+			mFailCount = 0;
+			
+			mCommandHandler.post(new Runnable() {
+				public void run() {
+					mHandleCallback.onBansheeCommandHandled(
+							queue.command, queue.params, result);
+				}
+			});
 		}
 	}
 }
