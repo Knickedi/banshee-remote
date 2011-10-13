@@ -16,7 +16,10 @@ import de.viktorreiser.bansheeremote.data.BansheeServerCheckTask;
 import de.viktorreiser.bansheeremote.data.BansheeServerCheckTask.OnBansheeServerCheck;
 
 /**
- * Create a new server (if it is valid and reachable).
+ * Create a new server (if it is valid and reachable) and add it to server list.<br>
+ * <br>
+ * When a server is successfully added then {@code RESULT_OK} is set, otherwise
+ * {@code RESULT_CANCELED}.
  * 
  * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
  */

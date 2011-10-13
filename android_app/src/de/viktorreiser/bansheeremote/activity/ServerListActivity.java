@@ -25,8 +25,8 @@ import de.viktorreiser.bansheeremote.data.BansheeServerCheckTask.OnBansheeServer
 /**
  * Choose server from list or create a new one.<br>
  * <br>
- * If chosen server is reachable than the activity will be finished and the chosen server will be
- * persisted.
+ * If chosen server is reachable then the chosen server will be persisted, {@code RESULT_OK} will be
+ * set and the activity will be finished. Otherwise {@code RESULT_CANCELED} will be set.
  * 
  * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
  */

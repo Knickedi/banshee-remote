@@ -18,7 +18,7 @@ import android.os.Handler;
  * back the results on the UI thread.<br>
  * <br>
  * First you create an instance with
- * {@link #BansheeConnection(BansheeServer, OnBansheeCommandHandled)}. The command handler callback
+ * {@link #BansheeConnection(BansheeServer, OnBansheeCommandHandle)}. The command handler callback
  * is called on the UI thread after {@value #MAX_FAIL_COMMANDS} failed requests with {@code null}
  * parameters. After that every new command request will be just ignored so the connection is
  * useless (no need for {@link #close()}). If you decide to stop sending commands and close the
@@ -48,7 +48,7 @@ public class BansheeConnection {
 	private LinkedList<CommandQueue> mCommandQueue = new LinkedList<CommandQueue>();
 	private CommandThread mCommandThread = new CommandThread();
 	private Handler mCommandHandler = new Handler();
-	private OnBansheeCommandHandled mHandleCallback;
+	private OnBansheeCommandHandle mHandleCallback;
 	
 	// PUBLIC =====================================================================================
 	
@@ -74,14 +74,26 @@ public class BansheeConnection {
 		/**
 		 * (Set and) get player status.<br>
 		 * <br>
-		 * A {@code null} parameter just requests the current status
+		 * A {@code null} parameter just requests the current status (status will be returned after
+		 * any type of request).
+		 * 
+		 * You can bundle status request type in a single request. Just pass the previous encoded
+		 * request as parameter to the next one. Some request types are bundled and will override
+		 * the previous request parameter which was encoded. See {@link PlayerStatus} for more.
 		 */
 		PLAYER_STATUS(1),
 		
 		/**
-		 * 
+		 * Get track data (see {@link SongInfo} how to interpret the results).
 		 */
 		SONG_INFO(2),
+		
+		/**
+		 * Get sync database (information).<br>
+		 * <br>
+		 * This request will return also {@code null} so your handler knows about failed requests
+		 * (see {@link SyncDatabase} for more).
+		 */
 		SYNC_DATABASE(3);
 		
 		private final int mCode;
@@ -90,9 +102,63 @@ public class BansheeConnection {
 			mCode = code;
 		}
 		
+		/*@formatter:off*/
+		/**
+		 * Encode request and decode response.<br>
+		 * <br>
+		 * <b>Request</b> groups can be combined to one request parameter (see
+		 * {@link Command#PLAYER_STATUS}).<br>
+		 * <br>
+		 * <table border="0" cellspacing="0" cellpadidng="0">
+		 * <tr><td>pause</td><td>&nbsp;{@link #encodePause(byte[])}</td></tr>
+		 * <tr><td>play</td><td>&nbsp;{@link #encodePlay(byte[])}</td></tr>
+		 * <tr><td>next track</td><td>&nbsp;{@link #encodePlayNext(byte[])}</td></tr>
+		 * <tr><td>previous track</td><td>&nbsp;{@link #encodePlayPrevious(byte[])}</td></tr>
+		 * <tr><td>toggle play / pause</td><td>&nbsp;{@link #encodePlayToggle(byte[])}</td></tr>
+		 * </table>
+		 * <br>
+		 * <table border="0" cellspacing="0" cellpadidng="0">
+		 * <tr><td>set repeat mode</td><td>&nbsp;{@link #encodeRepeat(byte[], Repeat)}</td></tr>
+		 * <tr><td>toggle repeat on / off</td><td>&nbsp;{@link #encodeRepeatOnOffToggle(byte[])}</td></tr>
+		 * <tr><td>toggle between all modes</td><td>&nbsp;{@link #encodeRepeatToggle(byte[])}</td></tr>
+		 * </table>
+		 * <br>
+		 * <table border="0" cellspacing="0" cellpadidng="0">
+		 * <tr><td>set shuffle mode</td><td>&nbsp;{@link #encodeShuffle(byte[], Shuffle)}</td></tr>
+		 * <tr><td>toggle shuffle on / off</td><td>&nbsp;{@link #encodeRepeatOnOffToggle(byte[])}</td></tr>
+		 * <tr><td>toggle shuffle all modes</td><td>&nbsp;{@link #encodeShuffleToggle(byte[])}</td></tr>
+		 * </table>
+		 * <br>
+		 * <table border="0" cellspacing="0" cellpadidng="0">
+		 * <tr><td>set volume {@code 1-100}</td><td>&nbsp;{@link #encodeVolume(byte[], int)}</td></tr>
+		 * <tr><td>set volume to {@code 0}</td><td>&nbsp;{@link #encodeVolumeMute(byte[])}</td></tr>
+		 * <tr><td>volume one step down</td><td>&nbsp;{@link #encodeVolumeDown(byte[])}</td></tr>
+		 * <tr><td>volume one step up</td><td>&nbsp;{@link #encodeVolumeUp(byte[])}</td></tr>
+		 * </table>
+		 * <br>
+		 * <b>Response</b> provides some player status information.<br>
+		 * <br>
+		 * <table border="0" cellspacing="0" cellpadidng="0">
+		 * <tr><td>is player playing</td><td>&nbsp;{@link #decodePause(byte[])}</td></tr>
+		 * <tr><td>is player paused</td><td>&nbsp;{@link #decodePause(byte[])}</td></tr>
+		 * <tr><td>(if both are {@code false} then the player is idle)</td><td></td></tr>
+		 * <tr><td>get current repeat mode</td><td>&nbsp;{@link #decodeShuffleMode(byte[])}</td></tr>
+		 * <tr><td>get current shuffle mode</td><td>&nbsp;{@link #decodeRepeatMode(byte[])}</td></tr>
+		 * <tr><td>get current volume {@code 0-100}</td><td>&nbsp;{@link #decodeVolume(byte[])}</td></tr>
+		 * <tr><td>get current track position<br>(in tenth seconds)</td>
+		 * <td>&nbsp;{@link #decodeSeekPosition(byte[])}</td></tr>
+		 * <tr><td>get change flag - {@code 0} means no track is playing<br>
+		 * ({@code oldFlag != newFlag == newSong})</td>
+		 * <td>&nbsp;{@link #decodeChangeFlag(byte[])}</td></tr>
+		 * <tr><td>get track ID (relates to database)</td><td>&nbsp;{@link #decodeSongId(byte[])}</td></tr>
+		 * </table>
+		 * 
+		 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+		 */
+		/*@formatter:on*/
 		public static class PlayerStatus {
 			
-			public static byte [] getRequest(byte [] request) {
+			private static byte [] getRequest(byte [] request) {
 				return request.length != 5 ? new byte [] {0, 0, 0, 0, 0} : request;
 			}
 			
@@ -204,6 +270,25 @@ public class BansheeConnection {
 			}
 		}
 		
+		/**
+		 * Get track info.<br>
+		 * <br>
+		 * This command has no parameter. It will return the current track data. Usually you call
+		 * this if the status reported a change in it's change flag. {@link SongInfo#decode(byte[])}
+		 * will return an {@code Object} array with following data:<br>
+		 * <br>
+		 * 0 - total length of track in seconds - {@code Integer}<br>
+		 * 1 - track title - {@code String}<br>
+		 * 2 - artist name - {@code String}<br>
+		 * 3 - album title - {@code String}<br>
+		 * 4 - genre - {@code String}<br>
+		 * 5 - album year - {@code Integer}<br>
+		 * 6 - cover ID (e.g. {@code "album-023AB83..."} or empty if there's no cover) -
+		 * {@code String}
+		 * 
+		 * @author Viktor Reiser &lt;<a
+		 *         href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+		 */
 		public static class SongInfo {
 			
 			public static Object [] decode(byte [] response) {
@@ -241,6 +326,20 @@ public class BansheeConnection {
 			}
 		}
 		
+		/**
+		 * Synchronize banshee database.<br>
+		 * <br>
+		 * {@code null} request will give you a {@code 0} byte response!<br>
+		 * <br>
+		 * Use {@link #encodeFileSize()} and {@link #decodeFileSize(byte[])} to request the database
+		 * size in bytes. You will get {@code 0} when there's no database available<br>
+		 * <br>
+		 * Use {@link #encodeFile()} to get the database as response encoded as byte array. You will
+		 * get a single byte wit the value {@code 0} when the database is not available.
+		 * 
+		 * @author Viktor Reiser &lt;<a
+		 *         href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+		 */
 		public static class SyncDatabase {
 			
 			public static byte [] encodeFileSize() {
@@ -260,7 +359,7 @@ public class BansheeConnection {
 			}
 			
 			public static long decodeFileSize(byte [] response) {
-				return decodeInt(response, 0);
+				return response.length < 4 ? 0 : decodeInt(response, 0);
 			}
 		}
 		
@@ -283,6 +382,11 @@ public class BansheeConnection {
 		}
 	}
 	
+	/**
+	 * Banshee shuffle modes.
+	 * 
+	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+	 */
 	public static enum Shuffle {
 		UNKNOWN(0),
 		OFF(1),
@@ -309,6 +413,11 @@ public class BansheeConnection {
 		}
 	}
 	
+	/**
+	 * Banshee repeat modes.
+	 * 
+	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+	 */
 	public static enum Repeat {
 		UNKNOWN(0),
 		OFF(1),
@@ -332,13 +441,36 @@ public class BansheeConnection {
 		}
 	}
 	
-	public static interface OnBansheeCommandHandled {
+	/**
+	 * Callback interface for handled commands.
+	 * 
+	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+	 */
+	public static interface OnBansheeCommandHandle {
 		
+		/**
+		 * Callback interface for handled commands.
+		 * 
+		 * @param command
+		 *            the command requested
+		 * @param params
+		 *            encoded request parameters
+		 * @param result
+		 *            response which should be decoded
+		 */
 		public void onBansheeCommandHandled(Command command, byte [] params, byte [] result);
 	}
 	
 	
-	public BansheeConnection(BansheeServer server, OnBansheeCommandHandled handleCallback) {
+	/**
+	 * Create a connection (object) which will communicate with the banshee server.
+	 * 
+	 * @param server
+	 *            data of banshee server
+	 * @param handleCallback
+	 *            callback which will be issued when a command is handled
+	 */
+	public BansheeConnection(BansheeServer server, OnBansheeCommandHandle handleCallback) {
 		if (server == null || handleCallback == null) {
 			throw new NullPointerException();
 		}
@@ -348,14 +480,39 @@ public class BansheeConnection {
 		mCommandThread.start();
 	}
 	
-	public void updateHandleCallback(OnBansheeCommandHandled callback) {
+	/**
+	 * Update the callback which was given in the constructor.
+	 * 
+	 * @param callback
+	 *            command handle callback
+	 */
+	public void updateHandleCallback(OnBansheeCommandHandle callback) {
 		mHandleCallback = callback;
 	}
 	
+	/**
+	 * Put command to the request queue.
+	 * 
+	 * @param command
+	 *            request command
+	 * @param params
+	 *            encoded request parameters
+	 */
 	public void sendCommand(Command command, byte [] params) {
 		sendCommand(command, params, true);
 	}
 	
+	/**
+	 * Put command to the request queue.
+	 * 
+	 * @param command
+	 *            request command
+	 * @param params
+	 *            encoded request parameters
+	 * @param updatePendingRequest
+	 *            {@code true} will update the last request of the same kind instead putting a new
+	 *            request into the queue, {@code false} will just add a new request into the queue
+	 */
 	public void sendCommand(Command command, byte [] params, boolean updatePendingRequest) {
 		if (command == null) {
 			throw new NullPointerException();
@@ -392,16 +549,33 @@ public class BansheeConnection {
 		}
 	}
 	
+	/**
+	 * Get banshee server of connection.
+	 * 
+	 * @return banshee server of this connection
+	 */
 	public BansheeServer getServer() {
 		return mServer;
 	}
 	
+	/**
+	 * Stop background request thread.
+	 */
 	public void close() {
 		mCommandThread.run = false;
 		mCommandThread.interrupt();
 	}
 	
 	
+	/**
+	 * This will send a synchronous (!) request to the given banshee server to test its
+	 * availability.
+	 * 
+	 * @param server
+	 *            banshee server to test
+	 * 
+	 * @return {@code true} if the given banshee server was available
+	 */
 	public static boolean checkConnection(BansheeServer server) {
 		// request code 0 is a test request which does nothing
 		byte [] result = sendRequest(server, 0, null);
@@ -410,6 +584,9 @@ public class BansheeConnection {
 	
 	// OVERRIDDEN =================================================================================
 	
+	/**
+	 * Kill request thread if we forgot to call {@link #close()}.
+	 */
 	@Override
 	protected void finalize() {
 		mCommandThread.run = false;
@@ -417,6 +594,18 @@ public class BansheeConnection {
 	
 	// PRIVATE ====================================================================================
 	
+	/**
+	 * Send request to server and get the response.
+	 * 
+	 * @param server
+	 *            banshee server to which the request will be sent
+	 * @param requestCode
+	 *            request code is taken from {@link Command} constant
+	 * @param params
+	 *            encoded parameters
+	 * 
+	 * @return response as byte array
+	 */
 	private synchronized static byte [] sendRequest(BansheeServer server, int requestCode,
 			byte [] params) {
 		byte [] result = null;
@@ -473,11 +662,22 @@ public class BansheeConnection {
 	}
 	
 	
+	/**
+	 * Object which represents a pending request.
+	 * 
+	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+	 */
 	private static class CommandQueue {
 		public Command command;
 		public byte [] params;
 	}
 	
+	
+	/**
+	 * Thread which takes request from queue and delegates the response to the connection callback.
+	 * 
+	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+	 */
 	private class CommandThread extends Thread {
 		
 		public volatile boolean run = true;
@@ -507,6 +707,15 @@ public class BansheeConnection {
 					final byte [] result = sendRequest(mServer, queue.command.mCode, queue.params);
 					
 					if (result == null || result.length == 0) {
+						if (queue.command == Command.SYNC_DATABASE) {
+							mCommandHandler.post(new Runnable() {
+								public void run() {
+									mHandleCallback.onBansheeCommandHandled(
+											queue.command, queue.params, null);
+								}
+							});
+						}
+						
 						mFailCount++;
 						
 						if (mFailCount >= MAX_FAIL_COMMANDS) {

@@ -26,7 +26,7 @@ import de.viktorreiser.bansheeremote.R;
 import de.viktorreiser.bansheeremote.data.App;
 import de.viktorreiser.bansheeremote.data.BansheeConnection;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
-import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandled;
+import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandle;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Repeat;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Shuffle;
 import de.viktorreiser.bansheeremote.data.BansheeServer;
@@ -35,9 +35,11 @@ import de.viktorreiser.bansheeremote.data.BansheeServerCheckTask.OnBansheeServer
 import de.viktorreiser.toolbox.content.NetworkStateBroadcast;
 
 /**
- * Main activity which communicates with the banshee server (updates and control commands).<br>
+ * Main activity which communicates with the banshee server (updates UI and sends control commands).<br>
  * <br>
- * 
+ * This class does the main work by delegating the requests triggered by the UI, handling the
+ * results and poll data periodically. It's also reacting on network changes and connection failure.
+ * So there's a lot of action going on here therefore here you will find the most tricky code here.
  * 
  * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
  */
@@ -204,7 +206,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		menu.add(Menu.NONE, 1, Menu.NONE, R.string.choose_server)
 				.setIcon(R.drawable.server);
 		menu.add(Menu.NONE, 2, Menu.NONE, R.string.sync_db)
-			.setIcon(R.drawable.sync);
+				.setIcon(R.drawable.sync);
 		menu.add(Menu.NONE, 3, Menu.NONE, R.string.settings)
 				.setIcon(R.drawable.settings);
 		
@@ -219,7 +221,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			startActivityForResult(new Intent(this, ServerListActivity.class),
 					REQUEST_SERVER_LIST);
 			return true;
-		
+			
 		case 2:
 			mConnection.sendCommand(Command.SYNC_DATABASE, Command.SyncDatabase.encodeFileSize());
 			return true;
@@ -432,7 +434,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		}
 	}
 	
-	private class CommandHandler implements OnBansheeCommandHandled {
+	private class CommandHandler implements OnBansheeCommandHandle {
 		
 		public void updateComplete(boolean force) {
 			updateVolume(force);
@@ -573,10 +575,11 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				mData.artId = (String) d[6];
 				updateComplete(false);
 				break;
-				
+			
 			case SYNC_DATABASE:
 				if (Command.SyncDatabase.isFileSizeRequest(params)) {
-					mConnection.sendCommand(Command.SYNC_DATABASE, Command.SyncDatabase.encodeFile());
+					mConnection.sendCommand(Command.SYNC_DATABASE,
+							Command.SyncDatabase.encodeFile());
 				} else if (Command.SyncDatabase.isFileRequest(params)) {
 					try {
 						if (response == null || response.length < 2) {
@@ -594,7 +597,8 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 						os.close();
 					} catch (Exception e) {
 						// TODO add database write error message
-						Toast.makeText(CurrentSongActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+						Toast.makeText(CurrentSongActivity.this, "Error: " + e.getMessage(),
+								Toast.LENGTH_LONG).show();
 					}
 				}
 				break;

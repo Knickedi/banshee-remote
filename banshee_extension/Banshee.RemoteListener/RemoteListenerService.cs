@@ -594,8 +594,35 @@ namespace Banshee.RemoteListener
 			 */
 			PlayerStatus = 1,
 			
+			/* Request current track data.
+			 * 
+			 * Input: None
+			 * 
+			 * Output: (the data will be empty or 0 when there's no track shich is
+			 * currently playing)
+			 * 
+			 * Track length seconds as short.
+			 * Track title as string.
+			 * Artist title as string.
+			 * Album title as string.
+			 * Genre as string.
+			 * Year as short.
+			 * Cover ID as string or empty if there's no cover.
+			 */
 			SongInfo = 2,
 			
+			/* Synchronize banshee database.
+			 * 
+			 * Input: byte
+			 * 1 - get banshee data base size
+			 * 2 - get database
+			 * all other request will return a byte with 0
+			 *
+			 * Output:
+			 * 1 - integer with database isze in bytes or 0 if there's no database
+			 * 2 - sqlite database packed in binary bytes or byte with value 0
+			 *     if there's no database
+			 */
 			SyncDatabase = 3,
 		}
 		
