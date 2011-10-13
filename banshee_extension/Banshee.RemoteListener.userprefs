@@ -9,14 +9,12 @@
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
-        <State expanded="True">
+        <State expanded="True" selected="True">
           <Node name="Banshee.RemoteListener" expanded="True">
             <Node name="References">
               <Option id="ShowAllFiles" value="True" />
             </Node>
-            <Node name="Banshee.RemoteListener" expanded="True">
-              <Node name="RemoteListenerService.cs" selected="True" />
-            </Node>
+            <Node name="Banshee.RemoteListener" expanded="True" />
           </Node>
         </State>
       </Pad>

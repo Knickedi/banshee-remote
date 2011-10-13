@@ -54,12 +54,5 @@
 		android:key="mobilepollinterval"
 		android:title="@string/mobile_poll_interval"
 		android:summary="@string/mobile_poll_interval_summary" />
-		
-	<CheckBoxPreference
-		android:key="chacheonsd"
-		android:defaultValue="true"
-		android:title="@string/cache_on_sd"
-		android:summaryOn="@string/cache_on_sd_on"
-		android:summaryOff="@string/cache_on_sd_off" />
 
 </PreferenceScreen>

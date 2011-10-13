@@ -33,7 +33,7 @@ public class App extends Application {
 	 * 
 	 * @return database which contains banshee configurations
 	 */
-	public static SQLiteDatabase getBansheeServer() {
+	public static SQLiteDatabase getBansheeServerDb() {
 		return mBansheeServer;
 	}
 	
@@ -101,16 +101,6 @@ public class App extends Application {
 	public static boolean isDisplayAlbumYear() {
 		return PreferenceManager.getDefaultSharedPreferences(mContext)
 				.getBoolean("displayalbumyear", true);
-	}
-	
-	/**
-	 * Should cached data be persisted on SD card or internal app data directory?
-	 * 
-	 * @return {@code true} if data should be (is) persisted on the SD card
-	 */
-	public static boolean isCacheOnSDCard() {
-		return PreferenceManager.getDefaultSharedPreferences(mContext)
-				.getBoolean("cacheonsd", true);
 	}
 	
 	// OVERRIDDEN =================================================================================

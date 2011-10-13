@@ -27,6 +27,7 @@ public class BansheeServer {
 	private long mSameHostId = -1;
 	private String mHost;
 	private int mPort;
+	private long mDbSize = -1;
 	
 	// PUBLIC =====================================================================================
 	
@@ -115,6 +116,18 @@ public class BansheeServer {
 		return mSameHostId;
 	}
 	
+	/**
+	 * Get locally stored size of database in bytes.<br>
+	 * <br>
+	 * This will be {@code -1} until you refresh this information with
+	 * {@link #updateServer(BansheeServer, int)}.
+	 * 
+	 * @return database size in bytes
+	 */
+	public long getDbSize() {
+		return mDbSize;
+	}
+	
 	
 	/**
 	 * Get list of created banshee servers.
@@ -126,19 +139,49 @@ public class BansheeServer {
 	public static List<BansheeServer> getServers() {
 		List<BansheeServer> server = new ArrayList<BansheeServer>();
 		
-		Cursor cursor = App.getBansheeServer().query(
-				DB.TABLE_NAME, new String [] {DB.ID, DB.HOST, DB.PORT},
+		Cursor cursor = App.getBansheeServerDb().query(DB.TABLE_NAME,
+				new String [] {DB.ID, DB.HOST, DB.PORT, DB.SAME_ID, DB.DB_SIZE},
 				null, null, null, null, null);
 		
 		while (cursor.moveToNext()) {
 			BansheeServer s = new BansheeServer(cursor.getString(1), cursor.getInt(2));
 			s.mId = cursor.getLong(0);
+			s.mSameHostId = cursor.getLong(3);
+			s.mDbSize = cursor.getLong(4);
 			server.add(s);
 		}
 		
 		cursor.close();
 		
 		return server;
+	}
+	
+	/**
+	 * Get server with given ID.
+	 * 
+	 * @param id
+	 *            ID of server
+	 * 
+	 * @return banshee server with given ID or {@code null} if the ID is invalid
+	 */
+	public BansheeServer getServer(long id) {
+		Cursor cursor = App.getBansheeServerDb().query(DB.TABLE_NAME,
+				new String[] {DB.ID, DB.HOST, DB.PORT, DB.SAME_ID, DB.DB_SIZE},
+				DB.ID + "=" + id, null, null, null, null);
+		
+		try {
+			if (cursor.moveToFirst()) {
+				BansheeServer s = new BansheeServer(cursor.getString(1), cursor.getInt(2));
+				s.mId = cursor.getLong(0);
+				s.mSameHostId = cursor.getLong(3);
+				s.mDbSize = cursor.getLong(4);
+				return s;
+			} else {
+				return null;
+			}
+		} finally {
+			cursor.close();
+		}
 	}
 	
 	/**
@@ -150,10 +193,36 @@ public class BansheeServer {
 	 * @see #getId()
 	 */
 	public static void addServer(BansheeServer server) {
+		if (server.mId > 0) {
+			throw new IllegalArgumentException("given server has already a valid ID");
+		}
+		
 		ContentValues v = new ContentValues();
 		v.put(DB.HOST, server.mHost);
 		v.put(DB.PORT, server.mPort);
-		App.getBansheeServer().insert(DB.TABLE_NAME, null, v);
+		server.mId = App.getBansheeServerDb().insert(DB.TABLE_NAME, null, v);
+	}
+	
+	/**
+	 * Update added server with and local database size.
+	 * 
+	 * @param server
+	 *            server to update (server should be added with {@link #addServer(BansheeServer)}
+	 *            before)
+	 * @param dbSize
+	 *            database size in bytes
+	 * 
+	 * @see #getDbSize()
+	 */
+	public static void updateServer(BansheeServer server, long dbSize) {
+		if (server.mId < 0) {
+			throw new IllegalArgumentException("given server has no valid ID");
+		}
+		
+		server.mDbSize = dbSize;
+		ContentValues values = new ContentValues();
+		values.put(DB.DB_SIZE, dbSize);
+		App.getBansheeServerDb().update(DB.TABLE_NAME, values, DB.ID + "=" + server.mId, null);
 	}
 	
 	/**
@@ -165,7 +234,7 @@ public class BansheeServer {
 	 * @see #getId()
 	 */
 	public static void removeServer(long id) {
-		App.getBansheeServer().delete(DB.TABLE_NAME, DB.ID + "=" + id, null);
+		App.getBansheeServerDb().delete(DB.TABLE_NAME, DB.ID + "=" + id, null);
 	}
 	
 	/**
@@ -178,13 +247,16 @@ public class BansheeServer {
 	public static BansheeServer getDefaultServer() {
 		BansheeServer s = null;
 		
-		Cursor cursor = App.getBansheeServer().query(
-				DB.TABLE_NAME, new String [] {DB.ID, DB.HOST, DB.PORT}, DB.DEFAULT + "!=0",
-				null, null, null, null, "1");
+		Cursor cursor = App.getBansheeServerDb().query(
+				DB.TABLE_NAME,
+				new String [] {DB.ID, DB.HOST, DB.PORT, DB.SAME_ID, DB.DB_SIZE},
+				DB.DEFAULT + "!=0", null, null, null, null, "1");
 		
 		if (cursor.moveToNext()) {
 			s = new BansheeServer(cursor.getString(1), cursor.getInt(2));
 			s.mId = cursor.getLong(0);
+			s.mSameHostId = cursor.getLong(3);
+			s.mDbSize = cursor.getLong(4);
 		}
 		
 		cursor.close();
@@ -201,7 +273,7 @@ public class BansheeServer {
 	 * @set {@link #getId()}
 	 */
 	public static void setDefaultServer(long id) {
-		App.getBansheeServer().execSQL("UPDATE " + DB.TABLE_NAME + " SET " + DB.DEFAULT
+		App.getBansheeServerDb().execSQL("UPDATE " + DB.TABLE_NAME + " SET " + DB.DEFAULT
 				+ "= (CASE WHEN " + DB.ID + "=" + id + " THEN 1 ELSE 0 END);");
 	}
 	
@@ -245,6 +317,8 @@ public class BansheeServer {
 					+ DB.ID + " INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,\n"
 					+ DB.HOST + " TEXT NOT NULL,\n"
 					+ DB.PORT + " INTEGER NOT NULL,\n"
+					+ DB.SAME_ID + " INTEGER NOT NULL,\n"
+					+ DB.DB_SIZE + " INTEGER NOT NULL DEFAULT 0,\n"
 					+ DB.DEFAULT + " INTEGER NOT NULL DEFAULT 0\n"
 					+ ");");
 		}
@@ -267,6 +341,8 @@ public class BansheeServer {
 		public static final String ID = "_id";
 		public static final String HOST = "host";
 		public static final String PORT = "port";
+		public static final String SAME_ID = "smaeid";
+		public static final String DB_SIZE = "dbsize";
 		public static final String DEFAULT = "isDefault";
 	}
 }

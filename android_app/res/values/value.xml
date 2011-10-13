@@ -35,7 +35,4 @@
 	<string name="wifi_poll_interval_summary">Interval in seconds in which the banshee server will be polled for changes when using WiFi</string>
 	<string name="mobile_poll_interval">Mobile poll interval </string>
 	<string name="mobile_poll_interval_summary">Interval in seconds in which the banshee server will be polled for changes when using mobile network</string>
-	<string name="cache_on_sd">Cache data on SD card</string>
-	<string name="cache_on_sd_on">Cached data will be persisted on SD card</string>
-	<string name="cache_on_sd_off">Cached data will be persisted in internal app data directory</string>
 </resources>
