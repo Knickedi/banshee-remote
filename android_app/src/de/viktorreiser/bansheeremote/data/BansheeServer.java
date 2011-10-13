@@ -176,6 +176,7 @@ public class BansheeServer {
 		ContentValues v = new ContentValues();
 		v.put(DB.HOST, server.mHost);
 		v.put(DB.PORT, server.mPort);
+		v.put(DB.SAME_ID, server.mSameHostId);
 		server.mId = getDb().insert(DB.TABLE_NAME, null, v);
 	}
 	
@@ -196,9 +197,12 @@ public class BansheeServer {
 		}
 		
 		server.mDbSize = dbSize;
-		ContentValues values = new ContentValues();
-		values.put(DB.DB_SIZE, dbSize);
-		getDb().update(DB.TABLE_NAME, values, DB.ID + "=" + server.mId, null);
+		ContentValues v = new ContentValues();
+		v.put(DB.DB_SIZE, dbSize);
+		v.put(DB.HOST, server.mHost);
+		v.put(DB.PORT, server.mPort);
+		v.put(DB.SAME_ID, server.mSameHostId);
+		getDb().update(DB.TABLE_NAME, v, DB.ID + "=" + server.mId, null);
 	}
 	
 	/**
