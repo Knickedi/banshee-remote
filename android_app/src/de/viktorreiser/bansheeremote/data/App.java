@@ -29,15 +29,6 @@ public class App extends Application {
 	}
 	
 	/**
-	 * Get instance of to database which contains the banshee server configurations.
-	 * 
-	 * @return database which contains banshee configurations
-	 */
-	public static SQLiteDatabase getBansheeServerDb() {
-		return mBansheeServer;
-	}
-	
-	/**
 	 * Should application remember last used banshee server on next startup?
 	 * 
 	 * @return {@code true} if last banshee server should be contacted automatically
@@ -101,6 +92,17 @@ public class App extends Application {
 	public static boolean isDisplayAlbumYear() {
 		return PreferenceManager.getDefaultSharedPreferences(mContext)
 				.getBoolean("displayalbumyear", true);
+	}
+	
+	// PACKAGE ====================================================================================
+	
+	/**
+	 * Get instance of to database which contains the banshee server configurations.
+	 * 
+	 * @return database which contains banshee configurations
+	 */
+	static SQLiteDatabase getBansheeServerDb() {
+		return mBansheeServer;
 	}
 	
 	// OVERRIDDEN =================================================================================

@@ -164,7 +164,7 @@ public class BansheeServer {
 	 * 
 	 * @return banshee server with given ID or {@code null} if the ID is invalid
 	 */
-	public BansheeServer getServer(long id) {
+	public static BansheeServer getServer(long id) {
 		Cursor cursor = App.getBansheeServerDb().query(DB.TABLE_NAME,
 				new String[] {DB.ID, DB.HOST, DB.PORT, DB.SAME_ID, DB.DB_SIZE},
 				DB.ID + "=" + id, null, null, null, null);

@@ -3,11 +3,13 @@ package de.viktorreiser.bansheeremote.activity;
 import java.io.OutputStream;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.drawable.BitmapDrawable;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -55,6 +57,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	
 	private boolean mActivityPaused = true;
 	private boolean mWaitingForServerList = false;
+	private boolean mDatabaseSyncRunning = false;
 	
 	private ImageView mPlay;
 	private ImageView mPause;
@@ -104,6 +107,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			mConnection = (BansheeConnection) dataBefore[1];
 			mData = (BansheeData) dataBefore[2];
 			mPreviousData = (BansheeData) dataBefore[3];
+			mDatabaseSyncRunning = (Boolean) dataBefore[4];
 			mCommandHandler.updateComplete(true);
 			
 			if (mConnection != null) {
@@ -171,7 +175,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			mCheckTask.dismissDialog();
 		}
 		
-		return new Object [] {mCheckTask, mConnection, mData, mPreviousData};
+		return new Object [] {mCheckTask, mConnection, mData, mPreviousData, mDatabaseSyncRunning};
 	}
 	
 	@Override
@@ -225,7 +229,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			return true;
 			
 		case 2:
-			mConnection.sendCommand(Command.SYNC_DATABASE, Command.SyncDatabase.encodeFileSize());
+			if (!mDatabaseSyncRunning) {
+				mConnection.sendCommand(Command.SYNC_DATABASE, Command.SyncDatabase.encodeFileSize());
+			}
 			return true;
 			
 		case 3:
@@ -552,58 +558,18 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			
 			switch (command) {
 			case PLAYER_STATUS:
-				mData.playing = Command.PlayerStatus.decodePlaying(response);
-				mData.currentTime = Command.PlayerStatus.decodeSeekPosition(response);
-				mData.repeat = Command.PlayerStatus.decodeRepeatMode(response);
-				mData.shuffle = Command.PlayerStatus.decodeShuffleMode(response);
-				mData.volume = Command.PlayerStatus.decodeVolume(response);
-				mData.changeFlag = Command.PlayerStatus.decodeChangeFlag(response);
-				mData.currentSongId = Command.PlayerStatus.decodeSongId(response);
-
-				mStatusPollHandler.updatePseudoPoll();
-				updateComplete(false);
-				
-				if (mData.changeFlag != mPreviousData.changeFlag) {
-					mConnection.sendCommand(Command.SONG_INFO, null);
-				}
+				handlePlayerStatus(response);
 				break;
 			
 			case SONG_INFO:
-				Object [] d = Command.SongInfo.decode(response);
-				mData.totalTime = (Integer) d[0];
-				mData.song = (String) d[1];
-				mData.artist = (String) d[2];
-				mData.album = (String) d[3];
-				mData.genre = (String) d[4];
-				mData.year = (Integer) d[5];
-				mData.artId = (String) d[6];
-				updateComplete(false);
+				handleSongInfo(response);
 				break;
 			
 			case SYNC_DATABASE:
 				if (Command.SyncDatabase.isFileSizeRequest(params)) {
-					mConnection.sendCommand(Command.SYNC_DATABASE,
-							Command.SyncDatabase.encodeFile());
+					handleSyncDatabaseFileSize(response);
 				} else if (Command.SyncDatabase.isFileRequest(params)) {
-					try {
-						if (response == null || response.length < 2) {
-							throw new Exception();
-						}
-						
-						long id = mConnection.getServer().getSameHostId();
-						
-						if (id < 0) {
-							id = mConnection.getServer().getId();
-						}
-						
-						OutputStream os = CurrentSongActivity.this.openFileOutput(id + ".db", 0);
-						os.write(response);
-						os.close();
-					} catch (Exception e) {
-						// TODO add database write error message
-						Toast.makeText(CurrentSongActivity.this, "Error: " + e.getMessage(),
-								Toast.LENGTH_LONG).show();
-					}
+					handleSyncDatabaseFile(response);
 				}
 				break;
 			}
@@ -620,6 +586,76 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				startActivityForResult(
 						new Intent(CurrentSongActivity.this, ServerListActivity.class),
 						REQUEST_SERVER_LIST);
+			}
+		}
+		
+		private void handlePlayerStatus(byte [] response) {
+			mData.playing = Command.PlayerStatus.decodePlaying(response);
+			mData.currentTime = Command.PlayerStatus.decodeSeekPosition(response);
+			mData.repeat = Command.PlayerStatus.decodeRepeatMode(response);
+			mData.shuffle = Command.PlayerStatus.decodeShuffleMode(response);
+			mData.volume = Command.PlayerStatus.decodeVolume(response);
+			mData.changeFlag = Command.PlayerStatus.decodeChangeFlag(response);
+			mData.currentSongId = Command.PlayerStatus.decodeSongId(response);
+
+			mStatusPollHandler.updatePseudoPoll();
+			updateComplete(false);
+			
+			if (mData.changeFlag != mPreviousData.changeFlag) {
+				mConnection.sendCommand(Command.SONG_INFO, null);
+			}
+		}
+		
+		private void handleSongInfo(byte [] response) {
+			Object [] d = Command.SongInfo.decode(response);
+			mData.totalTime = (Integer) d[0];
+			mData.song = (String) d[1];
+			mData.artist = (String) d[2];
+			mData.album = (String) d[3];
+			mData.genre = (String) d[4];
+			mData.year = (Integer) d[5];
+			mData.artId = (String) d[6];
+			updateComplete(false);
+		}
+		
+		private void handleSyncDatabaseFileSize(byte [] response) {
+			if (response == null) {
+				
+			} else if (Command.SyncDatabase.decodeFileSize(response) == 0) {
+				
+			} else {
+				long dbSize = mConnection.getServer().getDbSize();
+				BansheeServer same = BansheeServer.getServer(
+						mConnection.getServer().getSameHostId());
+				
+				if (same != null) {
+					dbSize = mConnection.getServer().getDbSize();
+				}
+				
+				mConnection.sendCommand(Command.SYNC_DATABASE,
+						Command.SyncDatabase.encodeFile());
+			}
+		}
+		
+		private void handleSyncDatabaseFile(byte [] response) {
+			try {
+				if (response == null || response.length < 2) {
+					throw new Exception();
+				}
+				
+				long id = mConnection.getServer().getSameHostId();
+				
+				if (id < 0) {
+					id = mConnection.getServer().getId();
+				}
+				
+				OutputStream os = CurrentSongActivity.this.openFileOutput(id + ".db", 0);
+				os.write(response);
+				os.close();
+			} catch (Exception e) {
+				// TODO add database write error message
+				Toast.makeText(CurrentSongActivity.this, "Error: " + e.getMessage(),
+						Toast.LENGTH_LONG).show();
 			}
 		}
 		
