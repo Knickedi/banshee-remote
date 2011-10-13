@@ -2,7 +2,6 @@ package de.viktorreiser.bansheeremote.data;
 
 import android.app.Application;
 import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
 import android.preference.PreferenceManager;
 
 /**
@@ -15,7 +14,6 @@ public class App extends Application {
 	// PRIVATE ====================================================================================
 	
 	private static Context mContext;
-	private static SQLiteDatabase mBansheeServer;
 	
 	// PUBLIC =====================================================================================
 	
@@ -94,17 +92,6 @@ public class App extends Application {
 				.getBoolean("displayalbumyear", true);
 	}
 	
-	// PACKAGE ====================================================================================
-	
-	/**
-	 * Get instance of to database which contains the banshee server configurations.
-	 * 
-	 * @return database which contains banshee configurations
-	 */
-	static SQLiteDatabase getBansheeServerDb() {
-		return mBansheeServer;
-	}
-	
 	// OVERRIDDEN =================================================================================
 	
 	/**
@@ -113,6 +100,5 @@ public class App extends Application {
 	@Override
 	public void onCreate() {
 		mContext = getApplicationContext();
-		mBansheeServer = new BansheeServer.BasheeDbHelper(mContext).getWritableDatabase();
 	}
 }

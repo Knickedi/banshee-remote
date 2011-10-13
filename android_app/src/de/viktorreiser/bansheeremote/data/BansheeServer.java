@@ -23,6 +23,8 @@ public class BansheeServer {
 	
 	// PRIVATE ====================================================================================
 	
+	private static SQLiteDatabase mDbinstance = null;
+	
 	private long mId;
 	private long mSameHostId = -1;
 	private String mHost;
@@ -139,7 +141,7 @@ public class BansheeServer {
 	public static List<BansheeServer> getServers() {
 		List<BansheeServer> server = new ArrayList<BansheeServer>();
 		
-		Cursor cursor = App.getBansheeServerDb().query(DB.TABLE_NAME,
+		Cursor cursor = getDb().query(DB.TABLE_NAME,
 				new String [] {DB.ID, DB.HOST, DB.PORT, DB.SAME_ID, DB.DB_SIZE},
 				null, null, null, null, null);
 		
@@ -165,7 +167,7 @@ public class BansheeServer {
 	 * @return banshee server with given ID or {@code null} if the ID is invalid
 	 */
 	public static BansheeServer getServer(long id) {
-		Cursor cursor = App.getBansheeServerDb().query(DB.TABLE_NAME,
+		Cursor cursor = getDb().query(DB.TABLE_NAME,
 				new String[] {DB.ID, DB.HOST, DB.PORT, DB.SAME_ID, DB.DB_SIZE},
 				DB.ID + "=" + id, null, null, null, null);
 		
@@ -200,7 +202,7 @@ public class BansheeServer {
 		ContentValues v = new ContentValues();
 		v.put(DB.HOST, server.mHost);
 		v.put(DB.PORT, server.mPort);
-		server.mId = App.getBansheeServerDb().insert(DB.TABLE_NAME, null, v);
+		server.mId = getDb().insert(DB.TABLE_NAME, null, v);
 	}
 	
 	/**
@@ -222,7 +224,7 @@ public class BansheeServer {
 		server.mDbSize = dbSize;
 		ContentValues values = new ContentValues();
 		values.put(DB.DB_SIZE, dbSize);
-		App.getBansheeServerDb().update(DB.TABLE_NAME, values, DB.ID + "=" + server.mId, null);
+		getDb().update(DB.TABLE_NAME, values, DB.ID + "=" + server.mId, null);
 	}
 	
 	/**
@@ -234,7 +236,7 @@ public class BansheeServer {
 	 * @see #getId()
 	 */
 	public static void removeServer(long id) {
-		App.getBansheeServerDb().delete(DB.TABLE_NAME, DB.ID + "=" + id, null);
+		getDb().delete(DB.TABLE_NAME, DB.ID + "=" + id, null);
 	}
 	
 	/**
@@ -247,7 +249,7 @@ public class BansheeServer {
 	public static BansheeServer getDefaultServer() {
 		BansheeServer s = null;
 		
-		Cursor cursor = App.getBansheeServerDb().query(
+		Cursor cursor = getDb().query(
 				DB.TABLE_NAME,
 				new String [] {DB.ID, DB.HOST, DB.PORT, DB.SAME_ID, DB.DB_SIZE},
 				DB.DEFAULT + "!=0", null, null, null, null, "1");
@@ -273,7 +275,7 @@ public class BansheeServer {
 	 * @set {@link #getId()}
 	 */
 	public static void setDefaultServer(long id) {
-		App.getBansheeServerDb().execSQL("UPDATE " + DB.TABLE_NAME + " SET " + DB.DEFAULT
+		getDb().execSQL("UPDATE " + DB.TABLE_NAME + " SET " + DB.DEFAULT
 				+ "= (CASE WHEN " + DB.ID + "=" + id + " THEN 1 ELSE 0 END);");
 	}
 	
@@ -297,14 +299,22 @@ public class BansheeServer {
 		}
 	}
 	
-	// PACKAGE ====================================================================================
+	// PRIVATE ====================================================================================
+	
+	private static SQLiteDatabase getDb() {
+		if (mDbinstance == null) {
+			return mDbinstance = new BasheeDbHelper(App.getContext()).getWritableDatabase();
+		} else {
+			return mDbinstance;
+		}
+	}
 	
 	/**
 	 * Helper which creates and setups an empty banshee server database.
 	 * 
 	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
 	 */
-	static class BasheeDbHelper extends SQLiteOpenHelper {
+	private static class BasheeDbHelper extends SQLiteOpenHelper {
 		
 		public BasheeDbHelper(Context context) {
 			super(context, "bansheeserver.db", null, 1);
@@ -328,8 +338,6 @@ public class BansheeServer {
 			
 		}
 	}
-	
-	// PRIVATE ====================================================================================
 	
 	/**
 	 * Database (column) constants.
