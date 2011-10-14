@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <resources>
+	<string name="unknown_track">Unknown track</string>
+	<string name="unknown_artist">Unknown artist</string>
+	<string name="unknown_album">Unknown album</string>
 	<string name="settings">Settings</string>
 	<string name="banshee_settings">Banshee remote settings</string>
     <string name="choose_server">Choose server</string>

@@ -39,7 +39,7 @@ import de.viktorreiser.toolbox.content.NetworkStateBroadcast;
  * <br>
  * This class does the main work by delegating the requests triggered by the UI, handling the
  * results and poll data periodically. It's also reacting on network changes and connection failure.
- * So there's a lot of action going on here therefore here you will find the most tricky code here.
+ * So there's a lot of action going on here therefore you will find the most tricky code here.
  * 
  * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
  */
@@ -506,6 +506,10 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 					|| (App.isDisplaySongGenre() && !mData.genre.equals(mPreviousData.genre))) {
 				String song = mData.song;
 				
+				if (song.equals("")) {
+					song = getString(R.string.unknown_track);
+				}
+				
 				if (App.isDisplaySongGenre() && !mData.genre.equals("")) {
 					song += " [" + mData.genre + "]";
 				}
@@ -514,12 +518,20 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			}
 			
 			if (force || !mData.artist.equals(mPreviousData.artist)) {
-				mArtist.setText(mData.artist);
+				if (mData.artist.equals("")) {
+					mArtist.setText(R.string.unknown_artist);
+				} else {
+					mArtist.setText(mData.artist);
+				}
 			}
 			
 			if (force || !mData.album.equals(mPreviousData.album)
 					|| (App.isDisplayAlbumYear() && mData.year != mPreviousData.year)) {
 				String album = mData.album;
+				
+				if (album.equals("")) {
+					album = getString(R.string.unknown_album);
+				}
 				
 				if (App.isDisplayAlbumYear() && mData.year >= 1000) {
 					album += " [" + mData.year + "]";
