@@ -649,6 +649,14 @@ namespace Banshee.RemoteListener
 			 *     if there's no database
 			 */
 			SyncDatabase = 3,
+			
+			/* Set track seek position.
+			 * 
+			 * Input: Short which contains the seek position in ten seconds.
+			 * 
+			 * Output: Short which contains the set position.
+			 */
+			Seek = 4,
 		}
 		
 		#endregion
@@ -761,6 +769,30 @@ namespace Banshee.RemoteListener
 			}
 			
 			return new byte [] {0};
+		}
+		
+		public byte [] Seek(int readBytes) {
+			if (readBytes > 2) {
+				TrackInfo track = ServiceManager.PlayerEngine.CurrentTrack;
+				int position = ShortFromBuffer(1) * 100;
+				
+				if (track == null) {
+					int duration = (int) track.Duration.TotalMilliseconds;
+					
+					if (duration <= position) {
+						ServiceManager.PlayerEngine.Position = (uint) position;
+						position = 0;
+					} else {
+						ServiceManager.PlayerEngine.Position = (uint) position;
+					}
+				} else {
+					ServiceManager.PlayerEngine.Position = (uint) position;
+				}
+				
+				return ShortToByte(position / 100);
+			} else {
+				return new byte [] {0};
+			}
 		}
 		
 		#endregion

@@ -94,7 +94,14 @@ public class BansheeConnection {
 		 * This request will return also {@code null} so your handler knows about failed requests
 		 * (see {@link SyncDatabase} for more).
 		 */
-		SYNC_DATABASE(3);
+		SYNC_DATABASE(3),
+		
+		/**
+		 * Set seek position of current song.<br>
+		 * <br>
+		 * (See {@link Seek} for more).
+		 */
+		SEEK(4);
 		
 		private final int mCode;
 		
@@ -361,6 +368,34 @@ public class BansheeConnection {
 			public static long decodeFileSize(byte [] response) {
 				return response.length < 4 ? 0 : decodeInt(response, 0);
 			}
+		}
+		
+		/**
+		 * Set seek position.
+		 * 
+		 * A {@code null} request will do nothing. Use {@link #encode(int)} to send a seek position
+		 * in tenth seconds. {@link #decode(byte[])} will giv eyou the set (so the new) position by
+		 * the server.
+		 * 
+		 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+		 */
+		public static class Seek {
+			
+			public static byte [] encode(int position) {
+				return encodeShort(position);
+			}
+			
+			public static int getPositionRequest(byte [] params) {
+				return decodeShort(params, 0);
+			}
+			
+			public static int decode(byte [] response) {
+				return decodeShort(response, 0);
+			}
+		}
+		
+		private static byte [] encodeShort(int value) {
+			return new byte [] {(byte) value, (byte) (value >> 8)};
 		}
 		
 		private static int decodeShort(byte [] response, int position) {

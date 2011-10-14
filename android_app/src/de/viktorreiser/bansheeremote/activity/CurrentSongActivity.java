@@ -349,8 +349,11 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		
 		mSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromTouch) {
-				if (fromTouch) {
-					// TODO trigger seek command
+				if (fromTouch && mData.totalTime > 0) {
+					int value = mData.totalTime * progress / 100;
+					mConnection.sendCommand(Command.SEEK, Command.Seek.encode(value));
+					mData.currentTime = value;
+					mCommandHandler.updateSeekData(false);
 				}
 			}
 			
@@ -569,6 +572,10 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 					handleSyncDatabaseFile(response);
 				}
 				break;
+				
+			case SEEK:
+				handleSeek(params, response);
+				break;
 			}
 		}
 		
@@ -649,6 +656,12 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				Toast.makeText(CurrentSongActivity.this, R.string.updated_sync_db,
 						Toast.LENGTH_LONG).show();
 			}
+		}
+		
+		private void handleSeek(byte [] params, byte [] response) {
+			mData.currentTime = Command.Seek.decode(response);
+			mStatusPollHandler.updatePseudoPoll();
+			updateSeekData(false);
 		}
 		
 		private String secondsToDurationString(int seconds) {
