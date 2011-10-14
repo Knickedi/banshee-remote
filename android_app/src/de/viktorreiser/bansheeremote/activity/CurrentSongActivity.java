@@ -350,8 +350,11 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		mSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromTouch) {
 				if (fromTouch && mData.totalTime > 0) {
-					int value = mData.totalTime * progress / 100;
-					mConnection.sendCommand(Command.SEEK, Command.Seek.encode(value));
+					long value = Math.max(1, (long) (1.0 * mData.totalTime * progress
+							/ seekBar.getMax()));
+					
+					mConnection.sendCommand(Command.PLAYER_STATUS,
+							Command.PlayerStatus.encodeSeekPosition(null, value));
 					mData.currentTime = value;
 					mCommandHandler.updateSeekData(false);
 				}
@@ -419,8 +422,8 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		String genre = "";
 		int year = 0;
 		String artId = "";
-		int totalTime = -1;
-		int currentTime = -1;
+		long totalTime = -1;
+		long currentTime = -1;
 		long currentSongId = 0;
 		int changeFlag = 0;
 		
@@ -542,14 +545,14 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		}
 		
 		public void updateSeekData(boolean force) {
-			if (force || mPreviousData.currentTime != mData.currentTime
-					|| mPreviousData.totalTime != mData.totalTime) {
+			if (force || Math.abs(mPreviousData.currentTime -  mData.currentTime) > 500
+					|| Math.abs(mPreviousData.totalTime - mData.totalTime) > 500) {
 				mCurrentTime.setText(mData.currentTime < 0
-						? "" : secondsToDurationString(mData.currentTime / 10));
+						? "" : millisecondsToDurationString(mData.currentTime));
 				mTotalTime.setText(mData.totalTime < 0
-						? "" : secondsToDurationString(mData.totalTime));
+						? "" : millisecondsToDurationString(mData.totalTime));
 				mSeekBar.setProgress(mData.totalTime <= 0 || mData.currentTime < 0
-						? 0 : Math.round(100f * mData.currentTime / mData.totalTime));
+						? 0 : Math.round(1000f * mData.currentTime / mData.totalTime));
 			}
 		}
 		
@@ -583,10 +586,6 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				} else if (Command.SyncDatabase.isFileRequest(params)) {
 					handleSyncDatabaseFile(response);
 				}
-				break;
-				
-			case SEEK:
-				handleSeek(params, response);
 				break;
 			}
 		}
@@ -624,7 +623,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		
 		private void handleSongInfo(byte [] response) {
 			Object [] d = Command.SongInfo.decode(response);
-			mData.totalTime = (Integer) d[0];
+			mData.totalTime = (Long) d[0];
 			mData.song = (String) d[1];
 			mData.artist = (String) d[2];
 			mData.album = (String) d[3];
@@ -670,13 +669,8 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			}
 		}
 		
-		private void handleSeek(byte [] params, byte [] response) {
-			mData.currentTime = Command.Seek.decode(response);
-			mStatusPollHandler.updatePseudoPoll();
-			updateSeekData(false);
-		}
-		
-		private String secondsToDurationString(int seconds) {
+		private String millisecondsToDurationString(long milliseconds) {
+			long seconds = milliseconds / 1000;
 			String prependedZero = (seconds % 60 < 10) ? "0" : "";
 			
 			if (seconds >= 60) {
@@ -709,10 +703,10 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		
 		public void updatePseudoPoll() {
 			removeMessages(MESSAGE_UPDATE_POSITION);
-			
+
 			if (mData.playing) {
 				long interval = App.getPollInterval(NetworkStateBroadcast.isWifiConnected());
-				
+
 				if (interval > 1000) {
 					mmSeekUpdateStart = System.currentTimeMillis();
 					sendEmptyMessageDelayed(MESSAGE_UPDATE_POSITION, 1000);
@@ -730,9 +724,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			
 			case MESSAGE_UPDATE_POSITION:
 				if (mmRunning) {
-					mData.currentTime += (System.currentTimeMillis() - mmSeekUpdateStart) / 100;
+					mData.currentTime += (System.currentTimeMillis() - mmSeekUpdateStart);
 					
-					if (mData.totalTime > 0 && mData.currentTime / 10 > mData.totalTime) {
+					if (mData.totalTime > 0 && mData.currentTime > mData.totalTime) {
 						mConnection.sendCommand(Command.PLAYER_STATUS, null);
 					} else {
 						mCommandHandler.updateSeekData(false);

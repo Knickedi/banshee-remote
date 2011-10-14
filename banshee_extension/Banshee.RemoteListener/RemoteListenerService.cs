@@ -619,12 +619,17 @@ namespace Banshee.RemoteListener
 		/// Set track seek position of player.
 		/// </summary>
 		/// <param name="position">
-		/// Position in milliseconds.
+		/// Position in milliseconds. 0 will be ignored, use 1 instead.
 		/// </param>
 		/// <param name="newPosition">
 		/// This will contain the new position. The player returns a wrong position on set.
 		/// </param>
 		private void SetupSeekPosition(uint position, out uint? newPosition) {
+			if (position == 0) {
+				newPosition = null;
+				return;
+			}
+			
 			TrackInfo track = ServiceManager.PlayerEngine.CurrentTrack;
 			
 			if (track == null) {
@@ -660,7 +665,7 @@ namespace Banshee.RemoteListener
 		/// Byte 9-12               : song ID in database
 		/// </returns>
 		private byte [] PlayerStatusResult() {
-			byte [] result = new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+			byte [] result = new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 			
 			if (ServiceManager.PlayerEngine.CurrentState == PlayerState.Paused) {
 				result[0] = 0x80;
@@ -672,13 +677,13 @@ namespace Banshee.RemoteListener
 			result[0] |= (byte) ShuffleMode();
 			result[1] = (byte) ServiceManager.PlayerEngine.Volume;
 			
-			Array.Copy(ShortToByte((ushort) (ServiceManager.PlayerEngine.Position / 100)),
-			           0, result, 2, 2);
+			Array.Copy(IntToByte((uint) (ServiceManager.PlayerEngine.Position)),
+			           0, result, 2, 4);
 			
 			TrackInfo track = ServiceManager.PlayerEngine.CurrentTrack;
 			
 			if (track != null) {
-				Array.Copy(ShortToByte((ushort) track.FileSize), 0, result, 4, 2);
+				Array.Copy(ShortToByte((ushort) track.FileSize), 0, result, 6, 2);
 			}
 			
 			return result;
@@ -820,7 +825,7 @@ namespace Banshee.RemoteListener
 				SetupVolume(_buffer[3]);
 			}
 			
-			if (readBytes > 5) {
+			if (readBytes > 7) {
 				SetupSeekPosition(IntFromBuffer(4), out newPosition);
 			}
 			
@@ -836,7 +841,7 @@ namespace Banshee.RemoteListener
 			
 			if (newPosition != null) {
 				byte [] position = IntToByte((uint) newPosition);
-				Array.Copy(position, 0, result, 3, position.Length);
+				Array.Copy(position, 0, result, 2, position.Length);
 			}
 			
 			return result;

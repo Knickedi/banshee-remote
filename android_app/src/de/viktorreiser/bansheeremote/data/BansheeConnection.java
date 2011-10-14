@@ -94,14 +94,7 @@ public class BansheeConnection {
 		 * This request will return also {@code null} so your handler knows about failed requests
 		 * (see {@link SyncDatabase} for more).
 		 */
-		SYNC_DATABASE(3),
-		
-		/**
-		 * Set seek position of current song.<br>
-		 * <br>
-		 * (See {@link Seek} for more).
-		 */
-		SEEK(4);
+		SYNC_DATABASE(3);
 		
 		private final int mCode;
 		
@@ -166,7 +159,8 @@ public class BansheeConnection {
 		public static class PlayerStatus {
 			
 			private static byte [] getRequest(byte [] request) {
-				return request == null || request.length != 5 ? new byte [] {0, 0, 0, 0, 0} : request;
+				return request == null || request.length != 7
+						? new byte [] {0, 0, 0, 0, 0, 0, 0} : request;
 			}
 			
 			public static byte [] encodePlayToggle(byte [] request) {
@@ -244,6 +238,12 @@ public class BansheeConnection {
 				return request;
 			}
 			
+			public static byte [] encodeSeekPosition(byte [] request, long position) {
+				byte [] p = encodeInt(position);
+				System.arraycopy(p, 0, request = getRequest(request), 3, p.length);
+				return request;
+			}
+			
 			public static boolean decodePause(byte [] response) {
 				return (response[0] & 0x80) != 0;
 			}
@@ -264,16 +264,16 @@ public class BansheeConnection {
 				return response[1] & 0xff;
 			}
 			
-			public static int decodeSeekPosition(byte [] response) {
-				return decodeShort(response, 2);
+			public static long decodeSeekPosition(byte [] response) {
+				return decodeInt(response, 2);
 			}
 			
 			public static int decodeChangeFlag(byte [] response) {
-				return decodeShort(response, 4);
+				return decodeShort(response, 6);
 			}
 			
 			public static long decodeSongId(byte [] response) {
-				return decodeInt(response, 6);
+				return decodeInt(response, 8);
 			}
 		}
 		
@@ -303,8 +303,8 @@ public class BansheeConnection {
 				int index = 0;
 				Object [] stringData;
 				
-				decoded[0] = decodeShort(response, index);
-				index += 2;
+				decoded[0] = decodeInt(response, index);
+				index += 4;
 				
 				stringData = decodeString(response, index);
 				index += (Integer) stringData[0];
@@ -370,32 +370,13 @@ public class BansheeConnection {
 			}
 		}
 		
-		/**
-		 * Set seek position.
-		 * 
-		 * A {@code null} request will do nothing. Use {@link #encode(int)} to send a seek position
-		 * in tenth seconds. {@link #decode(byte[])} will giv eyou the set (so the new) position by
-		 * the server.
-		 * 
-		 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
-		 */
-		public static class Seek {
-			
-			public static byte [] encode(int position) {
-				return encodeShort(position);
-			}
-			
-			public static int getPositionRequest(byte [] params) {
-				return decodeShort(params, 0);
-			}
-			
-			public static int decode(byte [] response) {
-				return decodeShort(response, 0);
-			}
-		}
+//		private static byte [] encodeShort(int value) {
+//			return new byte [] {(byte) value, (byte) (value >> 8)};
+//		}
 		
-		private static byte [] encodeShort(int value) {
-			return new byte [] {(byte) value, (byte) (value >> 8)};
+		private static byte [] encodeInt(long value) {
+			return new byte [] {(byte) value, (byte) (value >> 8), (byte) (value >> 16),
+					(byte) (value >> 24)};
 		}
 		
 		private static int decodeShort(byte [] response, int position) {
