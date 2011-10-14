@@ -646,7 +646,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				Toast.makeText(CurrentSongActivity.this, R.string.error_writing_sync_db,
 						Toast.LENGTH_LONG).show();
 			} else {
-				Toast.makeText(CurrentSongActivity.this, R.string.error_writing_sync_db,
+				Toast.makeText(CurrentSongActivity.this, R.string.updated_sync_db,
 						Toast.LENGTH_LONG).show();
 			}
 		}

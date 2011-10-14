@@ -26,10 +26,10 @@ public class BansheeServer {
 	private static SQLiteDatabase mDbinstance = null;
 	
 	private long mId;
-	private long mSameHostId = -1;
 	private String mHost;
 	private int mPort;
-	private long mDbSize = -1;
+	long mSameHostId = -1;
+	long mDbSize = -1;
 	
 	// PUBLIC =====================================================================================
 	
@@ -181,31 +181,6 @@ public class BansheeServer {
 	}
 	
 	/**
-	 * Update added server with and local database size.
-	 * 
-	 * @param server
-	 *            server to update (server should be added with {@link #addServer(BansheeServer)}
-	 *            before)
-	 * @param dbSize
-	 *            database size in bytes
-	 * 
-	 * @see #getDbSize()
-	 */
-	public static void updateServer(BansheeServer server, long dbSize) {
-		if (server.mId < 0) {
-			throw new IllegalArgumentException("given server has no valid ID");
-		}
-		
-		server.mDbSize = dbSize;
-		ContentValues v = new ContentValues();
-		v.put(DB.DB_SIZE, dbSize);
-		v.put(DB.HOST, server.mHost);
-		v.put(DB.PORT, server.mPort);
-		v.put(DB.SAME_ID, server.mSameHostId);
-		getDb().update(DB.TABLE_NAME, v, DB.ID + "=" + server.mId, null);
-	}
-	
-	/**
 	 * Remove banshee server from list.
 	 * 
 	 * @param id
@@ -260,29 +235,27 @@ public class BansheeServer {
 	// PACKAGE ====================================================================================
 	
 	/**
-	 * Get ID of banshee server which represents the same server.<br>
-	 * <br>
-	 * For example you could define several different addresses (maybe LAN and Internet) for a
-	 * single banshee server but you won't that they share the same persisted data. So you define
-	 * the ID of the previous defined banshee server and they will share the same persisted database
-	 * and don not need to create it twice.
+	 * Update added server with and local database size.
 	 * 
-	 * @return ID of same banshee server
-	 */
-	long getSameHostId() {
-		return mSameHostId;
-	}
-	
-	/**
-	 * Get locally stored size of database in bytes.<br>
-	 * <br>
-	 * This will be {@code -1} until you refresh this information with
-	 * {@link #updateServer(BansheeServer, int)}.
+	 * @param server
+	 *            server to update (server should be added with {@link #addServer(BansheeServer)}
+	 *            before)
+	 * @param dbSize
+	 *            database size in bytes
 	 * 
-	 * @return database size in bytes
+	 * @see #getDbSize()
 	 */
-	long getDbSize() {
-		return mDbSize;
+	static void updateServer(BansheeServer server) {
+		if (server.mId < 0) {
+			throw new IllegalArgumentException("given server has no valid ID");
+		}
+		
+		ContentValues v = new ContentValues();
+		v.put(DB.DB_SIZE, server.mDbSize);
+		v.put(DB.HOST, server.mHost);
+		v.put(DB.PORT, server.mPort);
+		v.put(DB.SAME_ID, server.mSameHostId);
+		getDb().update(DB.TABLE_NAME, v, DB.ID + "=" + server.mId, null);
 	}
 	
 	// OVERRIDDEN =================================================================================
