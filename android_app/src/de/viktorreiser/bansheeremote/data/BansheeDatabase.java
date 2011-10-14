@@ -17,6 +17,8 @@ public class BansheeDatabase {
 			server.mSameHostId = -1;
 			BansheeServer.updateServer(server);
 			id = server.getId();
+		} else {
+			server = same;
 		}
 		
 		if (!new File(Environment.getExternalStorageDirectory(),
