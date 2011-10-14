@@ -834,6 +834,11 @@ namespace Banshee.RemoteListener
 				result[0] = (byte) ((result[0] & 0xbf) + ((bool) playing ? 0x40 : 0x0));
 			}
 			
+			if (newPosition != null) {
+				byte [] position = IntToByte((uint) newPosition);
+				Array.Copy(position, 0, result, 3, position.Length);
+			}
+			
 			return result;
 		}
 		
