@@ -30,6 +30,10 @@ namespace Banshee.RemoteListener
 	{
 		#region Attributes
 		
+		// timespan a compress database will be cached (in seconds)
+		private static int _DB_CACHED_COMPRESSION = 24 * 60 * 60;
+		
+		
 		private int [] _VolumeSteps = new int [] {
 			0, 1, 2, 3, 5, 7, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 90, 100
 		};
@@ -401,7 +405,7 @@ namespace Banshee.RemoteListener
 		}
 		
 		private void CompressDatabase() {
-			if (Timestamp() - _dbCompressTime < 24 * 60 * 60) {
+			if (Timestamp() - _dbCompressTime < _DB_CACHED_COMPRESSION) {
 				return;
 			}
 			
@@ -616,11 +620,17 @@ namespace Banshee.RemoteListener
 			 * Input: byte
 			 * 1 - get banshee data base size
 			 * 2 - get database
+			 * 3 - request / force database re-compression
+			 *     this request can take some seconds to complete depending on database size
+			 *     and will block your player for this time (maybe 4-10 seconds)
+			 *     This should only be used if you insist on a fresh database (compressed
+			 *     database is cahced for 1 day)
 			 * all other request will return a byte with 0
 			 *
 			 * Output:
 			 * 1 - integer with database isze in bytes or 0 if there's no database
 			 * 2 - sqlite database packed in binary bytes or byte with value 0
+			 * 3 - byte with value 1
 			 *     if there's no database
 			 */
 			SyncDatabase = 3,
@@ -728,6 +738,10 @@ namespace Banshee.RemoteListener
 					if (File.Exists(DatabasePath(true))) {
 						return File.ReadAllBytes(DatabasePath(true));
 					}
+				} else if (_buffer[2] == 3) {
+					_dbCompressTime = 0;
+					CompressDatabase();
+					return new byte [] {1};
 				}
 			}
 			
