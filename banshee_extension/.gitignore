@@ -1,2 +1,4 @@
 bin/*
+Banshee.RemoteListener.userprefs
+Banshee.RemoteListener.pidb
 !bin/.gitignore

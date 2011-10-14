@@ -33,6 +33,12 @@ namespace Banshee.RemoteListener
 		// timespan a compress database will be cached (in seconds)
 		private static int _DB_CACHED_COMPRESSION = 24 * 60 * 60;
 		
+		// amount of seconds which should be passed so the current song
+		// is played again on previous track request
+		// if given amount of seconds hasn't passed the track prior to the
+		// current will be played (allows replay of current track)
+		private static int _PREVIOUS_TRACK_OFFSET = 15;
+		
 		
 		private int [] _VolumeSteps = new int [] {
 			0, 1, 2, 3, 5, 7, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 90, 100
@@ -337,6 +343,7 @@ namespace Banshee.RemoteListener
 					paused = false;
 				}
 				break;
+				
 			case 2:
 				if (ServiceManager.PlayerEngine.CurrentState != PlayerState.Playing) {
 					ServiceManager.PlayerEngine.Play();
@@ -344,6 +351,7 @@ namespace Banshee.RemoteListener
 					paused = false;
 				}
 				break;
+				
 			case 3:
 				if (ServiceManager.PlayerEngine.CurrentState == PlayerState.Playing
 				    	&& ServiceManager.PlayerEngine.CanPause) {
@@ -352,13 +360,20 @@ namespace Banshee.RemoteListener
 					paused = true;
 				}
 				break;
+				
 			case 4:
 				ServiceManager.PlaybackController.Next();
 				playing = true;
 				paused = false;
 				break;
+				
 			case 5:
-				ServiceManager.PlaybackController.Previous();
+				if (ServiceManager.PlayerEngine.Position / 1000 > _PREVIOUS_TRACK_OFFSET) {
+					ServiceManager.PlaybackController.RestartOrPrevious();
+				} else {
+					ServiceManager.PlaybackController.Previous();
+				}
+				
 				playing = true;
 				paused = false;
 				break;
