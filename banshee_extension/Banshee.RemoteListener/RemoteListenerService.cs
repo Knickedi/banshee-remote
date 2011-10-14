@@ -26,39 +26,79 @@ using Hyena.Data.Sqlite;
 
 namespace Banshee.RemoteListener
 {
+	/// <summary>
+	/// Remote control extension for banshee player.
+	/// </summary>
+	/// This extension is starting a socket listener and controls banshee player by receiving and
+	/// handling incoming requests.
 	public class RemoteListenerService : IExtensionService, IDisposable
 	{
 		#region Attributes
 		
-		// timespan a compress database will be cached (in seconds)
+		/// <summary>
+		/// Timespan the compressed database will be cached (in seconds)
+		/// </summary>
 		private static int _DB_CACHED_COMPRESSION = 24 * 60 * 60;
 		
-		// amount of seconds which should be passed so the current song
-		// is played again on previous track request
-		// if given amount of seconds hasn't passed the track prior to the
-		// current will be played (allows replay of current track)
+		/// <summary>
+		/// Timespan to pass until "previous" request triggers differently.
+		/// </summary>
+		/// Amount of seconds which should be passed so the current song is played again on
+		/// "previous" track request if given amount of seconds hasn't passed the track prior to
+		/// the urrent will be played (allows replay of current track).
 		private static int _PREVIOUS_TRACK_OFFSET = 15;
 		
-		
+		/// <summary>
+		/// Volume step down / up steps.
+		/// </summary>
 		private int [] _VolumeSteps = new int [] {
 			0, 1, 2, 3, 5, 7, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 90, 100
 		};
+		
+		/// <summary>
+		/// Default shuffle mode states.
+		/// </summary>
 		private string [] _ShuffleModes = new string [] {
 				"off", "song", "artist", "album", "rating", "score"
 		};
+		
+		/// <summary>
+		/// Default repeat mode states.
+		/// </summary>
 		private PlaybackRepeatMode [] _RepeatModes = new PlaybackRepeatMode [] {
 				PlaybackRepeatMode.None,
 				PlaybackRepeatMode.RepeatSingle,
 				PlaybackRepeatMode.RepeatAll
 		};
 		
+		
+		/// <summary>
+		/// Remote control socket listener.
+		/// </summary>
 		private Socket _listener;
+		
+		/// <summary>
+		/// Buffer to which incoming requests will be written.
+		/// </summary>
 		private byte[] _buffer = new byte[1024];
-		private PreferenceBase _portPref;
-		private PreferenceService _prefs;
+		
+		/// <summary>
+		/// Timestamp of last database compression
+		/// </summary>
 		private int _dbCompressTime = 0;
 		
+		/// <summary>
+		/// Banshee port preference.
+		/// </summary>
+		private PreferenceBase _portPref;
+		
+		/// <summary>
+		/// Banshee preferences
+		/// </summary>
+		private PreferenceService _prefs;
+		
 		#endregion
+		
 		
 		#region Banshee extension
 
@@ -120,8 +160,12 @@ namespace Banshee.RemoteListener
 
 		#endregion
 
+		
 		#region RemoteListener connector
 
+		/// <summary>
+		/// Start remote control socket listener with port given in the preferences.
+		/// </summary>
 		public void StartRemoteListener ()
 		{
 			int port = (int) _prefs["RemoteControl"]["BansheeRemote"]["remote_control_port"]
@@ -145,6 +189,12 @@ namespace Banshee.RemoteListener
 			}
 		}
 
+		/// <summary>
+		/// Trigger on incomming client request.
+		/// </summary>
+		/// <param name="ar">
+		/// Contains the client socket.
+		/// </param>
 		void OnIncomingConnection(IAsyncResult ar)
 		{
 			Socket client = null;
@@ -159,6 +209,12 @@ namespace Banshee.RemoteListener
 			}
 		}
 		
+		/// <summary>
+		/// Triggered when received client request was read.
+		/// </summary>
+		/// <param name="ar">
+		/// Contains the client socket.
+		/// </param>
 		void OnReceiveRequest(IAsyncResult ar) {
 			Socket client = null;
 			bool isListenerAccepting = false;
@@ -195,6 +251,12 @@ namespace Banshee.RemoteListener
 			}
 		}
 		
+		/// <summary>
+		/// Triggered when response was sent back to client.
+		/// </summary>
+		/// <param name="ar">
+		/// Contains the client socket.
+		/// </param>
 		void OnSentResponse(IAsyncResult ar) {
 			try {
 				((Socket)ar.AsyncState).Close();
@@ -204,21 +266,74 @@ namespace Banshee.RemoteListener
 		
 		#endregion
 		
+		
 		#region Helper functions
 		
-		private int ShortFromBuffer(int p) {
-			return ((_buffer[p + 1] << 8) & 0xff00) + _buffer[p];
+		/// <summary>
+		/// Read a big endian short value from buffer.
+		/// </summary>
+		/// <param name="p">
+		/// Position in buffer where the short value is located.
+		/// </param>
+		/// <returns>
+		/// Read short value. 
+		/// </returns>
+		private ushort ShortFromBuffer(int p) {
+			return (ushort) (_buffer[p] + ((_buffer[p + 1] << 8) & 0xff00));
 		}
 		
-		private byte [] ShortToByte(int i) {
-			return new byte [] {(byte) i, (byte) ((i >> 8) & 0xff)};
+		/// <summary>
+		/// Get big endian representation of a short value.
+		/// </summary>
+		/// <param name="s">
+		/// Short value to convert.
+		/// </param>
+		/// <returns>
+		/// Big endian representation of the given short value.
+		/// </returns>
+		private byte [] ShortToByte(ushort s) {
+			return new byte [] {(byte) s, (byte) ((s >> 8) & 0xff)};
 		}
 		
-		private byte [] IntToByte(int i) {
+		/// <summary>
+		/// Read a big endian integer value from buffer.
+		/// </summary>
+		/// <param name="p">
+		/// Position in buffer where the integer value is located.
+		/// </param>
+		/// <returns>
+		/// Read integer value. 
+		/// </returns>
+		private uint IntFromBuffer(int p) {
+			return (uint) (_buffer[p] + ((_buffer[p + 1] << 8) & 0xff00)
+				+ ((_buffer[p + 2] << 16) & 0xff0000)
+				+ ((_buffer[p + 3] << 24) & 0xff000000));
+		}
+		
+		/// <summary>
+		/// Get big endian representation of a integer value.
+		/// </summary>
+		/// <param name="s">
+		/// Integer value to convert.
+		/// </param>
+		/// <returns>
+		/// Big endian representation of the given integer value.
+		/// </returns>
+		private byte [] IntToByte(uint i) {
 			return new byte [] {(byte) i, (byte) ((i >> 8) & 0xff),
 					(byte) ((i >> 16) & 0xff), (byte) ((i >> 24) & 0xff)};
 		}
 		
+		/// <summary>
+		/// Get byte representation of an UTF-8 string.
+		/// </summary>
+		/// <param name="s">
+		/// String to convert.
+		/// </param>
+		/// <returns>
+		/// First two bytes is a big endian short which tells how many following bytes represent
+		/// the converted string.
+		/// </returns>
 		private byte [] StringToByte(string s) {
 			if (s == null || s.Length == 0) {
 				return new byte [] {0, 0};
@@ -226,7 +341,7 @@ namespace Banshee.RemoteListener
 			
 			byte [] stringBytes = Encoding.UTF8.GetBytes(s);
 			byte [] result = new byte [2 + stringBytes.Length];
-			byte [] length = ShortToByte(stringBytes.Length);
+			byte [] length = ShortToByte((ushort) stringBytes.Length);
 			
 			Array.Copy(length, 0, result, 0, length.Length);
 			Array.Copy(stringBytes, 0, result, 2, stringBytes.Length);
@@ -234,10 +349,53 @@ namespace Banshee.RemoteListener
 			return result;
 		}
 		
+		/// <summary>
+		/// Get trimmed string.
+		/// </summary>
+		/// <param name="s">
+		/// String to timm.
+		/// </param>
+		/// <returns>
+		/// Trimmed string, null will be returned as empty string.
+		/// </returns>
 		private string TrimString(string s) {
 			return s == null ? "" : s.Trim();
 		}
 		
+		/// <summary>
+		/// Get unix timestamp.
+		/// </summary>
+		/// <returns>
+		/// Current unix timestamp.
+		/// </returns>
+		private int Timestamp() {
+			return Convert.ToInt32(new TimeSpan(
+				DateTime.Now.Ticks - new DateTime(1970, 1, 1).Ticks).TotalSeconds);
+		}
+		
+		/// <summary>
+		/// Get unix timestamp for given date.
+		/// </summary>
+		/// <param name="date">
+		/// Date for which the timestamp should be calculated.
+		/// </param>
+		/// <returns>
+		/// Unix timestamp of given date.
+		/// </returns>
+		private int Timestamp(DateTime date) {
+			return Convert.ToInt32(new TimeSpan(
+				date.Ticks - new DateTime(1970, 1, 1).Ticks).TotalSeconds);
+		}
+		
+		/// <summary>
+		/// Get path to (compressed) banshee database.
+		/// </summary>
+		/// <param name="compressed">
+		/// True will return the path to compress database.
+		/// </param>
+		/// <returns>
+		/// Path to database.
+		/// </returns>
 		private string DatabasePath(bool compressed) {
 			string home = Environment.GetEnvironmentVariable("HOME");
 			string dbPath = home + "/.config/banshee-1/banshee";
@@ -245,6 +403,18 @@ namespace Banshee.RemoteListener
 			return dbPath + (compressed ? "compressed.db" : ".db");
 		}
 		
+		/// <summary>
+		/// Get current player shuffle mode.
+		/// </summary>
+		/// <returns>
+		/// 0 - unknown
+		/// 1 - off
+		/// 2 - song
+		/// 3 - artist
+		/// 4 - album
+		/// 5 - rating
+		/// 6 - score
+		/// </returns>
 		private int ShuffleMode() {
 			switch (ServiceManager.PlaybackController.ShuffleMode) {
 			case "off":     return 1;
@@ -257,6 +427,15 @@ namespace Banshee.RemoteListener
 			}
 		}
 		
+		/// <summary>
+		/// Get current player repeat mode.
+		/// </summary>
+		/// <returns>
+		/// 0 - unknown
+		/// 1 - off
+		/// 2 - single
+		/// 3 - all
+		/// </returns>
 		private int RepeatMode() {
 			switch (ServiceManager.PlaybackController.RepeatMode) {
 			case PlaybackRepeatMode.None:          return 1;
@@ -266,6 +445,15 @@ namespace Banshee.RemoteListener
 			}
 		}
 		
+		/// <summary>
+		/// Set volume of player.
+		/// </summary>
+		/// <param name="volume">
+		/// 1 - 100 - set volume
+		///     101 - set 0
+		///     102 - step down
+		///     103 - step up
+		/// </param>
 		private void SetupVolume(int volume) {
 			if (volume == 0 || volume > 103) {
 				return;
@@ -302,6 +490,16 @@ namespace Banshee.RemoteListener
 			ServiceManager.PlayerEngine.Volume = (ushort) volume;
 		}
 		
+		/// <summary>
+		/// Set repeat mode of player.
+		/// </summary>
+		/// <param name="mode">
+		/// 1 - off
+		/// 2 - single
+		/// 3 - all
+		/// 4 - toggle to next mode
+		/// 5 - toggle on / off
+		/// </param>
 		private void SetupRepeatMode(int mode) {
 			if (mode >= 1 && mode <= 3) {
 				if (ShuffleMode() == 0) {
@@ -317,6 +515,19 @@ namespace Banshee.RemoteListener
 			}
 		}
 		
+		/// <summary>
+		/// Set player shuffle mode
+		/// </summary>
+		/// <param name="mode">
+		/// 1 - off
+		/// 2 - song
+		/// 3 - artist
+		/// 4 - album
+		/// 5 - rating
+		/// 6 - score
+		/// 7 - toggle to next mode
+		/// 8 - toggle on / off
+		/// </param>
 		private void SetupShuffleMode(int mode) {
 			if (mode >= 1 && mode <= 6) {
 				if (ShuffleMode() == 0) {
@@ -332,6 +543,26 @@ namespace Banshee.RemoteListener
 			}
 		}
 		
+		/// <summary>
+		/// Set player play mode / status.
+		/// </summary>
+		/// <param name="mode">
+		/// 1 - toggle play / pause
+		/// 2 - play
+		/// 3 - pause
+		/// 4 - next
+		/// 5 - previous
+		/// </param>
+		/// <param name="playing">
+		/// Banshee is not getting the fact what that play status was changed imediatelly.
+		/// So this variable will contain true or false when the player is playing now or
+		/// null if you can read the current status because request didn't change anything.
+		/// </param>
+		/// <param name="paused">
+		/// Banshee is not getting the fact what that play status was changed imediatelly.
+		/// So this variable will contain true or false when the player is paused now or
+		/// null if you can read the current status because request didn't change anything.
+		/// </param>
 		private void SetupPlayMode(int mode, out bool? playing, out bool? paused) {
 			playing = paused = null;
 			
@@ -384,10 +615,50 @@ namespace Banshee.RemoteListener
 			}
 		}
 		
-		private void SetupSeekPosition(int position) {
+		/// <summary>
+		/// Set track seek position of player.
+		/// </summary>
+		/// <param name="position">
+		/// Position in milliseconds.
+		/// </param>
+		/// <param name="newPosition">
+		/// This will contain the new position. The player returns a wrong position on set.
+		/// </param>
+		private void SetupSeekPosition(uint position, out uint? newPosition) {
+			TrackInfo track = ServiceManager.PlayerEngine.CurrentTrack;
 			
+			if (track == null) {
+				int duration = (int) track.Duration.TotalMilliseconds;
+				
+				if (duration <= position) {
+					ServiceManager.PlayerEngine.Position = (uint) position;
+					position = 0;
+				} else {
+					ServiceManager.PlayerEngine.Position = (uint) position;
+				}
+			} else {
+				ServiceManager.PlayerEngine.Position = (uint) position;
+			}
+				
+			newPosition = position;
 		}
 		
+		/// <summary>
+		/// Generate result for player status request
+		/// </summary>
+		/// <returns>
+		/// Bit 8 (last) of byte 1  : 1 when the player is paused otherwise 0
+		/// Bit 7 of byte 1         : 1 when the player is playing otherwise 0
+		///                           If both bits are 0 then the player is idle
+		/// Bit 6-5 of byte 1       : See RepeatMode()
+		/// Bit 3-1 of byte 1       : See SuffleMode()
+		/// Byte 2                  : volume (0 - 100 see volume request)
+		/// byte 3-6                : song seek position (in millisecond)
+		/// Byte 7-8                : change flag (song ID is not enough because it
+		///                           could be non existing when the song is not
+		///                           stored in the database)
+		/// Byte 9-12               : song ID in database
+		/// </returns>
 		private byte [] PlayerStatusResult() {
 			byte [] result = new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 			
@@ -401,28 +672,25 @@ namespace Banshee.RemoteListener
 			result[0] |= (byte) ShuffleMode();
 			result[1] = (byte) ServiceManager.PlayerEngine.Volume;
 			
-			Array.Copy(ShortToByte((int) ServiceManager.PlayerEngine.Position / 100),
+			Array.Copy(ShortToByte((ushort) (ServiceManager.PlayerEngine.Position / 100)),
 			           0, result, 2, 2);
 			
 			TrackInfo track = ServiceManager.PlayerEngine.CurrentTrack;
 			
 			if (track != null) {
-				Array.Copy(ShortToByte((int) track.FileSize), 0, result, 4, 2);
+				Array.Copy(ShortToByte((ushort) track.FileSize), 0, result, 4, 2);
 			}
 			
 			return result;
 		}
 		
-		private int Timestamp(DateTime date) {
-			return Convert.ToInt32(new TimeSpan(
-				date.Ticks - new DateTime(1970, 1, 1).Ticks).TotalSeconds);
-		}
-		
-		private int Timestamp() {
-			return Convert.ToInt32(new TimeSpan(
-				DateTime.Now.Ticks - new DateTime(1970, 1, 1).Ticks).TotalSeconds);
-		}
-		
+		/// <summary>
+		/// Compress banshee database if it is not already compressed.
+		/// </summary>
+		/// This won't do anything if last compression is not more than  _DB_CACHED_COMPRESSION
+		/// senconds ago. To avoid that you can reset _dbCompressTime to 0.
+		/// 
+		/// See https://github.com/Knickedi/banshee-remote for more.
 		private void CompressDatabase() {
 			if (Timestamp() - _dbCompressTime < _DB_CACHED_COMPRESSION) {
 				return;
@@ -515,157 +783,19 @@ namespace Banshee.RemoteListener
 		
 		#endregion
 		
-		#region RemoteListener request type definition
-		
-		/* Every request is mapped onto one of thes enum constants.
-		 * 
-		 * A request should have following byte format:
-		 * Request code + parameter bytes (optional)
-		 * [byte request code][param byte 1]...[param byte n]
-		 * 
-		 * If request code can't be mapped onto one of these constants the
-		 * request just fails. If it can be mapped the corresponding method
-		 * will be called. If it isn't defined then the request fails too.
-		 * 
-		 * The corresponding method should have the followind singnature:
-		 * public byte [] RequestCodeConstantName(int readBytes)
-		 * Return of null and byte array with length 0 will be interpreted as error!
-		 * 
-		 * If the request expacts parameters or returns data then always these
-		 * convertions will be followed:
-		 * - short    big endian - 2 byte
-		 * - integer  big endian - 4 byte
-		 * - string   first is short and gives the length (byte count) of the
-		 *            following string
-		 */
-		public enum RequestCode {
-			
-			/* Like ping. Just for testing the connection.
-			 * 
-			 * Output: 0 value byte.
-			 */
-			Test = 0,
-			
-			/* (Set and) get player status.
-			 * 
-			 * 
-			 * Input: (all optional - length too, missing parameters will be just
-			 * ignored - you can use this too just get the player status)
-			 * 
-			 * SHUFFLE CHANGES DISABLED! It crashes banshee, bug is reported.
-			 * This feature will be enabled when bug was fixed...
-			 * 
-			 * Why everything in one request?
-			 * This way you can set changes in a single request. Although there's
-			 * hardly a chance you would do that but you can simply ignore other
-			 * parameters and just commit a single change so...
-			 * It's more efficient that way, a request costs a couple of bytes (or
-			 * even none when no parameters suplied) but a socket connection for
-			 * every status change might be expensive.
-			 * 
-			 * Bit 7-8 of byte 1       : 0 - no action
-			 *                           1 - toggle play/pause
-			 *                           2 - play
-			 *                           3 - pause
-			 *                           4 - next
-			 *                           5 - previous
-			 * Bit 4-1 of byte 1       : 0 - no action
-			 *                           1-3 - set repeat mode (see output)
-			 *                           4 - toggle between repeat modes
-			 *                           5 - toggle repeat on / off
-			 * Byte 2                  : 0 - no action
-			 *                           1-6 - set shuffle mode (see output)
-			 *                           7 - toggle between shuffle modes
-			 *                           8 - toggle shuffle on / off
-			 * Byte 3                  : 0 - no action
-			 *                           1-100 - set volume
-			 *                           101 - mute volume
-			 *                           102 - volume step down
-			 *                           103 - volume step up
-			 * Byte 4-5                : Set song seek position (in tenth second)
-			 *                           Starts with 1, 0 won't do anything
-			 * 
-			 * 
-			 * Output:
-			 * 
-			 * Bit 8 (last) of byte 1  : 1 when the player is paused otherwise 0
-			 * Bit 7 of byte 1         : 1 when the player is playing otherwise 0
-			 *                           If both bits are 0 then the player is idle
-			 * Bit 6-5 of byte 1       : repeat mode
-			 *                           0 - unknown
-			 *                           1 - off
-			 *                           2 - single
-			 *                           3 - all
-			 * Bit 3-1 of byte 1       : shuffle mode
-			 *                           0 - unknown
-			 *                           1 - off
-			 *                           2 - song
-			 *                           3 - artist
-			 *                           4 - album
-			 *                           5 - rating
-			 *                           6 - score
-			 * Byte 2                  : volume (0 - 100 see volume request)
-			 * byte 3-4                : song seek position (tenth second)
-			 * Byte 5-6                : change flag (song ID is not enough because it
-			 *                           could be non existing when the song is not
-			 *                           stored in the database)
-			 * Byte 7-10               : song ID in database
-			 * 
-			 * If the change flag differs from the change flag from previous request
-			 * then the song has changed and you should request song data or use
-			 * song ID locally.
-			 */
-			PlayerStatus = 1,
-			
-			/* Request current track data.
-			 * 
-			 * Input: None
-			 * 
-			 * Output: (the data will be empty or 0 when there's no track shich is
-			 * currently playing)
-			 * 
-			 * Track length seconds as short.
-			 * Track title as string.
-			 * Artist title as string.
-			 * Album title as string.
-			 * Genre as string.
-			 * Year as short.
-			 * Cover ID as string or empty if there's no cover.
-			 */
-			SongInfo = 2,
-			
-			/* Synchronize banshee database.
-			 * 
-			 * Input: byte
-			 * 1 - get banshee data base size
-			 * 2 - get database
-			 * 3 - request / force database re-compression
-			 *     this request can take some seconds to complete depending on database size
-			 *     and will block your player for this time (maybe 4-10 seconds)
-			 *     This should only be used if you insist on a fresh database (compressed
-			 *     database is cahced for 1 day)
-			 * all other request will return a byte with 0
-			 *
-			 * Output:
-			 * 1 - integer with database isze in bytes or 0 if there's no database
-			 * 2 - sqlite database packed in binary bytes or byte with value 0
-			 * 3 - byte with value 1
-			 *     if there's no database
-			 */
-			SyncDatabase = 3,
-			
-			/* Set track seek position.
-			 * 
-			 * Input: Short which contains the seek position in ten seconds.
-			 * 
-			 * Output: Short which contains the set position.
-			 */
-			Seek = 4,
-		}
-		
-		#endregion
 		
 		#region RemoteListener request type callbacks
+		
+		/// <summary>
+		/// Request code definition.
+		/// </summary>
+		/// See https://github.com/Knickedi/banshee-remote for more.
+		public enum RequestCode {
+			Test = 0,
+			PlayerStatus = 1,
+			SongInfo = 2,
+			SyncDatabase = 3,
+		}
 		
 		public byte [] Test(int readBytes) {
 			return new byte[] {0};
@@ -674,6 +804,7 @@ namespace Banshee.RemoteListener
 		public byte [] PlayerStatus(int readBytes) {
 			bool? playing = null;
 			bool? paused = null;
+			uint? newPosition = null;
 			
 			if (readBytes > 1) {
 				SetupPlayMode((_buffer[1] >> 4) & 0xf, out playing, out paused);
@@ -690,7 +821,7 @@ namespace Banshee.RemoteListener
 			}
 			
 			if (readBytes > 5) {
-				SetupSeekPosition(ShortFromBuffer(4));
+				SetupSeekPosition(IntFromBuffer(4), out newPosition);
 			}
 			
 			byte [] result = PlayerStatusResult();
@@ -714,12 +845,12 @@ namespace Banshee.RemoteListener
 				string home = Environment.GetEnvironmentVariable("HOME");
 				string coverPath = home + "/.cache/media-art/" + track.ArtworkId +".jpg";
 				
-				totalTime = ShortToByte((int) track.Duration.TotalSeconds);
+				totalTime = IntToByte((uint) track.Duration.TotalMilliseconds);
 				song = StringToByte(TrimString(track.TrackTitle));
 				artist = StringToByte(TrimString(track.ArtistName));
 				album = StringToByte(TrimString(track.AlbumTitle));
 				genre = StringToByte(TrimString(track.Genre));
-				year = ShortToByte(track.Year);
+				year = ShortToByte((ushort) track.Year);
 				artId = StringToByte(System.IO.File.Exists(coverPath) ? track.ArtworkId : "");
 			} else {
 				totalTime = year = song = artist = album = genre = artId = new byte [] {0, 0};
@@ -751,12 +882,12 @@ namespace Banshee.RemoteListener
 			if (readBytes > 1) {
 				if (_buffer[1] == 1) {
 					if (File.Exists(DatabasePath(true))) {
-						return IntToByte((int) new FileInfo(DatabasePath(true)).Length);
+						return IntToByte((uint) new FileInfo(DatabasePath(true)).Length);
 					} else {
 						CompressDatabase();
 						
 						if (File.Exists(DatabasePath(true))) {
-							return IntToByte((int) new FileInfo(DatabasePath(true)).Length);
+							return IntToByte((uint) new FileInfo(DatabasePath(true)).Length);
 						} else {
 							return IntToByte(0);
 						}
@@ -773,30 +904,6 @@ namespace Banshee.RemoteListener
 			}
 			
 			return new byte [] {0};
-		}
-		
-		public byte [] Seek(int readBytes) {
-			if (readBytes > 2) {
-				TrackInfo track = ServiceManager.PlayerEngine.CurrentTrack;
-				int position = ShortFromBuffer(1) * 100;
-				
-				if (track == null) {
-					int duration = (int) track.Duration.TotalMilliseconds;
-					
-					if (duration <= position) {
-						ServiceManager.PlayerEngine.Position = (uint) position;
-						position = 0;
-					} else {
-						ServiceManager.PlayerEngine.Position = (uint) position;
-					}
-				} else {
-					ServiceManager.PlayerEngine.Position = (uint) position;
-				}
-				
-				return ShortToByte(position / 100);
-			} else {
-				return new byte [] {0};
-			}
 		}
 		
 		#endregion
