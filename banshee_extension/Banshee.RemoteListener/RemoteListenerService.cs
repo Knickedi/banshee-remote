@@ -234,6 +234,10 @@ namespace Banshee.RemoteListener
 			return result;
 		}
 		
+		private string TrimString(string s) {
+			return s == null ? "" : s.Trim();
+		}
+		
 		private string DatabasePath(bool compressed) {
 			string home = Environment.GetEnvironmentVariable("HOME");
 			string dbPath = home + "/.config/banshee-1/banshee";
@@ -711,10 +715,10 @@ namespace Banshee.RemoteListener
 				string coverPath = home + "/.cache/media-art/" + track.ArtworkId +".jpg";
 				
 				totalTime = ShortToByte((int) track.Duration.TotalSeconds);
-				song = StringToByte(track.DisplayTrackTitle);
-				artist = StringToByte(track.DisplayArtistName);
-				album = StringToByte(track.DisplayAlbumTitle);
-				genre = StringToByte(StringUtil.MaybeFallback(track.DisplayGenre, ""));
+				song = StringToByte(TrimString(track.TrackTitle));
+				artist = StringToByte(TrimString(track.ArtistName));
+				album = StringToByte(TrimString(track.AlbumTitle));
+				genre = StringToByte(TrimString(track.Genre));
 				year = ShortToByte(track.Year);
 				artId = StringToByte(System.IO.File.Exists(coverPath) ? track.ArtworkId : "");
 			} else {
