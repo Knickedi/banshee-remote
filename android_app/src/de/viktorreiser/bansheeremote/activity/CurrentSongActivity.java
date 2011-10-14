@@ -623,14 +623,17 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		
 		private void handleSongInfo(byte [] response) {
 			Object [] d = Command.SongInfo.decode(response);
-			mData.totalTime = (Long) d[0];
-			mData.song = (String) d[1];
-			mData.artist = (String) d[2];
-			mData.album = (String) d[3];
-			mData.genre = (String) d[4];
-			mData.year = (Integer) d[5];
-			mData.artId = (String) d[6];
-			updateComplete(false);
+			
+			if (d != null) {
+				mData.totalTime = (Long) d[0];
+				mData.song = (String) d[1];
+				mData.artist = (String) d[2];
+				mData.album = (String) d[3];
+				mData.genre = (String) d[4];
+				mData.year = (Integer) d[5];
+				mData.artId = (String) d[6];
+				updateComplete(false);
+			}
 		}
 		
 		private void handleSyncDatabaseFileSize(byte [] response) {

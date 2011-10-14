@@ -299,37 +299,42 @@ public class BansheeConnection {
 		public static class SongInfo {
 			
 			public static Object [] decode(byte [] response) {
-				Object [] decoded = new Object [7];
-				int index = 0;
-				Object [] stringData;
-				
-				decoded[0] = decodeInt(response, index);
-				index += 4;
-				
-				stringData = decodeString(response, index);
-				index += (Integer) stringData[0];
-				decoded[1] = stringData[1];
-				
-				stringData = decodeString(response, index);
-				index += (Integer) stringData[0];
-				decoded[2] = stringData[1];
-				
-				stringData = decodeString(response, index);
-				index += (Integer) stringData[0];
-				decoded[3] = stringData[1];
-				
-				stringData = decodeString(response, index);
-				index += (Integer) stringData[0];
-				decoded[4] = stringData[1];
-				
-				decoded[5] = decodeShort(response, index);
-				index += 2;
-				
-				stringData = decodeString(response, index);
-				index += (Integer) stringData[0];
-				decoded[6] = stringData[1];
-				
-				return decoded;
+				try {
+					Object [] decoded = new Object [7];
+					int index = 0;
+					Object [] stringData;
+					
+					decoded[0] = decodeInt(response, index);
+					index += 4;
+					
+					stringData = decodeString(response, index);
+					index += (Integer) stringData[0];
+					decoded[1] = stringData[1];
+					
+					stringData = decodeString(response, index);
+					index += (Integer) stringData[0];
+					decoded[2] = stringData[1];
+					
+					stringData = decodeString(response, index);
+					index += (Integer) stringData[0];
+					decoded[3] = stringData[1];
+					
+					stringData = decodeString(response, index);
+					index += (Integer) stringData[0];
+					decoded[4] = stringData[1];
+					
+					decoded[5] = decodeShort(response, index);
+					index += 2;
+					
+					stringData = decodeString(response, index);
+					index += (Integer) stringData[0];
+					decoded[6] = stringData[1];
+					
+					return decoded;
+				} catch (ArrayIndexOutOfBoundsException e) {
+					// this happens for strings if the connection is lost...
+					return null;
+				}
 			}
 		}
 		
@@ -370,9 +375,9 @@ public class BansheeConnection {
 			}
 		}
 		
-//		private static byte [] encodeShort(int value) {
-//			return new byte [] {(byte) value, (byte) (value >> 8)};
-//		}
+		// private static byte [] encodeShort(int value) {
+		// return new byte [] {(byte) value, (byte) (value >> 8)};
+		// }
 		
 		private static byte [] encodeInt(long value) {
 			return new byte [] {(byte) value, (byte) (value >> 8), (byte) (value >> 16),
