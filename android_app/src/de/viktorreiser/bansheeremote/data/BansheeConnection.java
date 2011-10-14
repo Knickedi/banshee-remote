@@ -136,21 +136,30 @@ public class BansheeConnection {
 		 * <tr><td>volume one step up</td><td>&nbsp;{@link #encodeVolumeUp(byte[])}</td></tr>
 		 * </table>
 		 * <br>
+		 * <table border="0" cellspacing="0" cellpadidng="0">
+		 * <tr><td>set seek position in milliseconds<br>{@code 0} is ignored</td>
+		 * <td>&nbsp;{@link #encodeSeekPosition(byte[], long)}</td></tr>
+		 * </table>
+		 * <br>
 		 * <b>Response</b> provides some player status information.<br>
 		 * <br>
 		 * <table border="0" cellspacing="0" cellpadidng="0">
 		 * <tr><td>is player playing</td><td>&nbsp;{@link #decodePause(byte[])}</td></tr>
 		 * <tr><td>is player paused</td><td>&nbsp;{@link #decodePause(byte[])}</td></tr>
 		 * <tr><td>(if both are {@code false} then the player is idle)</td><td></td></tr>
-		 * <tr><td>get current repeat mode</td><td>&nbsp;{@link #decodeShuffleMode(byte[])}</td></tr>
-		 * <tr><td>get current shuffle mode</td><td>&nbsp;{@link #decodeRepeatMode(byte[])}</td></tr>
-		 * <tr><td>get current volume {@code 0-100}</td><td>&nbsp;{@link #decodeVolume(byte[])}</td></tr>
-		 * <tr><td>get current track position<br>(in tenth seconds)</td>
+		 * <tr><td>get current repeat mode</td>
+		 * <td>&nbsp;{@link #decodeShuffleMode(byte[])}</td></tr>
+		 * <tr><td>get current shuffle mode</td>
+		 * <td>&nbsp;{@link #decodeRepeatMode(byte[])}</td></tr>
+		 * <tr><td>get current volume {@code 0-100}</td>
+		 * <td>&nbsp;{@link #decodeVolume(byte[])}</td></tr>
+		 * <tr><td>get current track position<br>(in milliseconds)</td>
 		 * <td>&nbsp;{@link #decodeSeekPosition(byte[])}</td></tr>
 		 * <tr><td>get change flag - {@code 0} means no track is playing<br>
 		 * ({@code oldFlag != newFlag == newSong})</td>
 		 * <td>&nbsp;{@link #decodeChangeFlag(byte[])}</td></tr>
-		 * <tr><td>get track ID (relates to database)</td><td>&nbsp;{@link #decodeSongId(byte[])}</td></tr>
+		 * <tr><td>get track ID (relates to database)</td>
+		 * <td>&nbsp;{@link #decodeSongId(byte[])}</td></tr>
 		 * </table>
 		 * 
 		 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
@@ -261,19 +270,19 @@ public class BansheeConnection {
 			}
 			
 			public static int decodeVolume(byte [] response) {
-				return response[1] & 0xff;
+				return response.length < 2 ? -1 : response[1] & 0xff;
 			}
 			
 			public static long decodeSeekPosition(byte [] response) {
-				return decodeInt(response, 2);
+				return response.length < 6 ? -1 : decodeInt(response, 2);
 			}
 			
 			public static int decodeChangeFlag(byte [] response) {
-				return decodeShort(response, 6);
+				return response.length < 8 ? -1 : decodeShort(response, 6);
 			}
 			
 			public static long decodeSongId(byte [] response) {
-				return decodeInt(response, 8);
+				return response.length < 12 ? -1 : decodeInt(response, 8);
 			}
 		}
 		
