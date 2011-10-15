@@ -951,8 +951,7 @@ namespace Banshee.RemoteListener
 			}
 			
 			if (artId != null) {
-				string home = Environment.GetEnvironmentVariable("HOME");
-				string coverPath = home + "/.cache/album-art/" + artId +".jpg";
+				string coverPath = CoverArtSpec.RootPath + "/" + artId + ".jpg";
 				
 				if (File.Exists(coverPath)) {
 					return File.ReadAllBytes(coverPath);

@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -34,6 +33,7 @@ import de.viktorreiser.bansheeremote.data.BansheeDatabase;
 import de.viktorreiser.bansheeremote.data.BansheeServer;
 import de.viktorreiser.bansheeremote.data.BansheeServerCheckTask;
 import de.viktorreiser.bansheeremote.data.BansheeServerCheckTask.OnBansheeServerCheck;
+import de.viktorreiser.bansheeremote.data.CoverCache;
 import de.viktorreiser.toolbox.content.NetworkStateBroadcast;
 
 /**
@@ -681,6 +681,10 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 					handleSyncDatabaseFile(response);
 				}
 				break;
+				
+			case COVER:
+				handleCover(response, params);
+				break;
 			}
 		}
 		
@@ -726,7 +730,17 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				mData.genre = (String) d[4];
 				mData.year = (Integer) d[5];
 				mData.artId = (String) d[6];
+				
 				updateComplete(false);
+				
+				if (!mData.artId.equals("")) {
+					if (CoverCache.coverExists(mData.artId)) {
+						mCoverAnimator.setCover(CoverCache.getCover(mData.artId));
+					} else {
+						mCoverAnimator.discardCover();
+						mConnection.sendCommand(Command.COVER, Command.Cover.encode(mData.artId));
+					}
+				}
 			}
 		}
 		
@@ -763,6 +777,22 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			} else {
 				Toast.makeText(CurrentSongActivity.this, R.string.updated_sync_db,
 						Toast.LENGTH_LONG).show();
+			}
+		}
+		
+		private void handleCover(byte [] response, byte [] params) {
+			if (response.length < 2) {
+				mCoverAnimator.setDefaultCover();
+			} else {
+				String id = Command.Cover.getId(params);
+				CoverCache.addCover(id, response);
+				Bitmap cover = CoverCache.getCover(id);
+				
+				if (cover == null) {
+					mCoverAnimator.setDefaultCover();
+				} else {
+					mCoverAnimator.setCover(cover);
+				}
 			}
 		}
 		
@@ -847,14 +877,15 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	 */
 	private class CoverAnimator implements Runnable {
 		
-		private static final long FADE_COMPLETE = 1000;
-		private static final long FADE_STEP = 40;
+		private static final long FADE_COMPLETE = 2000;
+		private static final long FADE_STEP = 50;
 		
 		private float mmAlpha1 = 0;
 		private float mmAlpha2 = 0;
 		private long mmLastStep;
 		private Bitmap mmNextCover;
 		private boolean mmDiscard = true;
+		private boolean mmHasCover = false;
 		private Bitmap mmDefaultCover =
 				((BitmapDrawable) getResources().getDrawable(R.drawable.no_cover)).getBitmap();
 		private Handler mmAnimationHandler = new Handler();
@@ -868,29 +899,36 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		public void discardCover() {
 			mmNextCover = null;
 			mmDiscard = true;
+			mmHasCover = false;
 			mmAnimationHandler.removeCallbacks(this);
 			mmLastStep = System.currentTimeMillis();
 			mmAnimationHandler.postDelayed(this, FADE_STEP);
 		}
 		
-		public void setDefault() {
+		public void setDefaultCover() {
 			setCover(mmDefaultCover);
 		}
 		
 		public void setCover(Bitmap cover) {
 			mmNextCover = cover;
-			discardCover();
+			mmDiscard = true;
+			mmAnimationHandler.removeCallbacks(this);
+			mmLastStep = System.currentTimeMillis();
+			mmAnimationHandler.postDelayed(this, FADE_STEP);
 		}
 		
 		public void run() {
 			boolean animate = false;
 			float step = 255f * (System.currentTimeMillis() - mmLastStep) / FADE_COMPLETE;
-			
+
 			if (Math.round(mmAlpha1) == 0 && mmNextCover != null) {
 				mmAlpha1 = mmAlpha2;
+				mmAlpha2 = 0;
 				mCover1.setImageDrawable(mCover2.getDrawable());
 				mCover2.setImageBitmap(mmNextCover);
 				mmDiscard = false;
+				mmHasCover = true;
+				mmNextCover = null;
 				animate = true;
 			}
 			
@@ -905,8 +943,8 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				if (alpha2 != 0 || mmNextCover != null) {
 					animate = true;
 				}
-			} else if (mmNextCover != null) {
-				mmAlpha2 = Math.max(255, mmAlpha2 + step);
+			} else if (mmHasCover) {
+				mmAlpha2 = Math.min(255, mmAlpha2 + step);
 				alpha2 = Math.round(mmAlpha2);
 				
 				if (alpha2 != 255) {

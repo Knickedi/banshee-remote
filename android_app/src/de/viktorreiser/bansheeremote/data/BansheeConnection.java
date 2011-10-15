@@ -94,7 +94,15 @@ public class BansheeConnection {
 		 * This request will return also {@code null} so your handler knows about failed requests
 		 * (see {@link SyncDatabase} for more).
 		 */
-		SYNC_DATABASE(3);
+		SYNC_DATABASE(3),
+		
+		/**
+		 * Get cover.<br>
+		 * <br>
+		 * {@code null} request will return (if available). You can request a specific cover (see
+		 * {@link Cover}). If no cover is available you get a {@code 0} byte.
+		 */
+		COVER(4);
 		
 		private final int mCode;
 		
@@ -384,9 +392,27 @@ public class BansheeConnection {
 			}
 		}
 		
-		// private static byte [] encodeShort(int value) {
-		// return new byte [] {(byte) value, (byte) (value >> 8)};
-		// }
+		/**
+		 * Get cover.<br>
+		 * <br>
+		 * Use {@link #encode(String)} to request a specific cover.
+		 * 
+		 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+		 */
+		public static class Cover {
+			
+			public static byte [] encode(String artId) {
+				return encodeString(artId);
+			}
+			
+			public static String getId(byte [] params) {
+				return (String) decodeString(params, 0)[1];
+			}
+		}
+		
+		private static byte [] encodeShort(int value) {
+			return new byte [] {(byte) value, (byte) (value >> 8)};
+		}
 		
 		private static byte [] encodeInt(long value) {
 			return new byte [] {(byte) value, (byte) (value >> 8), (byte) (value >> 16),
@@ -402,6 +428,16 @@ public class BansheeConnection {
 					+ ((response[position + 1] & 0xff) << 8)
 					+ ((response[position + 2] & 0xff) << 16)
 					+ ((long) (response[position + 3] & 0xff) << 24);
+		}
+		
+		private static byte [] encodeString(String s) {
+			byte [] sBytes = s.getBytes();
+			byte [] length = encodeShort(sBytes.length);
+			
+			byte [] result = new byte [length.length + sBytes.length];
+			System.arraycopy(length, 0, result, 0, length.length);
+			System.arraycopy(sBytes, 0, result, length.length, sBytes.length);
+			return result;
 		}
 		
 		private static Object [] decodeString(byte [] response, int position) {
