@@ -54,6 +54,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	private boolean mActivityPaused = true;
 	private boolean mWaitingForServerList = false;
 	private boolean mDatabaseSyncRunning = false;
+	private boolean mWasPlayingBeforeCall = false;
 	
 	private ImageView mPlay;
 	private ImageView mPause;
@@ -62,7 +63,8 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	private TextView mShuffle;
 	private TextView mShuffle2;
 	private TextView mVolume;
-	private ImageView mCover;
+	private ImageView mCover1;
+	private ImageView mCover2;
 	private TextView mCurrentTime;
 	private TextView mTotalTime;
 	private TextView mSong;
@@ -70,9 +72,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	private TextView mAlbum;
 	private SeekBar mSeekBar;
 	
-	private volatile BitmapDrawable mCoverDrawable = new BitmapDrawable();
 	private BitmapDrawable mDefaultColorDrawable;
 	private BansheeServerCheckTask mCheckTask;
+	private CoverAnimator mCoverAnimator = new CoverAnimator();
 	private CommandHandler mCommandHandler = new CommandHandler();
 	private StatusPollHandler mStatusPollHandler = new StatusPollHandler();
 	
@@ -83,6 +85,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	
 	// OVERRIDDEN =================================================================================
 	
+	/**
+	 * Setup activity (fetch retained data when configuration was changed before).
+	 */
 	@Override
 	protected void onCreate(Bundle bundle) {
 		super.onCreate(bundle);
@@ -104,6 +109,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			mData = (BansheeData) dataBefore[2];
 			mPreviousData = (BansheeData) dataBefore[3];
 			mDatabaseSyncRunning = (Boolean) dataBefore[4];
+			mWasPlayingBeforeCall = (Boolean) dataBefore[5];
 			mCommandHandler.updateComplete(true);
 			
 			if (mConnection != null) {
@@ -130,6 +136,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		}
 	}
 	
+	/**
+	 * Clear all unneeded data (especially if activity is really destroyed / finished).
+	 */
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
@@ -147,6 +156,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		}
 	}
 	
+	/**
+	 * Setup activity for visible state (server poll etc).
+	 */
 	@Override
 	public void onResume() {
 		super.onResume();
@@ -157,6 +169,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		}
 	}
 	
+	/**
+	 * Setup activity for invisible state (disable server poll etc).
+	 */
 	@Override
 	public void onPause() {
 		super.onPause();
@@ -165,15 +180,22 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		mStatusPollHandler.stop();
 	}
 	
+	/**
+	 * We want to retain some data when configuration changes (data + running tasks).
+	 */
 	@Override
 	public Object onRetainNonConfigurationInstance() {
 		if (mCheckTask != null) {
 			mCheckTask.dismissDialog();
 		}
 		
-		return new Object [] {mCheckTask, mConnection, mData, mPreviousData, mDatabaseSyncRunning};
+		return new Object [] {mCheckTask, mConnection, mData, mPreviousData, mDatabaseSyncRunning,
+				mWasPlayingBeforeCall};
 	}
 	
+	/**
+	 * We have to handle the return from other activities here.
+	 */
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		switch (requestCode) {
@@ -201,6 +223,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		}
 	}
 	
+	/**
+	 * Create a options menu.
+	 */
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
@@ -215,6 +240,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		return true;
 	}
 	
+	/**
+	 * React on options menu selections.
+	 */
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
@@ -240,6 +268,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		}
 	}
 	
+	/**
+	 * Listen for volume keys.
+	 */
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent event) {
 		if (App.isVolumeKeyControl()) {
@@ -262,6 +293,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		return super.dispatchKeyEvent(event);
 	}
 	
+	/**
+	 * Callback of inital server check task.
+	 */
 	public void onBansheeServerCheck(boolean success) {
 		BansheeServer server = mCheckTask.getServer();
 		mCheckTask = null;
@@ -277,6 +311,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	
 	// PRIVATE ====================================================================================
 	
+	/**
+	 * Get all needed references from inflated views.
+	 */
 	private void setupViewReferences() {
 		mPlay = (ImageView) findViewById(R.id.play);
 		mPause = (ImageView) findViewById(R.id.pause);
@@ -285,7 +322,8 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		mShuffle = (TextView) findViewById(R.id.shuffle);
 		mShuffle2 = (TextView) findViewById(R.id.shuffle_2);
 		mVolume = (TextView) findViewById(R.id.volume);
-		mCover = (ImageView) findViewById(R.id.cover);
+		mCover1 = (ImageView) findViewById(R.id.cover1);
+		mCover2 = (ImageView) findViewById(R.id.cover2);
 		mCurrentTime = (TextView) findViewById(R.id.seek_position);
 		mTotalTime = (TextView) findViewById(R.id.seek_total);
 		mSong = (TextView) findViewById(R.id.song_title);
@@ -294,13 +332,27 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		mSeekBar = (SeekBar) findViewById(R.id.seekbar);
 	}
 	
+	/**
+	 * Set phone state listener to send stop command to server on incoming call.
+	 */
 	private void setupPhoneStateListener() {
 		PhoneStateListener phoneStateListener = new PhoneStateListener() {
 			public void onCallStateChanged(int state, String incomingNumber) {
 				if (state == TelephonyManager.CALL_STATE_RINGING
 						&& App.isStopOnCall()) {
-					mConnection.sendCommand(Command.PLAYER_STATUS,
-							Command.PlayerStatus.encodePause(null));
+					mWasPlayingBeforeCall = mData.playing;
+					
+					if (mWasPlayingBeforeCall) {
+						mConnection.sendCommand(Command.PLAYER_STATUS,
+								Command.PlayerStatus.encodePause(null));
+					}
+				} else if (state == TelephonyManager.CALL_STATE_IDLE) {
+					if (mWasPlayingBeforeCall) {
+						mConnection.sendCommand(Command.PLAYER_STATUS,
+								Command.PlayerStatus.encodePlay(null));
+					}
+					
+					mWasPlayingBeforeCall = false;
 				}
 			}
 		};
@@ -309,6 +361,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				phoneStateListener, PhoneStateListener.LISTEN_CALL_STATE);
 	}
 	
+	/**
+	 * Setup all needed view listeners.
+	 */
 	private void setupViewControls() {
 		findViewById(R.id.back).setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
@@ -402,6 +457,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		});
 	}
 	
+	/**
+	 * Setup network change listener.
+	 */
 	private void setupNetworkChangeListener() {
 		NetworkStateBroadcast.initialCheck(this);
 		
@@ -416,6 +474,12 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				new IntentFilter(NetworkStateBroadcast.NETWORK_STATE_ACTION));
 	}
 	
+	/**
+	 * Create and setup server connection.
+	 * 
+	 * @param server
+	 *            banshee server to connect to (the connection should've tested before)
+	 */
 	private void setupServerConnection(BansheeServer server) {
 		mData = new BansheeData();
 		mCommandHandler.updateComplete(true);
@@ -428,6 +492,11 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	}
 	
 	
+	/**
+	 * Simple data container for server state.
+	 * 
+	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+	 */
 	private class BansheeData {
 		boolean playing = false;
 		int volume = -1;
@@ -462,6 +531,11 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		}
 	}
 	
+	/**
+	 * This class will handle all incoming server responses and so UI changes.
+	 * 
+	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+	 */
 	private class CommandHandler implements OnBansheeCommandHandle {
 		
 		public void updateComplete(boolean force) {
@@ -543,7 +617,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				} else {
 					mArtist.setText(mData.artist);
 				}
-
+				
 				mArtist.setSelected(true);
 			}
 			
@@ -703,6 +777,11 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		}
 	}
 	
+	/**
+	 * This class is responsible for server status polls.
+	 * 
+	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+	 */
 	private class StatusPollHandler extends Handler {
 		
 		private final int MESSAGE_GET_STATUS = 1;
@@ -725,10 +804,10 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		
 		public void updatePseudoPoll() {
 			removeMessages(MESSAGE_UPDATE_POSITION);
-
+			
 			if (mData.playing) {
 				long interval = App.getPollInterval(NetworkStateBroadcast.isWifiConnected());
-
+				
 				if (interval > 1000) {
 					mmSeekUpdateStart = System.currentTimeMillis();
 					sendEmptyMessageDelayed(MESSAGE_UPDATE_POSITION, 1000);
@@ -758,5 +837,14 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				break;
 			}
 		}
+	}
+	
+	/**
+	 * This class will handle data incoming cover changes.
+	 * 
+	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+	 */
+	private class CoverAnimator {
+		
 	}
 }

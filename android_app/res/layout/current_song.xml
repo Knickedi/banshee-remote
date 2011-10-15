@@ -244,7 +244,19 @@
 		android:layout_height="wrap_content" />
 
 	<ImageView
-		android:id="@+id/cover"
+		android:id="@+id/cover1"
+		android:visibility="invisible"
+		android:layout_margin="10dip"
+		android:layout_below="@id/song_album"
+		android:layout_above="@id/seek_position"
+		android:src="@drawable/no_cover"
+		android:layout_width="fill_parent"
+		android:layout_height="fill_parent"
+		android:scaleType="fitCenter" />
+		
+	<ImageView
+		android:id="@+id/cover2"
+		android:visibility="invisible"
 		android:layout_margin="10dip"
 		android:layout_below="@id/song_album"
 		android:layout_above="@id/seek_position"
