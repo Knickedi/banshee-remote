@@ -562,8 +562,8 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		}
 		
 		public void updateSeekData(boolean force) {
-			if (force || Math.abs(mPreviousData.currentTime -  mData.currentTime) > 500
-					|| Math.abs(mPreviousData.totalTime - mData.totalTime) > 500) {
+			if (force || mPreviousData.currentTime != mData.currentTime
+					|| mPreviousData.totalTime != mData.totalTime) {
 				mCurrentTime.setText(mData.currentTime < 0
 						? "" : millisecondsToDurationString(mData.currentTime));
 				mTotalTime.setText(mData.totalTime < 0
