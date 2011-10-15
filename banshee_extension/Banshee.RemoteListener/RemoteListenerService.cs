@@ -325,6 +325,23 @@ namespace Banshee.RemoteListener
 		}
 		
 		/// <summary>
+		/// Get (UTF-8) string from buffer (see StringToByte for more).
+		/// </summary>
+		/// <param name="p">
+		/// Position in buffer where the string definition is located.
+		/// </param>
+		/// <returns>
+		/// Decoded (UTF-8) string.
+		/// </returns>
+		private string StringFromBuffer(int p, out int byteLength) {
+			byteLength = ShortFromBuffer(p);
+			string s = Encoding.UTF8.GetString(_buffer, p + 2, byteLength);
+			byteLength += 2;
+			
+			return s;
+		}
+		
+		/// <summary>
 		/// Get byte representation of an UTF-8 string.
 		/// </summary>
 		/// <param name="s">
@@ -800,6 +817,7 @@ namespace Banshee.RemoteListener
 			PlayerStatus = 1,
 			SongInfo = 2,
 			SyncDatabase = 3,
+			Cover = 4,
 		}
 		
 		public byte [] Test(int readBytes) {
@@ -910,6 +928,34 @@ namespace Banshee.RemoteListener
 					_dbCompressTime = 0;
 					CompressDatabase();
 					return new byte [] {1};
+				}
+			}
+			
+			return new byte [] {0};
+		}
+		
+		public byte [] Cover(int readBytes) {
+			string artId = null;
+			
+			if (readBytes > 2) {
+				int notNeeded;
+				artId = StringFromBuffer(1, out notNeeded);
+			}
+			
+			if (artId == null) {
+				TrackInfo track = ServiceManager.PlayerEngine.CurrentTrack;
+				
+				if (track != null) {
+					artId = track.ArtworkId;
+				}
+			}
+			
+			if (artId != null) {
+				string home = Environment.GetEnvironmentVariable("HOME");
+				string coverPath = home + "/.cache/album-art/" + artId +".jpg";
+				
+				if (File.Exists(coverPath)) {
+					return File.ReadAllBytes(coverPath);
 				}
 			}
 			
