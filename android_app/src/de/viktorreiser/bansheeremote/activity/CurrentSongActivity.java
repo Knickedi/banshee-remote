@@ -299,7 +299,8 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			public void onCallStateChanged(int state, String incomingNumber) {
 				if (state == TelephonyManager.CALL_STATE_RINGING
 						&& App.isStopOnCall()) {
-					// TODO trigger pause command when playing
+					mConnection.sendCommand(Command.PLAYER_STATUS,
+							Command.PlayerStatus.encodePause(null));
 				}
 			}
 		};
@@ -369,19 +370,34 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		
 		findViewById(R.id.browse_songs).setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				// TODO react on button click
+				if (BansheeDatabase.isOpen()) {
+					// TODO react on button click
+				} else {
+					Toast.makeText(CurrentSongActivity.this, R.string.need_sync_db,
+							Toast.LENGTH_SHORT).show();
+				}
 			}
 		});
 		
 		findViewById(R.id.browse_artists).setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				// TODO react on button click
+				if (BansheeDatabase.isOpen()) {
+					// TODO react on button click
+				} else {
+					Toast.makeText(CurrentSongActivity.this, R.string.need_sync_db,
+							Toast.LENGTH_SHORT).show();
+				}
 			}
 		});
 		
 		findViewById(R.id.browse_albums).setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				// TODO react on button click
+				if (BansheeDatabase.isOpen()) {
+					// TODO react on button click
+				} else {
+					Toast.makeText(CurrentSongActivity.this, R.string.need_sync_db,
+							Toast.LENGTH_SHORT).show();
+				}
 			}
 		});
 	}
@@ -392,7 +408,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		mNetworkChangeListener = new BroadcastReceiver() {
 			@Override
 			public void onReceive(Context context, Intent intent) {
-				
+				// TODO react on network change / setup new connection on mobile reconnect
 			}
 		};
 		
@@ -404,6 +420,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		mData = new BansheeData();
 		mCommandHandler.updateComplete(true);
 		mConnection = new BansheeConnection(server, mCommandHandler);
+		BansheeDatabase.open(server);
 		
 		if (!mActivityPaused) {
 			mStatusPollHandler.start();

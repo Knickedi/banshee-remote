@@ -20,10 +20,11 @@
 	<string name="poll_info_message">A higher value will lower the needed request amount to keep the UI up to date. This saves battery and traffic so is great for mobile network remote. But external(!) player status changes will be reported delayed.</string>
 	<string name="no_sync_db">Remote server doesn\'t provide a database!</string>
 	<string name="up_to_date_sync_db">Current database is already up to date...</string>
-	<string name="fetching_sync_db">Fetching (new) database from server...</string>
+	<string name="fetching_sync_db">Fetching database from server...</string>
 	<string name="error_fetching_sync_db">Database fetch from server failed!</string>
-	<string name="error_writing_sync_db">Failed to write database to SD card!</string>
+	<string name="error_writing_sync_db">Failed to write database to SD card or it is corrupted!</string>
 	<string name="updated_sync_db">Database successfully synchronized</string>
+	<string name="need_sync_db">Synchronized database needed...</string>
 	
 	<string name="remember_last_server">Remember last server</string>
 	<string name="remember_last_server_on">Will try to contact last chosen server on app start</string>
