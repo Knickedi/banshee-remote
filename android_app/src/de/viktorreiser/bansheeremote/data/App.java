@@ -2,6 +2,7 @@ package de.viktorreiser.bansheeremote.data;
 
 import android.app.Application;
 import android.content.Context;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 
 /**
@@ -16,6 +17,10 @@ public class App extends Application {
 	private static Context mContext;
 	
 	// PUBLIC =====================================================================================
+	
+	public static final String BANSHEE_PATH = Environment.getExternalStorageDirectory()
+			.getAbsolutePath() + "/BansheeRemote/";
+	
 	
 	/**
 	 * Get application context

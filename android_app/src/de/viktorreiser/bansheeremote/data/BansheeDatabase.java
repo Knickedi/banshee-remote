@@ -5,7 +5,6 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 
 import android.database.sqlite.SQLiteDatabase;
-import android.os.Environment;
 
 /**
  * This class handles the synchronized banshee database(s).
@@ -43,8 +42,7 @@ public class BansheeDatabase {
 			server = same;
 		}
 		
-		if (!new File(Environment.getExternalStorageDirectory(),
-				"BansheeRemote/" + id + ".db").exists()) {
+		if (!new File(App.BANSHEE_PATH + id + ".db").exists()) {
 			return false;
 		} else {
 			return dbSize == server.mDbSize;
@@ -78,8 +76,7 @@ public class BansheeDatabase {
 		}
 		
 		try {
-			File file = new File(Environment.getExternalStorageDirectory(),
-					"BansheeRemote/" + id + ".db");
+			File file = new File(App.BANSHEE_PATH + id + ".db");
 			
 			file.getParentFile().mkdir();
 			file.delete();
@@ -135,8 +132,7 @@ public class BansheeDatabase {
 			mBansheeDatabase.close();
 		}
 		
-		File file = new File(Environment.getExternalStorageDirectory(),
-				"BansheeRemote/" + id + ".db");
+		File file = new File(App.BANSHEE_PATH + id + ".db");
 		
 		try {
 			mBansheeDatabase = SQLiteDatabase.openDatabase(file.getAbsolutePath(), null,
