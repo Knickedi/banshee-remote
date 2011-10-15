@@ -5,7 +5,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -72,9 +74,8 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	private TextView mAlbum;
 	private SeekBar mSeekBar;
 	
-	private BitmapDrawable mDefaultColorDrawable;
 	private BansheeServerCheckTask mCheckTask;
-	private CoverAnimator mCoverAnimator = new CoverAnimator();
+	private CoverAnimator mCoverAnimator;
 	private CommandHandler mCommandHandler = new CommandHandler();
 	private StatusPollHandler mStatusPollHandler = new StatusPollHandler();
 	
@@ -93,12 +94,12 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		super.onCreate(bundle);
 		setContentView(R.layout.current_song);
 		
-		mDefaultColorDrawable = (BitmapDrawable) getResources().getDrawable(R.drawable.no_cover);
-		
 		setupViewReferences();
 		setupPhoneStateListener();
 		setupViewControls();
 		setupNetworkChangeListener();
+		
+		mCoverAnimator = new CoverAnimator();
 		
 		Object [] dataBefore = (Object []) getLastNonConfigurationInstance();
 		
@@ -840,11 +841,86 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	}
 	
 	/**
-	 * This class will handle data incoming cover changes.
+	 * This class will handle the incoming cover changes.
 	 * 
 	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
 	 */
-	private class CoverAnimator {
+	private class CoverAnimator implements Runnable {
 		
+		private static final long FADE_COMPLETE = 1000;
+		private static final long FADE_STEP = 40;
+		
+		private float mmAlpha1 = 0;
+		private float mmAlpha2 = 0;
+		private long mmLastStep;
+		private Bitmap mmNextCover;
+		private boolean mmDiscard = true;
+		private Bitmap mmDefaultCover =
+				((BitmapDrawable) getResources().getDrawable(R.drawable.no_cover)).getBitmap();
+		private Handler mmAnimationHandler = new Handler();
+		
+		
+		public CoverAnimator() {
+			mCover1.setAlpha(0);
+			mCover2.setAlpha(0);
+		}
+		
+		public void discardCover() {
+			mmNextCover = null;
+			mmDiscard = true;
+			mmAnimationHandler.removeCallbacks(this);
+			mmLastStep = System.currentTimeMillis();
+			mmAnimationHandler.postDelayed(this, FADE_STEP);
+		}
+		
+		public void setDefault() {
+			setCover(mmDefaultCover);
+		}
+		
+		public void setCover(Bitmap cover) {
+			mmNextCover = cover;
+			discardCover();
+		}
+		
+		public void run() {
+			boolean animate = false;
+			float step = 255f * (System.currentTimeMillis() - mmLastStep) / FADE_COMPLETE;
+			
+			if (Math.round(mmAlpha1) == 0 && mmNextCover != null) {
+				mmAlpha1 = mmAlpha2;
+				mCover1.setImageDrawable(mCover2.getDrawable());
+				mCover2.setImageBitmap(mmNextCover);
+				mmDiscard = false;
+				animate = true;
+			}
+			
+			mmAlpha1 = Math.max(0, mmAlpha1 - step);
+			int alpha1 = Math.round(mmAlpha1);
+			int alpha2 = 0;
+			
+			if (mmDiscard) {
+				mmAlpha2 = Math.max(0, mmAlpha2 - step);
+				alpha2 = Math.round(mmAlpha2);
+				
+				if (alpha2 != 0 || mmNextCover != null) {
+					animate = true;
+				}
+			} else if (mmNextCover != null) {
+				mmAlpha2 = Math.max(255, mmAlpha2 + step);
+				alpha2 = Math.round(mmAlpha2);
+				
+				if (alpha2 != 255) {
+					animate = true;
+				}
+			}
+			
+			mCover1.setAlpha(alpha1);
+			mCover2.setAlpha(alpha2);
+			
+			if (animate) {
+				mmLastStep = System.currentTimeMillis();
+				mmAnimationHandler.postDelayed(this, FADE_STEP);
+			}
+		}
 	}
 }
