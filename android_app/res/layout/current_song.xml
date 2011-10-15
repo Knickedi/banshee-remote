@@ -53,39 +53,33 @@
 		android:layout_height="1dip"
 		android:background="#ff888888" />
 
-	<TextView
+	<de.viktorreiser.toolbox.widget.MarqueeTextView
 		android:id="@+id/song_title"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
-		android:text="Song title"
+		android:text="@string/unknown_track"
 		android:textStyle="bold"
-		android:ellipsize="end"
-		android:singleLine="true"
 		android:layout_marginTop="11dip"
 		android:layout_marginLeft="10dip"
 		android:layout_marginRight="10dip"
 		android:layout_below="@id/header_background"
 		android:textAppearance="?android:attr/textAppearanceMedium" />
 
-	<TextView
+	<de.viktorreiser.toolbox.widget.MarqueeTextView
 		android:id="@+id/song_artist"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
-		android:text="Artist name of the song"
-		android:ellipsize="end"
-		android:singleLine="true"
+		android:text="@string/unknown_artist"
 		android:layout_marginLeft="10dip"
 		android:layout_marginRight="10dip"
 		android:layout_below="@id/song_title"
 		android:textAppearance="?android:attr/textAppearanceMedium" />
 
-	<TextView
+	<de.viktorreiser.toolbox.widget.MarqueeTextView
 		android:id="@+id/song_album"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
-		android:text="Album of song"
-		android:ellipsize="end"
-		android:singleLine="true"
+		android:text="@string/unknown_album"
 		android:layout_marginLeft="10dip"
 		android:layout_marginRight="10dip"
 		android:layout_below="@id/song_artist"

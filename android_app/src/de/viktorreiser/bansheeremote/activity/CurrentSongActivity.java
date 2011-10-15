@@ -11,6 +11,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -543,6 +544,8 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				} else {
 					mArtist.setText(mData.artist);
 				}
+
+				mArtist.setSelected(true);
 			}
 			
 			if (force || !mData.album.equals(mPreviousData.album)
