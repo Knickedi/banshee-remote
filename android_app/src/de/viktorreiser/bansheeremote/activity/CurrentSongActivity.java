@@ -112,6 +112,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			mDatabaseSyncRunning = (Boolean) dataBefore[4];
 			mWasPlayingBeforeCall = (Boolean) dataBefore[5];
 			mCommandHandler.updateComplete(true);
+			mCommandHandler.handleCoverStatus();
 			
 			if (mConnection != null) {
 				mConnection.updateHandleCallback(mCommandHandler);
@@ -732,14 +733,17 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				mData.artId = (String) d[6];
 				
 				updateComplete(false);
-				
-				if (!mData.artId.equals("")) {
-					if (CoverCache.coverExists(mData.artId)) {
-						mCoverAnimator.setCover(CoverCache.getCover(mData.artId));
-					} else {
-						mCoverAnimator.discardCover();
-						mConnection.sendCommand(Command.COVER, Command.Cover.encode(mData.artId));
-					}
+				handleCoverStatus();
+			}
+		}
+		
+		public void handleCoverStatus() {
+			if (!mData.artId.equals("")) {
+				if (CoverCache.coverExists(mData.artId)) {
+					mCoverAnimator.setCover(CoverCache.getCover(mData.artId));
+				} else {
+					mCoverAnimator.discardCover();
+					mConnection.sendCommand(Command.COVER, Command.Cover.encode(mData.artId));
 				}
 			}
 		}
