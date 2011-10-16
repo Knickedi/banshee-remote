@@ -580,8 +580,12 @@ namespace Banshee.RemoteListener
 		/// So this variable will contain true or false when the player is paused now or
 		/// null if you can read the current status because request didn't change anything.
 		/// </param>
-		private void SetupPlayMode(int mode, out bool? playing, out bool? paused) {
-			playing = paused = null;
+		/// <param name="reserSeekPosition">
+		/// Will be set to true if next or previous was requested and the seek position should
+		/// be set to 0.
+		/// </param>
+		private void SetupPlayMode(int mode, out bool? playing, out bool? paused, out bool? resetSeekPosition) {
+			playing = paused = resetSeekPosition = null;
 			
 			switch (mode) {
 			case 1:
@@ -617,6 +621,7 @@ namespace Banshee.RemoteListener
 				ServiceManager.PlaybackController.Next();
 				playing = true;
 				paused = false;
+				resetSeekPosition = true;
 				break;
 				
 			case 5:
@@ -628,6 +633,7 @@ namespace Banshee.RemoteListener
 				
 				playing = true;
 				paused = false;
+				resetSeekPosition = true;
 				break;
 			}
 		}
@@ -828,10 +834,15 @@ namespace Banshee.RemoteListener
 			bool? playing = null;
 			bool? paused = null;
 			uint? newPosition = null;
+			bool? resetSeek = null;
 			
 			if (readBytes > 1) {
-				SetupPlayMode((_buffer[1] >> 4) & 0xf, out playing, out paused);
+				SetupPlayMode((_buffer[1] >> 4) & 0xf, out playing, out paused, out resetSeek);
 				SetupRepeatMode(_buffer[1] & 0xf);
+				
+				if (resetSeek != null) {
+					newPosition = 0;
+				}
 			}
 			
 			if (readBytes > 2) {
@@ -859,6 +870,9 @@ namespace Banshee.RemoteListener
 			
 			if (newPosition != null) {
 				byte [] position = IntToByte((uint) newPosition);
+				Array.Copy(position, 0, result, 2, position.Length);
+			} else if (resetSeek != null) {
+				byte [] position = IntToByte(0);
 				Array.Copy(position, 0, result, 2, position.Length);
 			}
 			
