@@ -762,7 +762,7 @@ namespace Banshee.RemoteListener
 				
 				// remove unecessary columns from tracks table
 				db.Execute("CREATE TABLE tracks (\n"
-						+ "	_id  PRIMARY KEY,\n"
+						+ "	_id INTEGER PRIMARY KEY,\n"
 						+ "	artistId  INTEGER,\n"
 						+ "	albumId  INTEGER,\n"
 				        + "	title TEXT,\n"
@@ -780,7 +780,7 @@ namespace Banshee.RemoteListener
 				
 				// remove unecessary columns from artist table
 				db.Execute("CREATE TABLE artists (\n"
-						+ "	_id  PRIMARY KEY,\n"
+						+ "	_id INTEGER PRIMARY KEY,\n"
 						+ "	name TEXT\n"
 						+ ");");
 				db.Execute("INSERT INTO artists(_id, name) "
@@ -789,7 +789,7 @@ namespace Banshee.RemoteListener
 				
 				// remove unecessary columns from album table
 				db.Execute("CREATE TABLE albums (\n"
-						+ "	_id  PRIMARY KEY,\n"
+						+ "	_id INTEGER PRIMARY KEY,\n"
 						+ "	artistId INTEGER,\n"
 				        + " title TEXT,\n"
 				        + " artId TEXT\n"
