@@ -26,6 +26,9 @@
 	<string name="updated_sync_db">Database successfully synchronized</string>
 	<string name="need_sync_db">Synchronized database needed...</string>
 	
+	<string name="user_interface">User interface</string>
+	<string name="function">Function</string>
+	<string name="network">Network</string>
 	<string name="remember_last_server">Remember last server</string>
 	<string name="remember_last_server_on">Will try to contact last chosen server on app start</string>
 	<string name="remember_last_server_off">Won\'t try to contact last chosen server on app start but show server list</string>

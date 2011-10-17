@@ -29,14 +29,16 @@
 
 		<activity
 			android:name=".activity.NewServerActivity"
-			android:windowSoftInputMode="adjustResize" />
+			android:windowSoftInputMode="adjustResize"
+			android:theme="@android:style/Theme.NoTitleBar" />
 
 		<activity
 			android:name=".activity.ServerListActivity"
 			android:theme="@android:style/Theme.NoTitleBar" />
 		<activity
 			android:name=".activity.SettingsActivity"
-			android:label="@string/banshee_settings" />
+			android:label="@string/banshee_settings"
+			android:theme="@android:style/Theme.NoTitleBar" />
 
 	</application>
 
