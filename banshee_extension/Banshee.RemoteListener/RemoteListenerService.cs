@@ -765,18 +765,16 @@ namespace Banshee.RemoteListener
 						+ "	_id  PRIMARY KEY,\n"
 						+ "	artistId  INTEGER,\n"
 						+ "	albumId  INTEGER,\n"
-				        + "	fileSize INTEGER,\n"
-				        + "	bitrate INTEGER,\n"
 				        + "	title TEXT,\n"
 				        + " trackNumber INTEGER,\n"
 				        + "	duration INTEGER,\n"
 				        + "	year INTEGER,\n"
 				        + "	genre TEXT\n"
 						+ ");");
-				db.Execute("INSERT INTO tracks(_id, artistId, albumId, fileSize, "
-				        + "bitrate, title, trackNumber, duration, year, genre) "
-				        + "SELECT TrackID, ArtistID, AlbumId, FileSize, "
-				        + "BitRate, Title, TrackNumber, Duration, Year, Genre "
+				db.Execute("INSERT INTO tracks(_id, artistId, albumId, "
+				        + "title, trackNumber, duration, year, genre) "
+				        + "SELECT TrackID, ArtistID, AlbumId, "
+				        + "Title, TrackNumber, Duration, Year, Genre "
 				        + "FROM CoreTracks;");
 				db.Execute("DROP TABLE CoreTracks;");
 				
