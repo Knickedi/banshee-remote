@@ -29,8 +29,8 @@ import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandle;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Repeat;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Shuffle;
-import de.viktorreiser.bansheeremote.data.BansheeDatabase.TrackInfo;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase;
+import de.viktorreiser.bansheeremote.data.BansheeDatabase.TrackInfo;
 import de.viktorreiser.bansheeremote.data.BansheeServer;
 import de.viktorreiser.bansheeremote.data.BansheeServerCheckTask;
 import de.viktorreiser.bansheeremote.data.BansheeServerCheckTask.OnBansheeServerCheck;
@@ -760,6 +760,8 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 					mCoverAnimator.discardCover();
 					mConnection.sendCommand(Command.COVER, Command.Cover.encode(mData.artId));
 				}
+			} else {
+				mCoverAnimator.setDefaultCover();
 			}
 		}
 		

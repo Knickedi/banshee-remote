@@ -190,13 +190,13 @@ public class BansheeDatabase {
 			TrackInfo info = new TrackInfo();
 			
 			info.id = cursor.getLong(0);
-			info.title = cursor.getString(1);
+			info.title = cleanString(cursor.getString(1));
 			info.totalTime = cursor.getLong(2);
 			info.year = cursor.getInt(3);
-			info.genre = cursor.getString(4);
-			info.artist = cursor.getString(5);
-			info.album = cursor.getString(6);
-			info.artId = cursor.getString(7);
+			info.genre = cleanString(cursor.getString(4));
+			info.artist = cleanString(cursor.getString(5));
+			info.album = cleanString(cursor.getString(6));
+			info.artId = cleanString(cursor.getString(7));
 			info.aritstId = cursor.getLong(8);
 			info.albumId = cursor.getLong(9);
 			
@@ -206,6 +206,10 @@ public class BansheeDatabase {
 			cursor.close();
 			return null;
 		}
+	}
+	
+	private static String cleanString(String s) {
+		return s == null ? "" : s;
 	}
 	
 	private static class DB {
