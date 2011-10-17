@@ -33,6 +33,7 @@ public class BansheeDatabase {
 		public String genre;
 		public int year;
 		public long totalTime;
+		public int trackNumber;
 		public String artId;
 	}
 	
@@ -180,6 +181,7 @@ public class BansheeDatabase {
 				+ " SELECT t." + DB.ID + ", t." + DB.TITLE + ", t." + DB.DURATION
 				+ ", t." + DB.YEAR + ", t." + DB.GENRE + ", r." + DB.NAME
 				+ ", l." + DB.TITLE + ", l." + DB.ART_ID + ", r." + DB.ID + ", l." + DB.ID
+				+ ", t." + DB.TRACK_NUMBER
 				+ " FROM " + DB.TABLE_TRACKS + " AS t"
 				+ " JOIN " + DB.TABLE_ARTISTS + " AS r, " + DB.TABLE_ALBUM + " AS l"
 				+ " ON t." + DB.ARTIST_ID + "=r." + DB.ID
@@ -190,15 +192,16 @@ public class BansheeDatabase {
 			TrackInfo info = new TrackInfo();
 			
 			info.id = cursor.getLong(0);
-			info.title = cleanString(cursor.getString(1));
+			info.title = cleanString(cursor, 1);
 			info.totalTime = cursor.getLong(2);
-			info.year = cursor.getInt(3);
-			info.genre = cleanString(cursor.getString(4));
-			info.artist = cleanString(cursor.getString(5));
-			info.album = cleanString(cursor.getString(6));
-			info.artId = cleanString(cursor.getString(7));
+			info.year = cleanInt(cursor, 3);
+			info.genre = cleanString(cursor, 4);
+			info.artist = cleanString(cursor, 5);
+			info.album = cleanString(cursor, 6);
+			info.artId = cleanString(cursor, 7);
 			info.aritstId = cursor.getLong(8);
 			info.albumId = cursor.getLong(9);
+			info.trackNumber = cleanInt(cursor, 10);
 			
 			cursor.close();
 			return info;
@@ -208,8 +211,12 @@ public class BansheeDatabase {
 		}
 	}
 	
-	private static String cleanString(String s) {
-		return s == null ? "" : s;
+	private static String cleanString(Cursor c, int index) {
+		return c.isNull(index) ? "" : c.getString(index);
+	}
+	
+	private static int cleanInt(Cursor c, int index) {
+		return c.isNull(index) ? -1 : c.getInt(index);
 	}
 	
 	private static class DB {
@@ -226,5 +233,6 @@ public class BansheeDatabase {
 		public static final String GENRE = "genre";
 		public static final String NAME = "name";
 		public static final String ART_ID = "artId";
+		public static final String TRACK_NUMBER = "trackNumber";
 	}
 }
