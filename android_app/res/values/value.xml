@@ -48,4 +48,7 @@
 	<string name="wifi_poll_interval_summary">Interval in seconds in which the banshee server will be polled for changes when using WiFi</string>
 	<string name="mobile_poll_interval">Mobile poll interval </string>
 	<string name="mobile_poll_interval_summary">Interval in seconds in which the banshee server will be polled for changes when using mobile network</string>
+	<string name="fetch_cover_on_mobile">Mobile network cover</string>
+	<string name="fetch_cover_on_mobile_on">If cover is not cached it will be loaded from server</string>
+	<string name="fetch_cover_on_mobile_off">Cover will be tried to load from the cache only (if it was loaded with WiFi before)</string>
 </resources>

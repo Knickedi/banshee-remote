@@ -64,6 +64,13 @@
 			android:key="mobilepollinterval"
 			android:title="@string/mobile_poll_interval"
 			android:summary="@string/mobile_poll_interval_summary" />
+		
+		<CheckBoxPreference
+			android:key="fetchcovermobile"
+			android:defaultValue="false"
+			android:title="@string/fetch_cover_on_mobile"
+			android:summaryOn="@string/fetch_cover_on_mobile_on"
+			android:summaryOff="@string/fetch_cover_on_mobile_off" />
 
 	</PreferenceCategory>
 

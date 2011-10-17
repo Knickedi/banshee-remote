@@ -756,6 +756,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			if (!mData.artId.equals("")) {
 				if (CoverCache.coverExists(mData.artId)) {
 					mCoverAnimator.setCover(CoverCache.getCover(mData.artId));
+				} else if (NetworkStateBroadcast.isMobileConnected()
+						&& !App.isMobileNetworkCoverFetch()) {
+					mCoverAnimator.setDefaultCover();
 				} else {
 					mCoverAnimator.discardCover();
 					mConnection.sendCommand(Command.COVER, Command.Cover.encode(mData.artId));

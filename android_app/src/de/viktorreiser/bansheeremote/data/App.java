@@ -97,6 +97,16 @@ public class App extends Application {
 				.getBoolean("displayalbumyear", true);
 	}
 	
+	/**
+	 * Should cover be fetched from server when using mobile network.
+	 * 
+	 * @return {@code true} when cover should be fetched
+	 */
+	public static boolean isMobileNetworkCoverFetch(){
+		return PreferenceManager.getDefaultSharedPreferences(mContext)
+				.getBoolean("fetchcovermobile", false);
+	}
+	
 	// OVERRIDDEN =================================================================================
 	
 	/**
