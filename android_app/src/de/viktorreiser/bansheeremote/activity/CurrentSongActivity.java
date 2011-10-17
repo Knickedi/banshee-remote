@@ -55,7 +55,6 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	
 	
 	private boolean mActivityPaused = true;
-	private boolean mWaitingForServerList = false;
 	private boolean mDatabaseSyncRunning = false;
 	private boolean mWasPlayingBeforeCall = false;
 	
@@ -203,8 +202,6 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		switch (requestCode) {
 		case REQUEST_SERVER_LIST:
-			mWaitingForServerList = false;
-			
 			if (resultCode == RESULT_OK) {
 				// if the server list activity was left then because the user chose a valid server
 				// get it and use it - we can trust it's valid, activity before checked that
@@ -250,7 +247,6 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case 1:
-			mWaitingForServerList = true;
 			startActivityForResult(new Intent(this, ServerListActivity.class),
 					REQUEST_SERVER_LIST);
 			return true;
@@ -696,12 +692,10 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			Toast.makeText(CurrentSongActivity.this, R.string.host_offline_or_banshee_closed,
 					Toast.LENGTH_LONG).show();
 			
-			if (!mWaitingForServerList) {
 				// only start the activity if it's not already started manually
-				startActivityForResult(
-						new Intent(CurrentSongActivity.this, ServerListActivity.class),
-						REQUEST_SERVER_LIST);
-			}
+			Intent intent = new Intent(CurrentSongActivity.this, ServerListActivity.class);
+			intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+			startActivityForResult(intent, REQUEST_SERVER_LIST);
 		}
 		
 		private void handlePlayerStatus(byte [] response) {
