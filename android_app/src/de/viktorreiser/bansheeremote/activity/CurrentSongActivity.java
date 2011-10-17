@@ -29,6 +29,7 @@ import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandle;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Repeat;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Shuffle;
+import de.viktorreiser.bansheeremote.data.BansheeDatabase.TrackInfo;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase;
 import de.viktorreiser.bansheeremote.data.BansheeServer;
 import de.viktorreiser.bansheeremote.data.BansheeServerCheckTask;
@@ -716,7 +717,21 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			updateComplete(false);
 			
 			if (mData.changeFlag != mPreviousData.changeFlag) {
-				mConnection.sendCommand(Command.SONG_INFO, null);
+				TrackInfo info = BansheeDatabase.getTrackInfo(mData.currentSongId);
+				
+				if (info != null) {
+					mData.totalTime = info.totalTime;
+					mData.song = info.title;
+					mData.artist = info.artist;
+					mData.album = info.album;
+					mData.genre = info.genre;
+					mData.year = info.year;
+					mData.artId = info.artId;
+					updateComplete(false);
+					handleCoverStatus();
+				} else {
+					mConnection.sendCommand(Command.SONG_INFO, null);
+				}
 			}
 		}
 		

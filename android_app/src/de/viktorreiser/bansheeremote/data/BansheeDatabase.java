@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 /**
@@ -13,11 +14,27 @@ import android.database.sqlite.SQLiteDatabase;
  */
 public class BansheeDatabase {
 	
+	// PRIVATE ====================================================================================
+	
 	/**
 	 * Global instance of currently used database.
 	 */
 	private static SQLiteDatabase mBansheeDatabase;
 	
+	// PUBLIC =====================================================================================
+	
+	public static class TrackInfo {
+		public long id;
+		public long aritstId;
+		public long albumId;
+		public String title;
+		public String artist;
+		public String album;
+		public String genre;
+		public int year;
+		public long totalTime;
+		public String artId;
+	}
 	
 	/**
 	 * Is database up to date?
@@ -152,5 +169,58 @@ public class BansheeDatabase {
 	 */
 	public static boolean isOpen() {
 		return mBansheeDatabase != null;
+	}
+	
+	public static TrackInfo getTrackInfo(long id) {
+		if (!isOpen()) {
+			return null;
+		}
+		
+		Cursor cursor = mBansheeDatabase.rawQuery(""
+				+ " SELECT t." + DB.ID + ", t." + DB.TITLE + ", t." + DB.DURATION
+				+ ", t." + DB.YEAR + ", t." + DB.GENRE + ", r." + DB.NAME
+				+ ", l." + DB.TITLE + ", l." + DB.ART_ID + ", r." + DB.ID + ", l." + DB.ID
+				+ " FROM " + DB.TABLE_TRACKS + " AS t"
+				+ " JOIN " + DB.TABLE_ARTISTS + " AS r, " + DB.TABLE_ALBUM + " AS l"
+				+ " ON t." + DB.ARTIST_ID + "=r." + DB.ID
+				+ " AND t." + DB.ALBUM_ID + "=l." + DB.ID
+				+ " WHERE t." + DB.ID + "=" + id, null);
+		
+		if (cursor.moveToFirst()) {
+			TrackInfo info = new TrackInfo();
+			
+			info.id = cursor.getLong(0);
+			info.title = cursor.getString(1);
+			info.totalTime = cursor.getLong(2);
+			info.year = cursor.getInt(3);
+			info.genre = cursor.getString(4);
+			info.artist = cursor.getString(5);
+			info.album = cursor.getString(6);
+			info.artId = cursor.getString(7);
+			info.aritstId = cursor.getLong(8);
+			info.albumId = cursor.getLong(9);
+			
+			cursor.close();
+			return info;
+		} else {
+			cursor.close();
+			return null;
+		}
+	}
+	
+	private static class DB {
+		public static final String TABLE_TRACKS = "tracks";
+		public static final String TABLE_ARTISTS = "artists";
+		public static final String TABLE_ALBUM = "albums";
+
+		public static final String ID = "_id";
+		public static final String ARTIST_ID = "artistId";
+		public static final String ALBUM_ID = "albumId";
+		public static final String TITLE = "title";
+		public static final String DURATION = "duration";
+		public static final String YEAR = "year";
+		public static final String GENRE = "genre";
+		public static final String NAME = "name";
+		public static final String ART_ID = "artId";
 	}
 }
