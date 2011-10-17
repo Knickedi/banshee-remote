@@ -707,6 +707,8 @@ namespace Banshee.RemoteListener
 			
 			if (track != null) {
 				Array.Copy(ShortToByte((ushort) track.FileSize), 0, result, 6, 2);
+				Array.Copy(IntToByte((uint) DatabaseTrackInfo.GetTrackIdForUri(track.Uri)),
+				           0, result, 8, 4);
 			}
 			
 			return result;
