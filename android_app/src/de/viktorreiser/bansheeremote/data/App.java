@@ -102,9 +102,19 @@ public class App extends Application {
 	 * 
 	 * @return {@code true} when cover should be fetched
 	 */
-	public static boolean isMobileNetworkCoverFetch(){
+	public static boolean isMobileNetworkCoverFetch() {
 		return PreferenceManager.getDefaultSharedPreferences(mContext)
 				.getBoolean("fetchcovermobile", false);
+	}
+	
+	/**
+	 * Get the amount of preloaded playlist tracks from server in on cycle.
+	 * 
+	 * @return count of tracks to preload
+	 */
+	public static int getPlaylistPreloadCount() {
+		return PreferenceManager.getDefaultSharedPreferences(mContext)
+				.getInt("playlistfetchcount", 50);
 	}
 	
 	// OVERRIDDEN =================================================================================

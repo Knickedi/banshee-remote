@@ -48,11 +48,20 @@
 	</PreferenceCategory>
 
 	<PreferenceCategory android:title="@string/network">
+	
+	    <de.viktorreiser.toolbox.preference.NumberPickerPreference
+			custom:rangeStart="20"
+			custom:rangeEnd="100"
+			custom:speed="80"
+			android:defaultValue="50"
+			android:key="playlistfetchcount"
+			android:title="@string/playlist_fetch_count"
+			android:summary="@string/playlist_fetch_count_summary" />
 
 		<de.viktorreiser.toolbox.preference.NumberPickerPreference
 			custom:rangeStart="1"
 			custom:rangeEnd="30"
-			android:defaultValue="1"
+			android:defaultValue="5"
 			android:key="wifipollinterval"
 			android:title="@string/wifi_poll_interval"
 			android:summary="@string/wifi_poll_interval_summary" />
@@ -60,7 +69,7 @@
 		<de.viktorreiser.toolbox.preference.NumberPickerPreference
 			custom:rangeStart="1"
 			custom:rangeEnd="30"
-			android:defaultValue="5"
+			android:defaultValue="10"
 			android:key="mobilepollinterval"
 			android:title="@string/mobile_poll_interval"
 			android:summary="@string/mobile_poll_interval_summary" />

@@ -46,6 +46,8 @@
 	<string name="display_album_year">Show album year</string>
 	<string name="display_album_year_on">Year of album (if available) will be shown after album title</string>
 	<string name="display_album_year_off">Year will never be shown</string>
+	<string name="playlist_fetch_count">Playlist preload amount</string>
+	<string name="playlist_fetch_count_summary">Number of playlist tracks which will be loaded from server in one cycle (prevent loading of huge lists)</string>
 	<string name="wifi_poll_interval">WiFi poll interval</string>
 	<string name="wifi_poll_interval_summary">Interval in seconds in which the banshee server will be polled for changes when using WiFi</string>
 	<string name="mobile_poll_interval">Mobile poll interval </string>
