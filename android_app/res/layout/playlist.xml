@@ -51,6 +51,7 @@
 			android:layout_centerInParent="true" />
 
 		<TextView
+			android:id="@+id/no_entries"
 			android:visibility="gone"
 			android:gravity="center"
 			android:textAppearance="?android:attr/textAppearanceLarge"

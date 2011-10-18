@@ -40,6 +40,8 @@ public class BansheeConnection {
 	
 	// PRIVATE ====================================================================================
 	
+	private static final int CHECK_CONNECTION_TIMEOUT = 4000;
+	
 	private static byte [] mBuffer = new byte [1024];
 	private static ByteArrayOutputStream mByteOutputStream = new ByteArrayOutputStream();
 	
@@ -82,12 +84,12 @@ public class BansheeConnection {
 		 * request as parameter to the next one. Some request types are bundled and will override
 		 * the previous request parameter which was encoded. See {@link PlayerStatus} for more.
 		 */
-		PLAYER_STATUS(1),
+		PLAYER_STATUS(1, 1000),
 		
 		/**
 		 * Get track data (see {@link SongInfo} how to interpret the results).
 		 */
-		SONG_INFO(2),
+		SONG_INFO(2, 1000),
 		
 		/**
 		 * Get sync database (information).<br>
@@ -95,7 +97,7 @@ public class BansheeConnection {
 		 * This request will return also {@code null} so your handler knows about failed requests
 		 * (see {@link SyncDatabase} for more).
 		 */
-		SYNC_DATABASE(3),
+		SYNC_DATABASE(3, 10000),
 		
 		/**
 		 * Get cover.<br>
@@ -103,12 +105,21 @@ public class BansheeConnection {
 		 * {@code null} request will return (if available). You can request a specific cover (see
 		 * {@link Cover}). If no cover is available you get a {@code 0} byte.
 		 */
-		COVER(4);
+		COVER(4, 5000),
+		
+		/**
+		 * Get current playlist.<br>
+		 * <br>
+		 * Request is {@code null} and returns a list of track IDs which relate to the local database.
+		 */
+		PLAYLIST(5, 15000);
 		
 		private final int mCode;
+		private final int mTimeout;
 		
-		Command(int code) {
+		Command(int code, int timeout) {
 			mCode = code;
+			mTimeout = timeout;
 		}
 		
 		/*@formatter:off*/
@@ -411,6 +422,24 @@ public class BansheeConnection {
 			}
 		}
 		
+		public static class Playlist {
+			
+			public static long [] decode(byte [] response) {
+				try {
+					int count = decodeShort(response, 0);
+					long [] result = new long [count];
+					
+					for (int i = 0; i < count; i++) {
+						result[i] = decodeInt(response, i * 4 + 2);
+					}
+					
+					return result;
+				} catch (ArrayIndexOutOfBoundsException e) {
+					return new long [0];
+				}
+			}
+		}
+		
 		private static byte [] encodeShort(int value) {
 			return new byte [] {(byte) value, (byte) (value >> 8)};
 		}
@@ -666,7 +695,7 @@ public class BansheeConnection {
 	 */
 	public static boolean checkConnection(BansheeServer server) {
 		// request code 0 is a test request which does nothing
-		byte [] result = sendRequest(server, 0, null);
+		byte [] result = sendRequest(server, 0, null, CHECK_CONNECTION_TIMEOUT);
 		return result != null && result.length != 0;
 	}
 	
@@ -695,7 +724,7 @@ public class BansheeConnection {
 	 * @return response as byte array
 	 */
 	private synchronized static byte [] sendRequest(BansheeServer server, int requestCode,
-			byte [] params) {
+			byte [] params, int timeout) {
 		byte [] result = null;
 		byte [] request;
 		Socket socket = null;
@@ -714,8 +743,7 @@ public class BansheeConnection {
 		
 		try {
 			socket = new Socket(server.getHost(), server.getPort());
-			socket.setSoTimeout(2000);
-			socket.setSoLinger(true, 2000);
+			socket.setSoTimeout(timeout);
 			os = socket.getOutputStream();
 			is = socket.getInputStream();
 			os.write(request, 0, request.length);
@@ -791,7 +819,7 @@ public class BansheeConnection {
 					} catch (InterruptedException e) {
 					}
 				} else {
-					byte [] result = sendRequest(mServer, queue.command.mCode, queue.params);
+					byte [] result = sendRequest(mServer, queue.command.mCode, queue.params, queue.command.mTimeout);
 					
 					if (result == null || result.length == 0) {
 						handleFail(queue);
@@ -803,7 +831,7 @@ public class BansheeConnection {
 		}
 		
 		private void handleFail(final CommandQueue queue) {
-			if (queue.command == Command.SYNC_DATABASE) {
+			if (queue.command == Command.SYNC_DATABASE || queue.command == Command.PLAYLIST) {
 				mCommandHandler.post(new Runnable() {
 					public void run() {
 						mHandleCallback.onBansheeCommandHandled(

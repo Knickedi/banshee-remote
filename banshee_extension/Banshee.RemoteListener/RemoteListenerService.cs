@@ -981,12 +981,12 @@ namespace Banshee.RemoteListener
 			
 			if (model != null) {
 				int count = model.Count;
-				byte [] result = new byte [2 + 2 * count];
+				byte [] result = new byte [2 + 4 * count];
 				Array.Copy(ShortToByte((ushort) count), 0, result, 0, 2);
 				
 				for (int i = 0; i < count; i++) {
 					int id = DatabaseTrackInfo.GetTrackIdForUri(((TrackInfo) model.GetItem(i)).Uri);
-					Array.Copy(ShortToByte((ushort) id), 0, result, 0, 2);
+					Array.Copy(IntToByte((uint) id), 0, result, i * 4 + 2, 4);
 				}
 				
 				return result;

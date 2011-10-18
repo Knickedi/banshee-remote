@@ -125,6 +125,8 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			if (mCheckTask != null) {
 				// we are still checking a server, keep going
 				mCheckTask.showDialog(this);
+			} else {
+				mCommandHandler.handleCoverStatus();
 			}
 		} else {
 			BansheeServer server = BansheeServer.getDefaultServer();
@@ -172,7 +174,6 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		
 		if (mConnection != null) {
 			mStatusPollHandler.start();
-			mCommandHandler.handleCoverStatus();
 		}
 	}
 	
