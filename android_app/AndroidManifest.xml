@@ -3,7 +3,8 @@
 <manifest
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	package="de.viktorreiser.bansheeremote"
-	android:versionName="4.0.1" android:versionCode="12">
+	android:versionName="4.0.1"
+	android:versionCode="12">
 
 	<uses-sdk android:minSdkVersion="4" />
 
@@ -29,6 +30,11 @@
 
 		<activity
 			android:name=".activity.NewServerActivity"
+			android:windowSoftInputMode="adjustResize"
+			android:theme="@android:style/Theme.NoTitleBar" />
+
+		<activity
+			android:name=".activity.PlaylistActivity"
 			android:windowSoftInputMode="adjustResize"
 			android:theme="@android:style/Theme.NoTitleBar" />
 

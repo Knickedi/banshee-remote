@@ -557,6 +557,15 @@ public class BansheeConnection {
 	}
 	
 	/**
+	 * Get current command handler.
+	 * 
+	 * @return current command handler.
+	 */
+	public OnBansheeCommandHandle getHandleCallback(){
+		return mHandleCallback;
+	}
+	
+	/**
 	 * Put command to the request queue.
 	 * 
 	 * @param command

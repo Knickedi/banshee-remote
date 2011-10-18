@@ -48,10 +48,18 @@ import de.viktorreiser.toolbox.content.NetworkStateBroadcast;
  */
 public class CurrentSongActivity extends Activity implements OnBansheeServerCheck {
 	
+	// PUBLIC =====================================================================================
+	
+	// accessed by other activities
+	static BansheeConnection mConnection = null;
+	static BansheeData mData;
+	static BansheeData mPreviousData;
+	
 	// PIRVATE ====================================================================================
 	
 	private static final int REQUEST_SERVER_LIST = 1;
 	private static final int REQUEST_SEETINGS = 2;
+	private static final int REQUEST_PLAYLIST = 3;
 	
 	
 	private boolean mActivityPaused = true;
@@ -79,9 +87,6 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	private CommandHandler mCommandHandler = new CommandHandler();
 	private StatusPollHandler mStatusPollHandler = new StatusPollHandler();
 	
-	private BansheeConnection mConnection;
-	private BansheeData mData;
-	private BansheeData mPreviousData;
 	private BroadcastReceiver mNetworkChangeListener;
 	
 	// OVERRIDDEN =================================================================================
@@ -112,7 +117,6 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			mDatabaseSyncRunning = (Boolean) dataBefore[4];
 			mWasPlayingBeforeCall = (Boolean) dataBefore[5];
 			mCommandHandler.updateComplete(true);
-			mCommandHandler.handleCoverStatus();
 			
 			if (mConnection != null) {
 				mConnection.updateHandleCallback(mCommandHandler);
@@ -168,6 +172,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		
 		if (mConnection != null) {
 			mStatusPollHandler.start();
+			mCommandHandler.handleCoverStatus();
 		}
 	}
 	
@@ -451,7 +456,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		findViewById(R.id.playlist).setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				if (BansheeDatabase.isOpen()) {
-					// TODO react on button click
+					startActivityForResult(
+							new Intent(CurrentSongActivity.this, PlaylistActivity.class),
+							REQUEST_PLAYLIST);
 				} else {
 					Toast.makeText(CurrentSongActivity.this, R.string.need_sync_db,
 							Toast.LENGTH_SHORT).show();
@@ -694,7 +701,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 					handleSyncDatabaseFile(response);
 				}
 				break;
-				
+			
 			case COVER:
 				handleCover(response, params);
 				break;
@@ -704,10 +711,11 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		private void handleFail() {
 			mStatusPollHandler.stop();
 			mConnection = null;
+			mConnection = null;
 			Toast.makeText(CurrentSongActivity.this, R.string.host_offline_or_banshee_closed,
 					Toast.LENGTH_LONG).show();
 			
-				// only start the activity if it's not already started manually
+			finishActivity(REQUEST_PLAYLIST);
 			Intent intent = new Intent(CurrentSongActivity.this, ServerListActivity.class);
 			intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 			startActivityForResult(intent, REQUEST_SERVER_LIST);
@@ -819,12 +827,15 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			} else {
 				String id = Command.Cover.getId(params);
 				CoverCache.addCover(id, response);
-				Bitmap cover = CoverCache.getCover(id);
 				
-				if (cover == null) {
-					mCoverAnimator.setDefaultCover();
-				} else {
-					mCoverAnimator.setCover(cover);
+				if (!mActivityPaused) {
+					Bitmap cover = CoverCache.getCover(id);
+					
+					if (cover == null) {
+						mCoverAnimator.setDefaultCover();
+					} else {
+						mCoverAnimator.setCover(cover);
+					}
 				}
 			}
 		}
@@ -953,7 +964,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		public void run() {
 			boolean animate = false;
 			float step = 255f * (System.currentTimeMillis() - mmLastStep) / FADE_COMPLETE;
-
+			
 			if (Math.round(mmAlpha1) == 0 && mmNextCover != null) {
 				mmAlpha1 = mmAlpha2;
 				mmAlpha2 = 0;

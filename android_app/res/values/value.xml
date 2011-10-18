@@ -25,6 +25,8 @@
 	<string name="error_writing_sync_db">Failed to write database to SD card or it is corrupted!</string>
 	<string name="updated_sync_db">Database successfully synchronized</string>
 	<string name="need_sync_db">Synchronized database needed...</string>
+	<string name="playlist">Playlist</string>
+	<string name="no_playlist">No playlist available or loaded...</string>
 	
 	<string name="user_interface">User interface</string>
 	<string name="function">Function</string>
