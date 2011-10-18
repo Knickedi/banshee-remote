@@ -215,7 +215,11 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			break;
 		
 		case REQUEST_SEETINGS:
-			mCommandHandler.updateComplete(true);
+			if (mConnection == null) {
+				finish();
+			} else {
+				mCommandHandler.updateComplete(true);
+			}
 			break;
 		
 		default:
