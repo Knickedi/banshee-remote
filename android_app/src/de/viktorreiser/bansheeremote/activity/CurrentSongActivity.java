@@ -444,6 +444,17 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			}
 		});
 		
+		findViewById(R.id.playlist).setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				if (BansheeDatabase.isOpen()) {
+					// TODO react on button click
+				} else {
+					Toast.makeText(CurrentSongActivity.this, R.string.need_sync_db,
+							Toast.LENGTH_SHORT).show();
+				}
+			}
+		});
+		
 		findViewById(R.id.browse_albums).setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				if (BansheeDatabase.isOpen()) {

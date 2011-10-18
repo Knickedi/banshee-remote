@@ -13,6 +13,17 @@
 		android:background="@drawable/title_gradient">
 
 		<ImageButton
+			android:id="@+id/playlist"
+			android:src="@drawable/playlist"
+			android:background="@drawable/pressed_button"
+			android:scaleType="fitCenter"
+			android:layout_width="0dip"
+			android:layout_height="60dip"
+			android:paddingTop="5dip"
+			android:paddingBottom="5dip"
+			android:layout_weight="1" />
+
+		<ImageButton
 			android:id="@+id/browse_songs"
 			android:src="@drawable/songs"
 			android:background="@drawable/pressed_button"
@@ -252,7 +263,7 @@
 		android:layout_width="fill_parent"
 		android:layout_height="fill_parent"
 		android:scaleType="fitCenter" />
-		
+
 	<ImageView
 		android:id="@+id/cover2"
 		android:layout_margin="10dip"

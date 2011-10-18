@@ -144,6 +144,17 @@
 		android:layout_marginTop="10dip">
 
 		<ImageButton
+			android:id="@+id/playlist"
+			android:src="@drawable/playlist"
+			android:background="@drawable/pressed_button"
+			android:scaleType="fitCenter"
+			android:layout_width="0dip"
+			android:layout_height="fill_parent"
+			android:paddingLeft="5dip"
+			android:paddingRight="5dip"
+			android:layout_weight="1" />
+
+		<ImageButton
 			android:id="@+id/browse_songs"
 			android:src="@drawable/songs"
 			android:background="@drawable/pressed_button_2"
@@ -197,7 +208,7 @@
 			android:layout_height="fill_parent"
 			android:layout_weight="1"
 			android:textColor="@drawable/control_text_color" />
-			
+
 		<TextView
 			android:layout_marginLeft="5dip"
 			android:layout_marginRight="5dip"
@@ -231,7 +242,7 @@
 		android:layout_width="fill_parent"
 		android:layout_height="fill_parent"
 		android:scaleType="fitCenter" />
-		
+
 	<ImageView
 		android:id="@+id/cover2"
 		android:layout_margin="10dip"

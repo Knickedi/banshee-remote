@@ -824,6 +824,7 @@ namespace Banshee.RemoteListener
 			SongInfo = 2,
 			SyncDatabase = 3,
 			Cover = 4,
+			Playlist = 5,
 		}
 		
 		public byte [] Test(int readBytes) {
@@ -973,6 +974,25 @@ namespace Banshee.RemoteListener
 			}
 			
 			return new byte [] {0};
+		}
+		
+		public byte [] Playlist(int readbytes) {
+			TrackListModel model = ServiceManager.PlaybackController.Source.TrackModel;
+			
+			if (model != null) {
+				int count = model.Count;
+				byte [] result = new byte [2 + 2 * count];
+				Array.Copy(ShortToByte((ushort) count), 0, result, 0, 2);
+				
+				for (int i = 0; i < count; i++) {
+					int id = DatabaseTrackInfo.GetTrackIdForUri(((TrackInfo) model.GetItem(i)).Uri);
+					Array.Copy(ShortToByte((ushort) id), 0, result, 0, 2);
+				}
+				
+				return result;
+			} else {
+				return ShortToByte(0);
+			}
 		}
 		
 		#endregion
