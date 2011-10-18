@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
 
@@ -604,7 +605,6 @@ public class BansheeConnection {
 				for (CommandQueue q : mCommandQueue) {
 					if (q.command == command) {
 						commandUpdated = true;
-						q.command = command;
 						q.params = params;
 						break;
 					}
@@ -612,10 +612,23 @@ public class BansheeConnection {
 			}
 			
 			if (!commandUpdated) {
+				int i = 0;
+				
+				// cover commands has less priority
+				if (command != Command.COVER) {
+					for (Iterator<CommandQueue> it = mCommandQueue.iterator(); it.hasNext();) {
+						if (it.next().command != Command.COVER) {
+							break;
+						}
+						
+						i++;
+					}
+				}
+				
 				CommandQueue queue = new CommandQueue();
 				queue.command = command;
 				queue.params = params;
-				mCommandQueue.add(0, queue);
+				mCommandQueue.add(i, queue);
 			}
 		}
 		
