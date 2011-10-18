@@ -976,22 +976,44 @@ namespace Banshee.RemoteListener
 			return new byte [] {0};
 		}
 		
-		public byte [] Playlist(int readbytes) {
+		public byte [] Playlist(int readBytes) {
 			TrackListModel model = ServiceManager.PlaybackController.Source.TrackModel;
+			
+			int maxReturn = 0;
+			int startPosition = 0;
+			
+			if (readBytes > 2) {
+				maxReturn = ShortFromBuffer(1);
+			}
+			
+			if (readBytes > 4) {
+				startPosition = ShortFromBuffer(3);
+			}
 			
 			if (model != null) {
 				int count = model.Count;
-				byte [] result = new byte [2 + 4 * count];
-				Array.Copy(ShortToByte((ushort) count), 0, result, 0, 2);
+				int toCount = count;
+				int returned = count - startPosition;
 				
-				for (int i = 0; i < count; i++) {
+				if (returned < 0) {
+					returned = 0;
+				} else if (maxReturn != 0 && returned > maxReturn) {
+					returned = maxReturn;
+					toCount = startPosition + maxReturn;
+				}
+				
+				byte [] result = new byte [2 + 2 + 4 * returned];
+				Array.Copy(ShortToByte((ushort) count), 0, result, 0, 2);
+				Array.Copy(ShortToByte((ushort) returned), 0, result, 2, 2);
+				
+				for (int i = startPosition; i < toCount; i++) {
 					int id = DatabaseTrackInfo.GetTrackIdForUri(((TrackInfo) model.GetItem(i)).Uri);
-					Array.Copy(IntToByte((uint) id), 0, result, i * 4 + 2, 4);
+					Array.Copy(IntToByte((uint) id), 0, result, i * 4 + 4, 4);
 				}
 				
 				return result;
 			} else {
-				return ShortToByte(0);
+				return new byte [] {0, 0, 0, 0};
 			}
 		}
 		
