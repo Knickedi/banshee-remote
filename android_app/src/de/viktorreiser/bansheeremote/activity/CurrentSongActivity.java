@@ -211,6 +211,8 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			if (resultCode == RESULT_OK) {
 				// if the server list activity was left then because the user chose a valid server
 				// get it and use it - we can trust it's valid, activity before checked that
+				mCover1.setImageBitmap(null);
+				mCover2.setImageBitmap(mCoverAnimator.mmDefaultCover);
 				setupServerConnection(BansheeServer.getDefaultServer());
 			} else if (mConnection == null) {
 				// if user called server list activity from menu he had a valid connection before
