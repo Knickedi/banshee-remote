@@ -110,7 +110,9 @@ public class BansheeConnection {
 		/**
 		 * Get current playlist.<br>
 		 * <br>
-		 * Request is {@code null} and returns a list of track IDs which relate to the local database.
+		 * The list of track IDs relate to the local database.<br>
+		 * You can control how much tracks you want to have returned and from which position the
+		 * return should start (see {@link Playlist} for more).
 		 */
 		PLAYLIST(5, 15000);
 		
@@ -409,7 +411,8 @@ public class BansheeConnection {
 		 * <br>
 		 * Use {@link #encode(String)} to request a specific cover.
 		 * 
-		 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+		 * @author Viktor Reiser &lt;<a
+		 *         href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
 		 */
 		public static class Cover {
 			
@@ -422,21 +425,47 @@ public class BansheeConnection {
 			}
 		}
 		
+		/**
+		 * Get current playlist track IDs.<br>
+		 * <br>
+		 * A {@code null} request will return all tracks but this could be slow so you can specify
+		 * how much and from which start position you want to have track IDs ({#encode(int, int)}).<br>
+		 * {@link #decodeCount(byte[])} will give you the size of the playlist.
+		 * {@link #decodeTrackIds(byte[])} will give you the returned IDs.
+		 * 
+		 * @author Viktor Reiser &lt;<a
+		 *         href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+		 */
 		public static class Playlist {
 			
-			public static long [] decode(byte [] response) {
+			public static byte [] encode(int startPosition, int maxReturns) {
+				byte [] params = new byte [4];
+				System.arraycopy(encodeShort(maxReturns), 0, params, 0, 2);
+				System.arraycopy(encodeShort(startPosition), 0, params, 2, 2);
+				return params;
+			}
+			
+			public static int getStartPosition(byte [] params) {
+				return decodeShort(params, 0);
+			}
+			
+			public static long [] decodeTrackIds(byte [] response) {
 				try {
-					int count = decodeShort(response, 0);
+					int count = decodeShort(response, 2);
 					long [] result = new long [count];
 					
 					for (int i = 0; i < count; i++) {
-						result[i] = decodeInt(response, i * 4 + 2);
+						result[i] = decodeInt(response, i * 4 + 4);
 					}
 					
 					return result;
 				} catch (ArrayIndexOutOfBoundsException e) {
 					return new long [0];
 				}
+			}
+			
+			public static int decodeCount(byte [] response) {
+				return decodeShort(response, 0);
 			}
 		}
 		
@@ -591,7 +620,7 @@ public class BansheeConnection {
 	 * 
 	 * @return current command handler.
 	 */
-	public OnBansheeCommandHandle getHandleCallback(){
+	public OnBansheeCommandHandle getHandleCallback() {
 		return mHandleCallback;
 	}
 	
@@ -819,7 +848,8 @@ public class BansheeConnection {
 					} catch (InterruptedException e) {
 					}
 				} else {
-					byte [] result = sendRequest(mServer, queue.command.mCode, queue.params, queue.command.mTimeout);
+					byte [] result = sendRequest(mServer, queue.command.mCode, queue.params,
+							queue.command.mTimeout);
 					
 					if (result == null || result.length == 0) {
 						handleFail(queue);

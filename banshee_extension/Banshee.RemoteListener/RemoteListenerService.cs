@@ -1008,7 +1008,7 @@ namespace Banshee.RemoteListener
 				
 				for (int i = startPosition; i < toCount; i++) {
 					int id = DatabaseTrackInfo.GetTrackIdForUri(((TrackInfo) model.GetItem(i)).Uri);
-					Array.Copy(IntToByte((uint) id), 0, result, i * 4 + 4, 4);
+					Array.Copy(IntToByte((uint) id), 0, result, (i - startPosition) * 4 + 4, 4);
 				}
 				
 				return result;

@@ -1,23 +1,32 @@
 package de.viktorreiser.bansheeremote.activity;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
+import android.widget.AbsListView.OnScrollListener;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import de.viktorreiser.bansheeremote.R;
+import de.viktorreiser.bansheeremote.data.App;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandle;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase.TrackInfo;
+import de.viktorreiser.bansheeremote.data.CoverCache;
+import de.viktorreiser.toolbox.content.NetworkStateBroadcast;
 
 /**
- * Here we will load the current player play list, show it and interacti with it.
+ * Here we will load the current player play list, show it and interact with it.
  * 
  * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
  */
@@ -27,8 +36,12 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 	
 	private OnBansheeCommandHandle mOldCommandHandler;
 	private boolean mLoadingDismissed;
-	private List<TrackInfo> mPlaylist;
+	private List<PlaylistEntry> mPlaylist;
+	private ListView mList;
 	private PlaylistAdapter mAdapter;
+	private int mPlaylistCount = 0;
+	private boolean mPlaylistRequested;
+	private Set<String> mRequestedCovers = new HashSet<String>();
 	
 	// OVERRIDDEN =================================================================================
 	
@@ -42,31 +55,53 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 			return;
 		}
 		
-		Object [] dataBefore  = (Object []) getLastNonConfigurationInstance();
+		Object [] dataBefore = (Object []) getLastNonConfigurationInstance();
 		
 		if (dataBefore != null) {
 			mOldCommandHandler = (OnBansheeCommandHandle) dataBefore[0];
-			mPlaylist = (List<TrackInfo>) dataBefore[1];
+			mPlaylist = (List<PlaylistEntry>) dataBefore[1];
 			mLoadingDismissed = (Boolean) dataBefore[2];
+			mPlaylistCount = (Integer) dataBefore[3];
+			mPlaylistRequested = (Boolean) dataBefore[4];
+			mRequestedCovers = (Set<String>) dataBefore[5];
 		} else {
 			mLoadingDismissed = false;
-			mPlaylist = new ArrayList<TrackInfo>();
+			mPlaylist = new ArrayList<PlaylistEntry>();
 			
 			mOldCommandHandler = CurrentSongActivity.mConnection.getHandleCallback();
 			CurrentSongActivity.mConnection.updateHandleCallback(new OnBansheeCommandHandle() {
 				public void onBansheeCommandHandled(Command command, byte [] params, byte [] result) {
-					PlaylistActivity.this.onBansheeCommandHandled(command, params, result);
 					mOldCommandHandler.onBansheeCommandHandled(command, params, result);
+					PlaylistActivity.this.onBansheeCommandHandled(command, params, result);
 				}
 			});
 			
-			CurrentSongActivity.mConnection.sendCommand(Command.PLAYLIST, null);
+			mPlaylistRequested = true;
+			CurrentSongActivity.mConnection.sendCommand(Command.PLAYLIST,
+					Command.Playlist.encode(0, App.getPlaylistPreloadCount()));
 		}
 		
 		setContentView(R.layout.playlist);
 		
+		mList = (ListView) findViewById(R.id.list);
 		mAdapter = new PlaylistAdapter();
-		((ListView) findViewById(R.id.list)).setAdapter(mAdapter);
+		mList.setAdapter(mAdapter);
+		mList.setOnScrollListener(new OnScrollListener() {
+			public void onScrollStateChanged(AbsListView view, int scrollState) {
+				
+			}
+			
+			public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
+					int totalItemCount) {
+				if (!mPlaylistRequested && firstVisibleItem + visibleItemCount == mPlaylist.size()) {
+					mPlaylistRequested = true;
+					CurrentSongActivity.mConnection.sendCommand(Command.PLAYLIST,
+							Command.Playlist.encode(
+									mPlaylist.size(),
+									App.getPlaylistPreloadCount()));
+				}
+			}
+		});
 		
 		if (mLoadingDismissed) {
 			findViewById(R.id.loading_progress).setVisibility(View.GONE);
@@ -87,7 +122,8 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 	}
 	
 	public Object onRetainNonConfigurationInstance() {
-		return new Object [] {mOldCommandHandler, mPlaylist, mLoadingDismissed};
+		return new Object [] {mOldCommandHandler, mPlaylist, mLoadingDismissed, mPlaylistCount,
+				mPlaylistRequested, mRequestedCovers};
 	}
 	
 	public void onBansheeCommandHandled(Command command, byte [] params, byte [] result) {
@@ -96,17 +132,38 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		}
 		
 		if (command == Command.COVER) {
+			String artId = Command.Cover.getId(params);
+			Bitmap cover = CoverCache.getCover(artId);
 			
+			if (cover != null) {
+				int childCount = mList.getChildCount();
+				
+				for (int i = 0; i < childCount; i++) {
+					ViewHolder holder = (ViewHolder) mList.getChildAt(i).getTag();
+					
+					if (holder != null && artId.equals(holder.cover.getTag())) {
+						holder.cover.setImageBitmap(cover);
+					}
+				}
+			}
 		} else if (command == Command.PLAYLIST) {
 			if (result != null) {
-				long [] ids = Command.Playlist.decode(result);
-				mPlaylist = new ArrayList<TrackInfo>(ids.length);
+				int count = Command.Playlist.decodeCount(result);
+				
+				if (mPlaylistCount <= 0) {
+					mPlaylist = new ArrayList<PlaylistEntry>(mPlaylistCount);
+				}
+				
+				mPlaylistCount = count;
+				
+				long [] ids = Command.Playlist.decodeTrackIds(result);
 				
 				for (int i = 0; i < ids.length; i++) {
-					mPlaylist.add(BansheeDatabase.getTrackInfo(ids[i]));
+					mPlaylist.add(new PlaylistEntry(ids[i]));
 				}
 			}
 			
+			mPlaylistRequested = false;
 			mLoadingDismissed = true;
 			findViewById(R.id.loading_progress).setVisibility(View.GONE);
 			
@@ -120,29 +177,129 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 	
 	// PRIVATE ====================================================================================
 	
+	private static class PlaylistEntry {
+		
+		public PlaylistEntry(long id) {
+			this.id = id;
+		}
+		
+		public long id;
+		public TrackInfo trackInfo;
+	}
+	
+	private static class ViewHolder {
+		public ImageView cover;
+		public TextView track;
+		public TextView artist;
+		public TextView album;
+	}
+	
 	private class PlaylistAdapter extends BaseAdapter {
-
+		
 		public int getCount() {
-			return mPlaylist.size();
+			int size = mPlaylist.size();
+			return size == mPlaylistCount ? size : size + 1;
 		}
-
+		
+		public int getItemViewType(int position) {
+			return position == mPlaylist.size() ? 1 : 0;
+		}
+		
+		public int getViewTypeCount() {
+			return 2;
+		}
+		
 		public Object getItem(int position) {
-			return mPlaylist.get(position);
+			return null;
 		}
-
+		
 		public long getItemId(int position) {
-			return mPlaylist.get(position).id;
+			return position;
 		}
-
+		
 		public View getView(int position, View convertView, ViewGroup parent) {
+			int type = getItemViewType(position);
+			
 			if (convertView == null) {
-				convertView = new TextView(PlaylistActivity.this);
+				if (type == 0) {
+					convertView = getLayoutInflater().inflate(R.layout.track_list_item, null);
+					
+					ViewHolder holder = new ViewHolder();
+					holder.cover = (ImageView) convertView.findViewById(R.id.cover1);
+					holder.track = (TextView) convertView.findViewById(R.id.song_title);
+					holder.artist = (TextView) convertView.findViewById(R.id.song_artist);
+					holder.album = (TextView) convertView.findViewById(R.id.song_album);
+					convertView.setTag(holder);
+				} else {
+					convertView = getLayoutInflater()
+							.inflate(R.layout.playlist_loading_item, null);
+				}
 			}
 			
-			((TextView) convertView).setText(position + "");
+			if (type == 0) {
+				ViewHolder holder = (ViewHolder) convertView.getTag();
+				PlaylistEntry entry = mPlaylist.get(position);
+				
+				if (entry.trackInfo == null) {
+					entry.trackInfo = BansheeDatabase.getTrackInfo(entry.id);
+				}
+				
+				if (entry.trackInfo != null) {
+					if (CoverCache.coverExists(entry.trackInfo.artId)) {
+						holder.cover.setImageBitmap(CoverCache.getCover(entry.trackInfo.artId));
+						
+						holder.cover.setTag(null);
+					} else {
+						holder.cover.setImageResource(R.drawable.no_cover);
+						
+						if ((NetworkStateBroadcast.isWifiConnected()
+								|| App.isMobileNetworkCoverFetch())
+								&& !mRequestedCovers.contains(entry.trackInfo.artId)) {
+							mRequestedCovers.add(entry.trackInfo.artId);
+							CurrentSongActivity.mConnection.sendCommand(Command.COVER,
+									Command.Cover.encode(entry.trackInfo.artId));
+						}
+						
+						holder.cover.setTag(entry.trackInfo.artId);
+					}
+					
+					if (entry.trackInfo.title.equals("")) {
+						holder.track.setText(R.string.unknown_track);
+					} else {
+						holder.track.setText(entry.trackInfo.title);
+					}
+					
+					if (entry.trackInfo.artist.equals("")) {
+						holder.artist.setText(R.string.unknown_artist);
+					} else {
+						holder.artist.setText(entry.trackInfo.artist);
+					}
+					
+					if (entry.trackInfo.album.equals("")) {
+						holder.album.setText(R.string.unknown_album);
+					} else {
+						holder.album.setText(entry.trackInfo.album);
+					}
+				} else {
+					holder.cover.setImageResource(R.drawable.no_cover);
+					holder.track.setText(R.string.unknown_track);
+					holder.artist.setText(R.string.unknown_artist);
+					holder.album.setText(R.string.unknown_album);
+				}
+			} else {
+				int size = mPlaylist.size();
+				int requested = size + App.getPlaylistPreloadCount();
+				
+				if (requested >= mPlaylistCount) {
+					requested = mPlaylistCount;
+				}
+				
+				((TextView) convertView.findViewById(R.id.loading_playlist))
+						.setText(getString(R.string.loading_playlist,
+								size + 1, requested, mPlaylistCount));
+			}
 			
 			return convertView;
 		}
-		
 	}
 }

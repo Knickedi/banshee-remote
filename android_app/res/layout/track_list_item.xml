@@ -16,15 +16,6 @@
 		android:layout_height="40dip"
 		android:scaleType="fitCenter" />
 
-	<ImageView
-		android:layout_centerVertical="true"
-		android:layout_alignParentLeft="true"
-		android:layout_marginRight="10dip"
-		android:id="@+id/cover2"
-		android:layout_width="40dip"
-		android:layout_height="40dip"
-		android:scaleType="fitCenter" />
-
 	<TextView
 		android:id="@+id/song_title"
 		android:layout_alignParentRight="true"
