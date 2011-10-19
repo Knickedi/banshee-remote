@@ -105,10 +105,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		
 		if (mLoadingDismissed) {
 			findViewById(R.id.loading_progress).setVisibility(View.GONE);
-			
-			if (mPlaylist.size() == 0) {
-				findViewById(R.id.no_entries).setVisibility(View.VISIBLE);
-			}
+			refreshTitle();
 		}
 	}
 	
@@ -186,10 +183,9 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 			mPlaylistRequested = false;
 			mLoadingDismissed = true;
 			findViewById(R.id.loading_progress).setVisibility(View.GONE);
+			refreshTitle();
 			
-			if (mPlaylist.size() == 0) {
-				findViewById(R.id.no_entries).setVisibility(View.VISIBLE);
-			} else {
+			if (mPlaylist.size() != 0) {
 				mAdapter.notifyDataSetChanged();
 			}
 			break;
@@ -197,6 +193,11 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 	}
 	
 	// PRIVATE ====================================================================================
+	
+	private void refreshTitle() {
+		((TextView)findViewById(R.id.playlist_title)).setText(
+				getString(R.string.playlist) + " (" + mPlaylistCount + ")");
+	}
 	
 	private static class PlaylistEntry {
 		
