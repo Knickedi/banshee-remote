@@ -56,6 +56,14 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 			return;
 		}
 		
+		mOldCommandHandler = CurrentSongActivity.mConnection.getHandleCallback();
+		CurrentSongActivity.mConnection.updateHandleCallback(new OnBansheeCommandHandle() {
+			public void onBansheeCommandHandled(Command command, byte [] params, byte [] result) {
+				mOldCommandHandler.onBansheeCommandHandled(command, params, result);
+				PlaylistActivity.this.onBansheeCommandHandled(command, params, result);
+			}
+		});
+		
 		Object [] dataBefore = (Object []) getLastNonConfigurationInstance();
 		
 		if (dataBefore != null) {
@@ -68,15 +76,6 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		} else {
 			mLoadingDismissed = false;
 			mPlaylist = new ArrayList<PlaylistEntry>();
-			
-			mOldCommandHandler = CurrentSongActivity.mConnection.getHandleCallback();
-			CurrentSongActivity.mConnection.updateHandleCallback(new OnBansheeCommandHandle() {
-				public void onBansheeCommandHandled(Command command, byte [] params, byte [] result) {
-					mOldCommandHandler.onBansheeCommandHandled(command, params, result);
-					PlaylistActivity.this.onBansheeCommandHandled(command, params, result);
-				}
-			});
-			
 			mPlaylistRequested = true;
 			CurrentSongActivity.mConnection.sendCommand(Command.PLAYLIST,
 					Command.Playlist.encode(0, App.getPlaylistPreloadCount()));
@@ -143,7 +142,8 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		
 		switch (command) {
 		case PLAYER_STATUS:
-			if (CurrentSongActivity.mData.changeFlag != CurrentSongActivity.mPreviousData.changeFlag) {
+			if (CurrentSongActivity.mData.changeFlag != CurrentSongActivity.mPreviousData.changeFlag
+					|| CurrentSongActivity.mData.playing != CurrentSongActivity.mPreviousData.playing) {
 				mAdapter.notifyDataSetChanged();
 			}
 			break;
@@ -214,7 +214,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		public TextView track;
 		public TextView artist;
 		public TextView album;
-		public View playing;
+		public ImageView playing;
 	}
 	
 	private class PlaylistAdapter extends BaseAdapter {
@@ -276,7 +276,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 					holder.track = (TextView) convertView.findViewById(R.id.song_title);
 					holder.artist = (TextView) convertView.findViewById(R.id.song_artist);
 					holder.album = (TextView) convertView.findViewById(R.id.song_album);
-					holder.playing = convertView.findViewById(R.id.playing);
+					holder.playing = (ImageView) convertView.findViewById(R.id.playing);
 					convertView.setTag(holder);
 				} else if (type == 1) {
 					convertView = getLayoutInflater().inflate(R.layout.track_list_item_compact,
@@ -284,7 +284,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 					
 					ViewHolder holder = new ViewHolder();
 					holder.track = (TextView) convertView.findViewById(R.id.song_title);
-					holder.playing = convertView.findViewById(R.id.playing);
+					holder.playing = (ImageView) convertView.findViewById(R.id.playing);
 					convertView.setTag(holder);
 				} else {
 					convertView = getLayoutInflater()
@@ -354,9 +354,13 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 						holder.track.setText(entry.trackInfo.title);
 					}
 					
-					holder.playing.setVisibility(
-							entry.trackInfo.id == CurrentSongActivity.mData.currentSongId
-									? View.VISIBLE : View.GONE);
+					if (entry.trackInfo.id == CurrentSongActivity.mData.currentSongId) {
+						holder.playing.setVisibility(View.VISIBLE);
+						holder.playing.setImageResource(CurrentSongActivity.mData.playing
+								? R.drawable.ic_media_play : R.drawable.ic_media_pause);
+					} else {
+						holder.playing.setVisibility(View.GONE);
+					}
 				} else {
 					holder.track.setText(R.string.unknown_track);
 					holder.playing.setVisibility(View.GONE);
