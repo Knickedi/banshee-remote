@@ -1,10 +1,8 @@
 package de.viktorreiser.bansheeremote.activity;
 
 import android.app.Activity;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
@@ -87,8 +85,6 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	private CommandHandler mCommandHandler = new CommandHandler();
 	private StatusPollHandler mStatusPollHandler = new StatusPollHandler();
 	
-	private BroadcastReceiver mNetworkChangeListener;
-	
 	// OVERRIDDEN =================================================================================
 	
 	/**
@@ -102,7 +98,6 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		setupViewReferences();
 		setupPhoneStateListener();
 		setupViewControls();
-		setupNetworkChangeListener();
 		
 		mCoverAnimator = new CoverAnimator();
 		
@@ -150,8 +145,6 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		
-		unregisterReceiver(mNetworkChangeListener);
 		
 		if (mConnection != null) {
 			if (isFinishing()) {
@@ -479,23 +472,6 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				}
 			}
 		});
-	}
-	
-	/**
-	 * Setup network change listener.
-	 */
-	private void setupNetworkChangeListener() {
-		NetworkStateBroadcast.initialCheck(this);
-		
-		mNetworkChangeListener = new BroadcastReceiver() {
-			@Override
-			public void onReceive(Context context, Intent intent) {
-				// TODO react on network change / setup new connection on mobile reconnect
-			}
-		};
-		
-		registerReceiver(mNetworkChangeListener,
-				new IntentFilter(NetworkStateBroadcast.NETWORK_STATE_ACTION));
 	}
 	
 	/**

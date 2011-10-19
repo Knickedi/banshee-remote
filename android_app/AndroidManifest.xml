@@ -46,6 +46,13 @@
 			android:label="@string/banshee_settings"
 			android:theme="@android:style/Theme.NoTitleBar" />
 
+		<receiver android:name="de.viktorreiser.toolbox.content.WifiStateBroadcast">
+			<intent-filter>
+				<action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+				<action android:name="android.net.wifi.supplicant.CONNECTION_CHANGE" />
+			</intent-filter>
+		</receiver>
+
 	</application>
 
 </manifest> 
