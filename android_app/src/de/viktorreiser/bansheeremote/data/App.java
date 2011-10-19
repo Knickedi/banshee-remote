@@ -1,5 +1,6 @@
 package de.viktorreiser.bansheeremote.data;
 
+import de.viktorreiser.toolbox.content.NetworkStateBroadcast;
 import android.app.Application;
 import android.content.Context;
 import android.os.Environment;
@@ -135,5 +136,6 @@ public class App extends Application {
 	@Override
 	public void onCreate() {
 		mContext = getApplicationContext();
+		NetworkStateBroadcast.initialCheck(mContext);
 	}
 }
