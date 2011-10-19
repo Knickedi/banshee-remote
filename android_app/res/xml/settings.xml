@@ -19,6 +19,13 @@
 			android:title="@string/display_album_year"
 			android:summaryOn="@string/display_album_year_on"
 			android:summaryOff="@string/display_album_year_off" />
+			
+		<CheckBoxPreference
+			android:key="compactplaylist"
+			android:defaultValue="true"
+			android:title="@string/compact_playlist"
+			android:summaryOn="@string/compact_playlist_on"
+			android:summaryOff="@string/compact_playlist_off" />
 
 		<CheckBoxPreference
 			android:key="rememberdefault"

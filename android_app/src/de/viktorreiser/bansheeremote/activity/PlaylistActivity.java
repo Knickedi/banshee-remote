@@ -8,6 +8,7 @@ import java.util.Set;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.text.TextUtils.TruncateAt;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
@@ -184,6 +185,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		}
 		
 		public long id;
+		public boolean requestedTrackInfo = false;
 		public TrackInfo trackInfo;
 	}
 	
@@ -202,11 +204,35 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		}
 		
 		public int getItemViewType(int position) {
-			return position == mPlaylist.size() ? 1 : 0;
+			if (position == mPlaylist.size()) {
+				return 2;
+			} else if (App.isPlaylistCompact()) {
+				if (position == 0) {
+					return 0;
+				}
+				
+				PlaylistEntry entry = mPlaylist.get(position);
+				requestTrackInfo(entry);
+				
+				if (entry.trackInfo == null) {
+					return 0;
+				}
+				
+				PlaylistEntry previousEntry = mPlaylist.get(position - 1);
+				requestTrackInfo(previousEntry);
+				
+				if (previousEntry.trackInfo == null) {
+					return 0;
+				}
+				
+				return entry.trackInfo.albumId == previousEntry.trackInfo.albumId ? 1 : 0;
+			} else {
+				return 0;
+			}
 		}
 		
 		public int getViewTypeCount() {
-			return 2;
+			return 4;
 		}
 		
 		public Object getItem(int position) {
@@ -230,19 +256,23 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 					holder.artist = (TextView) convertView.findViewById(R.id.song_artist);
 					holder.album = (TextView) convertView.findViewById(R.id.song_album);
 					convertView.setTag(holder);
+				} else if (type == 1) {
+					convertView = getLayoutInflater().inflate(R.layout.track_list_item_compact, null);
+					
+					ViewHolder holder = new ViewHolder();
+					holder.track = (TextView) convertView.findViewById(R.id.song_title);
+					convertView.setTag(holder);
 				} else {
 					convertView = getLayoutInflater()
 							.inflate(R.layout.playlist_loading_item, null);
 				}
 			}
 			
+			ViewHolder holder = (ViewHolder) convertView.getTag();
+			
 			if (type == 0) {
-				ViewHolder holder = (ViewHolder) convertView.getTag();
 				PlaylistEntry entry = mPlaylist.get(position);
-				
-				if (entry.trackInfo == null) {
-					entry.trackInfo = BansheeDatabase.getTrackInfo(entry.id);
-				}
+				requestTrackInfo(entry);
 				
 				if (entry.trackInfo != null) {
 					if (CoverCache.coverExists(entry.trackInfo.artId)) {
@@ -269,22 +299,41 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 						holder.track.setText(entry.trackInfo.title);
 					}
 					
+					
 					if (entry.trackInfo.artist.equals("")) {
 						holder.artist.setText(R.string.unknown_artist);
 					} else {
 						holder.artist.setText(entry.trackInfo.artist);
 					}
 					
-					if (entry.trackInfo.album.equals("")) {
-						holder.album.setText(R.string.unknown_album);
+					String year = "";
+					
+					if (App.isDisplayAlbumYear() && entry.trackInfo.year >= 1000) {
+						year = " [" + entry.trackInfo.year + "]";
+						holder.album.setEllipsize(TruncateAt.MIDDLE);
 					} else {
-						holder.album.setText(entry.trackInfo.album);
+						holder.album.setEllipsize(TruncateAt.END);
+					}
+					
+					if (entry.trackInfo.album.equals("")) {
+						holder.album.setText(getString(R.string.unknown_album) + year);
+					} else {
+						holder.album.setText(entry.trackInfo.album + year);
 					}
 				} else {
 					holder.cover.setImageResource(R.drawable.no_cover);
 					holder.track.setText(R.string.unknown_track);
 					holder.artist.setText(R.string.unknown_artist);
 					holder.album.setText(R.string.unknown_album);
+				}
+			} else if (type == 1) {
+				PlaylistEntry entry = mPlaylist.get(position);
+				requestTrackInfo(entry);
+				
+				if (entry.trackInfo.title.equals("")) {
+					holder.track.setText(R.string.unknown_track);
+				} else {
+					holder.track.setText(entry.trackInfo.title);
 				}
 			} else {
 				int size = mPlaylist.size();
@@ -300,6 +349,13 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 			}
 			
 			return convertView;
+		}
+		
+		private void requestTrackInfo(PlaylistEntry entry) {
+			if (!entry.requestedTrackInfo) {
+				entry.requestedTrackInfo = true;
+				entry.trackInfo = BansheeDatabase.getTrackInfo(entry.id);
+			}
 		}
 	}
 }

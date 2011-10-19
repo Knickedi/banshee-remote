@@ -117,6 +117,16 @@ public class App extends Application {
 				.getInt("playlistfetchcount", 50);
 	}
 	
+	/**
+	 * Should a compact layout be used for the playlist.
+	 * 
+	 * @return {@code true} for a compact layout
+	 */
+	public static boolean isPlaylistCompact() {
+		return PreferenceManager.getDefaultSharedPreferences(mContext)
+				.getBoolean("compactplaylist", true);
+	}
+	
 	// OVERRIDDEN =================================================================================
 	
 	/**
