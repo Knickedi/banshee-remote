@@ -17,6 +17,7 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 import de.viktorreiser.bansheeremote.R;
 import de.viktorreiser.bansheeremote.data.App;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
@@ -43,6 +44,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 	private int mPlaylistCount = 0;
 	private boolean mPlaylistRequested;
 	private Set<String> mRequestedCovers = new HashSet<String>();
+	private boolean mDbOutOfDateHintShown = false;
 	
 	// OVERRIDDEN =================================================================================
 	
@@ -73,6 +75,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 			mPlaylistCount = (Integer) dataBefore[3];
 			mPlaylistRequested = (Boolean) dataBefore[4];
 			mRequestedCovers = (Set<String>) dataBefore[5];
+			mDbOutOfDateHintShown = (Boolean) dataBefore[6];
 		} else {
 			mLoadingDismissed = false;
 			mPlaylist = new ArrayList<PlaylistEntry>();
@@ -93,7 +96,8 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 			
 			public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
 					int totalItemCount) {
-				if (!mPlaylistRequested && firstVisibleItem + visibleItemCount + 5 >= mPlaylist.size()) {
+				if (!mPlaylistRequested
+						&& firstVisibleItem + visibleItemCount + 5 >= mPlaylist.size()) {
 					mPlaylistRequested = true;
 					CurrentSongActivity.mConnection.sendCommand(Command.PLAYLIST,
 							Command.Playlist.encode(
@@ -129,7 +133,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 	
 	public Object onRetainNonConfigurationInstance() {
 		return new Object [] {mOldCommandHandler, mPlaylist, mLoadingDismissed, mPlaylistCount,
-				mPlaylistRequested, mRequestedCovers};
+				mPlaylistRequested, mRequestedCovers, mDbOutOfDateHintShown};
 	}
 	
 	public void onBansheeCommandHandled(Command command, byte [] params, byte [] result) {
@@ -195,7 +199,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 	// PRIVATE ====================================================================================
 	
 	private void refreshTitle() {
-		((TextView)findViewById(R.id.playlist_title)).setText(
+		((TextView) findViewById(R.id.playlist_title)).setText(
 				getString(R.string.playlist) + " (" + mPlaylistCount + ")");
 	}
 	
@@ -388,6 +392,13 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 			if (!entry.requestedTrackInfo) {
 				entry.requestedTrackInfo = true;
 				entry.trackInfo = BansheeDatabase.getTrackInfo(entry.id);
+				
+				if (!mDbOutOfDateHintShown && entry.trackInfo == null && BansheeDatabase.isOpen()
+						&& App.isShowDbOutOfDateHint()) {
+					mDbOutOfDateHintShown = true;
+					Toast.makeText(PlaylistActivity.this, R.string.out_of_data_hint_db,
+							Toast.LENGTH_SHORT).show();
+				}
 			}
 		}
 	}

@@ -26,6 +26,13 @@
 			android:title="@string/compact_playlist"
 			android:summaryOn="@string/compact_playlist_on"
 			android:summaryOff="@string/compact_playlist_off" />
+			
+		<CheckBoxPreference
+			android:key="dboutofdatehint"
+			android:defaultValue="true"
+			android:title="@string/db_out_of_date_hint"
+			android:summaryOn="@string/db_out_of_date_hint_on"
+			android:summaryOff="@string/db_out_of_date_hint_off" />
 
 		<CheckBoxPreference
 			android:key="rememberdefault"

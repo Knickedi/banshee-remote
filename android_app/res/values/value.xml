@@ -25,6 +25,7 @@
 	<string name="error_writing_sync_db">Failed to write database to SD card or it is corrupted!</string>
 	<string name="updated_sync_db">Database successfully synchronized</string>
 	<string name="need_sync_db">Synchronized database needed...</string>
+	<string name="out_of_data_hint_db">Unknown track detected. A database synchronization might fix it...</string>
 	<string name="playlist">Playlist</string>
 	<string name="no_playlist">No playlist available or loaded...</string>
 	<string name="loading_playlist">Loading %1$s to %2$s of %3$s tracks...</string>
@@ -44,6 +45,9 @@
 	<string name="compact_playlist">Compact playlist layout</string>
 	<string name="compact_playlist_on">If previous playlist track is from same album all following will only display the track title</string>
 	<string name="compact_playlist_off">Every playlist item will have a cover, artist name and album title</string>
+	<string name="db_out_of_date_hint">Database hint</string>
+	<string name="db_out_of_date_hint_on">When a unknown track is detected you will get a hint that your database might be outdated</string>
+	<string name="db_out_of_date_hint_off">Hints of a possibly outdated database will be suppressed (not recommended)</string>
 	<string name="display_song_genre">Show song genre</string>
 	<string name="display_song_genre_on">Genre of song (if available) will be shown after song title</string>
 	<string name="display_song_genre_off">Genre will never be shown</string>

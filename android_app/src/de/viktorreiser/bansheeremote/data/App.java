@@ -128,6 +128,16 @@ public class App extends Application {
 				.getBoolean("compactplaylist", true);
 	}
 	
+	/**
+	 * Should possible database out of date hint be shown?
+	 * 
+	 * @return {@code false} will suppress the hint
+	 */
+	public static boolean isShowDbOutOfDateHint() {
+		return PreferenceManager.getDefaultSharedPreferences(mContext)
+				.getBoolean("dboutofdatehint", true);
+	}
+	
 	// OVERRIDDEN =================================================================================
 	
 	/**

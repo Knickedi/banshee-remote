@@ -790,6 +790,11 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 					updateComplete(false);
 					handleCoverStatus();
 				} else {
+					if (BansheeDatabase.isOpen() && App.isShowDbOutOfDateHint()) {
+						Toast.makeText(CurrentSongActivity.this, R.string.out_of_data_hint_db,
+								Toast.LENGTH_SHORT).show();
+					}
+					
 					mConnection.sendCommand(Command.SONG_INFO, null);
 				}
 			}
