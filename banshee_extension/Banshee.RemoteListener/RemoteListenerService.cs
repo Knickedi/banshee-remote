@@ -849,8 +849,7 @@ namespace Banshee.RemoteListener
 			}
 			
 			if (readBytes > 2) {
-				// FIXME remove comment if shuffle bug is fixed
-				// SetupShuffleMode(_buffer[2] & 0xf);
+				SetupShuffleMode(_buffer[2] & 0xf);
 			}
 			
 			if (readBytes > 3) {

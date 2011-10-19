@@ -503,14 +503,13 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			}
 		});
 		
-		// FIXME uncomment if bug fixed: https://bugzilla.gnome.org/show_bug.cgi?id=661322
-		// View shuffleClick = mShuffle2 != null ? findViewById(R.id.shuffle_container) : mShuffle;
-		// shuffleClick.setOnClickListener(new OnClickListener() {
-		// public void onClick(View v) {
-		// mConnection.sendCommand(Command.PLAYER_STATUS,
-		// Command.PlayerStatus.encodeShuffleToggle(null));
-		// }
-		// });
+		View shuffleClick = mShuffle2 != null ? findViewById(R.id.shuffle_container) : mShuffle;
+		shuffleClick.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				mConnection.sendCommand(Command.PLAYER_STATUS,
+						Command.PlayerStatus.encodeShuffleToggle(null));
+			}
+		});
 		
 		mSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromTouch) {
