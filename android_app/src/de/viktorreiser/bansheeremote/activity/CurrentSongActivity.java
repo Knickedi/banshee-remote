@@ -46,12 +46,114 @@ import de.viktorreiser.toolbox.content.NetworkStateBroadcast;
  */
 public class CurrentSongActivity extends Activity implements OnBansheeServerCheck {
 	
-	// PUBLIC =====================================================================================
+	// PACKAGE =====================================================================================
+	
+	/**
+	 * Simple data container for server state.
+	 * 
+	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+	 */
+	class BansheeData {
+		boolean playing = false;
+		int volume = -1;
+		Shuffle shuffle = Shuffle.UNKNOWN;
+		Repeat repeat = Repeat.UNKNOWN;
+		String song = "";
+		String artist = "";
+		String album = "";
+		String genre = "";
+		int year = 0;
+		String artId = "";
+		long totalTime = -1;
+		long currentTime = -1;
+		long currentSongId = 0;
+		int changeFlag = 0;
+		
+		public void copyFrom(BansheeData data) {
+			playing = data.playing;
+			volume = data.volume;
+			shuffle = data.shuffle;
+			repeat = data.repeat;
+			song = data.song;
+			artist = data.artist;
+			album = data.album;
+			genre = data.genre;
+			year = data.year;
+			artId = data.artId;
+			totalTime = data.totalTime;
+			currentTime = data.currentTime;
+			currentSongId = data.currentSongId;
+			changeFlag = data.changeFlag;
+		}
+	}
+	
+	/**
+	 * This class is responsible for server status polls.
+	 * 
+	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+	 */
+	class StatusPollHandler extends Handler {
+		
+		private final int MESSAGE_GET_STATUS = 1;
+		private final int MESSAGE_UPDATE_POSITION = 2;
+		
+		private boolean mmRunning = false;
+		private long mmSeekUpdateStart = 0;
+		
+		
+		public void start() {
+			mmRunning = true;
+			sendEmptyMessage(MESSAGE_GET_STATUS);
+		}
+		
+		public void stop() {
+			mmRunning = false;
+			removeMessages(MESSAGE_GET_STATUS);
+			removeMessages(MESSAGE_UPDATE_POSITION);
+		}
+		
+		public void updatePseudoPoll() {
+			removeMessages(MESSAGE_UPDATE_POSITION);
+			
+			if (mData.playing) {
+				long interval = App.getPollInterval(NetworkStateBroadcast.isWifiConnected());
+				
+				if (interval > 1000) {
+					mmSeekUpdateStart = System.currentTimeMillis();
+					sendEmptyMessageDelayed(MESSAGE_UPDATE_POSITION, 1000);
+				}
+			}
+		}
+		
+		public void handleMessage(Message msg) {
+			switch (msg.what) {
+			case MESSAGE_GET_STATUS:
+				mConnection.sendCommand(Command.PLAYER_STATUS, null);
+				sendEmptyMessageDelayed(MESSAGE_GET_STATUS,
+						App.getPollInterval(NetworkStateBroadcast.isWifiConnected()));
+				break;
+			
+			case MESSAGE_UPDATE_POSITION:
+				if (mmRunning) {
+					mData.currentTime += (System.currentTimeMillis() - mmSeekUpdateStart);
+					
+					if (mData.totalTime > 0 && mData.currentTime > mData.totalTime) {
+						mConnection.sendCommand(Command.PLAYER_STATUS, null);
+					} else {
+						mCommandHandler.updateSeekData(false);
+						updatePseudoPoll();
+					}
+				}
+				break;
+			}
+		}
+	}
 	
 	// accessed by other activities
 	static BansheeConnection mConnection = null;
 	static BansheeData mData;
 	static BansheeData mPreviousData;
+	static StatusPollHandler mStatusPollHandler;
 	
 	// PIRVATE ====================================================================================
 	
@@ -83,7 +185,6 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	private BansheeServerCheckTask mCheckTask;
 	private CoverAnimator mCoverAnimator;
 	private CommandHandler mCommandHandler = new CommandHandler();
-	private StatusPollHandler mStatusPollHandler = new StatusPollHandler();
 	
 	// OVERRIDDEN =================================================================================
 	
@@ -94,6 +195,8 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	protected void onCreate(Bundle bundle) {
 		super.onCreate(bundle);
 		setContentView(R.layout.current_song);
+
+		mStatusPollHandler = new StatusPollHandler();
 		
 		setupViewReferences();
 		setupPhoneStateListener();
@@ -145,6 +248,8 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
+
+		mStatusPollHandler = null;
 		
 		if (mConnection != null) {
 			if (isFinishing()) {
@@ -491,46 +596,6 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		}
 	}
 	
-	
-	/**
-	 * Simple data container for server state.
-	 * 
-	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
-	 */
-	private class BansheeData {
-		boolean playing = false;
-		int volume = -1;
-		Shuffle shuffle = Shuffle.UNKNOWN;
-		Repeat repeat = Repeat.UNKNOWN;
-		String song = "";
-		String artist = "";
-		String album = "";
-		String genre = "";
-		int year = 0;
-		String artId = "";
-		long totalTime = -1;
-		long currentTime = -1;
-		long currentSongId = 0;
-		int changeFlag = 0;
-		
-		public void copyFrom(BansheeData data) {
-			playing = data.playing;
-			volume = data.volume;
-			shuffle = data.shuffle;
-			repeat = data.repeat;
-			song = data.song;
-			artist = data.artist;
-			album = data.album;
-			genre = data.genre;
-			year = data.year;
-			artId = data.artId;
-			totalTime = data.totalTime;
-			currentTime = data.currentTime;
-			currentSongId = data.currentSongId;
-			changeFlag = data.changeFlag;
-		}
-	}
-	
 	/**
 	 * This class will handle all incoming server responses and so UI changes.
 	 * 
@@ -827,68 +892,6 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				return (seconds / 60) + ":" + prependedZero + (seconds % 60);
 			} else {
 				return "0:" + prependedZero + seconds;
-			}
-		}
-	}
-	
-	/**
-	 * This class is responsible for server status polls.
-	 * 
-	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
-	 */
-	private class StatusPollHandler extends Handler {
-		
-		private final int MESSAGE_GET_STATUS = 1;
-		private final int MESSAGE_UPDATE_POSITION = 2;
-		
-		private boolean mmRunning = false;
-		private long mmSeekUpdateStart = 0;
-		
-		
-		public void start() {
-			mmRunning = true;
-			sendEmptyMessage(MESSAGE_GET_STATUS);
-		}
-		
-		public void stop() {
-			mmRunning = false;
-			removeMessages(MESSAGE_GET_STATUS);
-			removeMessages(MESSAGE_UPDATE_POSITION);
-		}
-		
-		public void updatePseudoPoll() {
-			removeMessages(MESSAGE_UPDATE_POSITION);
-			
-			if (mData.playing) {
-				long interval = App.getPollInterval(NetworkStateBroadcast.isWifiConnected());
-				
-				if (interval > 1000) {
-					mmSeekUpdateStart = System.currentTimeMillis();
-					sendEmptyMessageDelayed(MESSAGE_UPDATE_POSITION, 1000);
-				}
-			}
-		}
-		
-		public void handleMessage(Message msg) {
-			switch (msg.what) {
-			case MESSAGE_GET_STATUS:
-				mConnection.sendCommand(Command.PLAYER_STATUS, null);
-				sendEmptyMessageDelayed(MESSAGE_GET_STATUS,
-						App.getPollInterval(NetworkStateBroadcast.isWifiConnected()));
-				break;
-			
-			case MESSAGE_UPDATE_POSITION:
-				if (mmRunning) {
-					mData.currentTime += (System.currentTimeMillis() - mmSeekUpdateStart);
-					
-					if (mData.totalTime > 0 && mData.currentTime > mData.totalTime) {
-						mConnection.sendCommand(Command.PLAYER_STATUS, null);
-					} else {
-						mCommandHandler.updateSeekData(false);
-						updatePseudoPoll();
-					}
-				}
-				break;
 			}
 		}
 	}

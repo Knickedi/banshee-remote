@@ -122,6 +122,15 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		}
 	}
 	
+	@Override
+	public void onResume() {
+		super.onResume();
+		
+		if (CurrentSongActivity.mConnection != null) {
+			CurrentSongActivity.mStatusPollHandler.start();
+		}
+	}
+	
 	public Object onRetainNonConfigurationInstance() {
 		return new Object [] {mOldCommandHandler, mPlaylist, mLoadingDismissed, mPlaylistCount,
 				mPlaylistRequested, mRequestedCovers};
@@ -132,7 +141,14 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 			return;
 		}
 		
-		if (command == Command.COVER) {
+		switch (command) {
+		case PLAYER_STATUS:
+			if (CurrentSongActivity.mData.changeFlag != CurrentSongActivity.mPreviousData.changeFlag) {
+				mAdapter.notifyDataSetChanged();
+			}
+			break;
+		
+		case COVER:
 			String artId = Command.Cover.getId(params);
 			Bitmap cover = CoverCache.getCover(artId);
 			
@@ -142,12 +158,15 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 				for (int i = 0; i < childCount; i++) {
 					ViewHolder holder = (ViewHolder) mList.getChildAt(i).getTag();
 					
-					if (holder != null && artId.equals(holder.cover.getTag())) {
+					if (holder != null && holder.cover != null
+							&& artId.equals(holder.cover.getTag())) {
 						holder.cover.setImageBitmap(cover);
 					}
 				}
 			}
-		} else if (command == Command.PLAYLIST) {
+			break;
+		
+		case PLAYLIST:
 			if (result != null) {
 				int count = Command.Playlist.decodeCount(result);
 				
@@ -173,6 +192,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 			} else {
 				mAdapter.notifyDataSetChanged();
 			}
+			break;
 		}
 	}
 	
@@ -194,6 +214,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		public TextView track;
 		public TextView artist;
 		public TextView album;
+		public View playing;
 	}
 	
 	private class PlaylistAdapter extends BaseAdapter {
@@ -255,12 +276,15 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 					holder.track = (TextView) convertView.findViewById(R.id.song_title);
 					holder.artist = (TextView) convertView.findViewById(R.id.song_artist);
 					holder.album = (TextView) convertView.findViewById(R.id.song_album);
+					holder.playing = convertView.findViewById(R.id.playing);
 					convertView.setTag(holder);
 				} else if (type == 1) {
-					convertView = getLayoutInflater().inflate(R.layout.track_list_item_compact, null);
+					convertView = getLayoutInflater().inflate(R.layout.track_list_item_compact,
+							null);
 					
 					ViewHolder holder = new ViewHolder();
 					holder.track = (TextView) convertView.findViewById(R.id.song_title);
+					holder.playing = convertView.findViewById(R.id.playing);
 					convertView.setTag(holder);
 				} else {
 					convertView = getLayoutInflater()
@@ -277,7 +301,6 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 				if (entry.trackInfo != null) {
 					if (CoverCache.coverExists(entry.trackInfo.artId)) {
 						holder.cover.setImageBitmap(CoverCache.getCover(entry.trackInfo.artId));
-						
 						holder.cover.setTag(null);
 					} else {
 						holder.cover.setImageResource(R.drawable.no_cover);
@@ -292,13 +315,6 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 						
 						holder.cover.setTag(entry.trackInfo.artId);
 					}
-					
-					if (entry.trackInfo.title.equals("")) {
-						holder.track.setText(R.string.unknown_track);
-					} else {
-						holder.track.setText(entry.trackInfo.title);
-					}
-					
 					
 					if (entry.trackInfo.artist.equals("")) {
 						holder.artist.setText(R.string.unknown_artist);
@@ -322,20 +338,32 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 					}
 				} else {
 					holder.cover.setImageResource(R.drawable.no_cover);
-					holder.track.setText(R.string.unknown_track);
 					holder.artist.setText(R.string.unknown_artist);
 					holder.album.setText(R.string.unknown_album);
 				}
-			} else if (type == 1) {
+			}
+			
+			if (type == 0 || type == 1) {
 				PlaylistEntry entry = mPlaylist.get(position);
 				requestTrackInfo(entry);
 				
-				if (entry.trackInfo.title.equals("")) {
-					holder.track.setText(R.string.unknown_track);
+				if (entry.trackInfo != null) {
+					if (entry.trackInfo.title.equals("")) {
+						holder.track.setText(R.string.unknown_track);
+					} else {
+						holder.track.setText(entry.trackInfo.title);
+					}
+					
+					holder.playing.setVisibility(
+							entry.trackInfo.id == CurrentSongActivity.mData.currentSongId
+									? View.VISIBLE : View.GONE);
 				} else {
-					holder.track.setText(entry.trackInfo.title);
+					holder.track.setText(R.string.unknown_track);
+					holder.playing.setVisibility(View.GONE);
 				}
-			} else {
+			}
+			
+			if (type == 2) {
 				int size = mPlaylist.size();
 				int requested = size + App.getPlaylistPreloadCount();
 				
