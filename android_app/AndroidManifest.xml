@@ -3,8 +3,8 @@
 <manifest
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	package="de.viktorreiser.bansheeremote"
-	android:versionName="4.0.1"
-	android:versionCode="12">
+	android:versionName="4.0.2"
+	android:versionCode="13">
 
 	<uses-sdk android:minSdkVersion="4" />
 
