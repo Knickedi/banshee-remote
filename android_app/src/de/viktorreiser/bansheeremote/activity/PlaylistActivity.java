@@ -93,7 +93,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 			
 			public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
 					int totalItemCount) {
-				if (!mPlaylistRequested && firstVisibleItem + visibleItemCount == mPlaylist.size()) {
+				if (!mPlaylistRequested && firstVisibleItem + visibleItemCount + 5 >= mPlaylist.size()) {
 					mPlaylistRequested = true;
 					CurrentSongActivity.mConnection.sendCommand(Command.PLAYLIST,
 							Command.Playlist.encode(
