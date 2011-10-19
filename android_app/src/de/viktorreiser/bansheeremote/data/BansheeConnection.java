@@ -374,8 +374,8 @@ public class BansheeConnection {
 		 * <br>
 		 * {@code null} request will give you a {@code 0} byte response!<br>
 		 * <br>
-		 * Use {@link #encodeFileSize()} and {@link #decodeFileSize(byte[])} to request the database
-		 * size in bytes. You will get {@code 0} when there's no database available<br>
+		 * Use {@link #encodeFileTimestamp()} and {@link #decodeFileTimestamp(byte[])} to request
+		 * the database size in bytes. You will get {@code 0} when there's no database available<br>
 		 * <br>
 		 * Use {@link #encodeFile()} to get the database as response encoded as byte array. You will
 		 * get a single byte wit the value {@code 0} when the database is not available.
@@ -385,7 +385,7 @@ public class BansheeConnection {
 		 */
 		public static class SyncDatabase {
 			
-			public static byte [] encodeFileSize() {
+			public static byte [] encodeFileTimestamp() {
 				return new byte [] {1};
 			}
 			
@@ -393,7 +393,7 @@ public class BansheeConnection {
 				return new byte [] {2};
 			}
 			
-			public static boolean isFileSizeRequest(byte [] params) {
+			public static boolean isFileTimestamp(byte [] params) {
 				return params[0] == 1;
 			}
 			
@@ -401,7 +401,7 @@ public class BansheeConnection {
 				return params[0] == 2;
 			}
 			
-			public static long decodeFileSize(byte [] response) {
+			public static long decodeFileTimestamp(byte [] response) {
 				return response.length < 4 ? 0 : decodeInt(response, 0);
 			}
 		}

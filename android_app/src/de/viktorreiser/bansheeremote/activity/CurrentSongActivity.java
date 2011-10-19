@@ -266,7 +266,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		case 2:
 			if (!mDatabaseSyncRunning) {
 				mConnection.sendCommand(Command.SYNC_DATABASE,
-						Command.SyncDatabase.encodeFileSize());
+						Command.SyncDatabase.encodeFileTimestamp());
 			}
 			return true;
 			
@@ -698,7 +698,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				break;
 			
 			case SYNC_DATABASE:
-				if (Command.SyncDatabase.isFileSizeRequest(params)) {
+				if (Command.SyncDatabase.isFileTimestamp(params)) {
 					handleSyncDatabaseFileSize(response);
 				} else if (Command.SyncDatabase.isFileRequest(params)) {
 					handleSyncDatabaseFile(response);
@@ -793,13 +793,13 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				return;
 			}
 			
-			long dbSize = Command.SyncDatabase.decodeFileSize(response);
+			long timestamp = Command.SyncDatabase.decodeFileTimestamp(response);
 			
-			if (dbSize == 0) {
+			if (timestamp == 0) {
 				Toast.makeText(CurrentSongActivity.this, R.string.no_sync_db,
 						Toast.LENGTH_LONG).show();
 			} else {
-				if (BansheeDatabase.isDatabaseUpToDate(mConnection.getServer(), dbSize)) {
+				if (BansheeDatabase.isDatabaseUpToDate(mConnection.getServer(), timestamp)) {
 					Toast.makeText(CurrentSongActivity.this, R.string.up_to_date_sync_db,
 							Toast.LENGTH_SHORT).show();
 				} else {

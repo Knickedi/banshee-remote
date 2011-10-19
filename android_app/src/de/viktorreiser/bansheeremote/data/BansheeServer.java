@@ -29,7 +29,7 @@ public class BansheeServer {
 	private String mHost;
 	private int mPort;
 	long mSameHostId = -1;
-	long mDbSize = -1;
+	long mDbTimestamp = -1;
 	
 	// PUBLIC =====================================================================================
 	
@@ -116,14 +116,14 @@ public class BansheeServer {
 		List<BansheeServer> server = new ArrayList<BansheeServer>();
 		
 		Cursor cursor = getDb().query(DB.TABLE_NAME,
-				new String [] {DB.ID, DB.HOST, DB.PORT, DB.SAME_ID, DB.DB_SIZE},
+				new String [] {DB.ID, DB.HOST, DB.PORT, DB.SAME_ID, DB.DB_TIMESTAMP},
 				null, null, null, null, null);
 		
 		while (cursor.moveToNext()) {
 			BansheeServer s = new BansheeServer(cursor.getString(1), cursor.getInt(2));
 			s.mId = cursor.getLong(0);
 			s.mSameHostId = cursor.getLong(3);
-			s.mDbSize = cursor.getLong(4);
+			s.mDbTimestamp = cursor.getLong(4);
 			server.add(s);
 		}
 		
@@ -142,7 +142,7 @@ public class BansheeServer {
 	 */
 	public static BansheeServer getServer(long id) {
 		Cursor cursor = getDb().query(DB.TABLE_NAME,
-				new String[] {DB.ID, DB.HOST, DB.PORT, DB.SAME_ID, DB.DB_SIZE},
+				new String [] {DB.ID, DB.HOST, DB.PORT, DB.SAME_ID, DB.DB_TIMESTAMP},
 				DB.ID + "=" + id, null, null, null, null);
 		
 		try {
@@ -150,7 +150,7 @@ public class BansheeServer {
 				BansheeServer s = new BansheeServer(cursor.getString(1), cursor.getInt(2));
 				s.mId = cursor.getLong(0);
 				s.mSameHostId = cursor.getLong(3);
-				s.mDbSize = cursor.getLong(4);
+				s.mDbTimestamp = cursor.getLong(4);
 				return s;
 			} else {
 				return null;
@@ -204,14 +204,14 @@ public class BansheeServer {
 		
 		Cursor cursor = getDb().query(
 				DB.TABLE_NAME,
-				new String [] {DB.ID, DB.HOST, DB.PORT, DB.SAME_ID, DB.DB_SIZE},
+				new String [] {DB.ID, DB.HOST, DB.PORT, DB.SAME_ID, DB.DB_TIMESTAMP},
 				DB.DEFAULT + "!=0", null, null, null, null, "1");
 		
 		if (cursor.moveToNext()) {
 			s = new BansheeServer(cursor.getString(1), cursor.getInt(2));
 			s.mId = cursor.getLong(0);
 			s.mSameHostId = cursor.getLong(3);
-			s.mDbSize = cursor.getLong(4);
+			s.mDbTimestamp = cursor.getLong(4);
 		}
 		
 		cursor.close();
@@ -251,7 +251,7 @@ public class BansheeServer {
 		}
 		
 		ContentValues v = new ContentValues();
-		v.put(DB.DB_SIZE, server.mDbSize);
+		v.put(DB.DB_TIMESTAMP, server.mDbTimestamp);
 		v.put(DB.HOST, server.mHost);
 		v.put(DB.PORT, server.mPort);
 		v.put(DB.SAME_ID, server.mSameHostId);
@@ -296,7 +296,7 @@ public class BansheeServer {
 	private static class BasheeDbHelper extends SQLiteOpenHelper {
 		
 		public BasheeDbHelper(Context context) {
-			super(context, "bansheeserver.db", null, 1);
+			super(context, "bansheeserver.db", null, 2);
 		}
 		
 		
@@ -307,14 +307,30 @@ public class BansheeServer {
 					+ DB.HOST + " TEXT NOT NULL,\n"
 					+ DB.PORT + " INTEGER NOT NULL,\n"
 					+ DB.SAME_ID + " INTEGER NOT NULL,\n"
-					+ DB.DB_SIZE + " INTEGER NOT NULL DEFAULT 0,\n"
+					+ DB.DB_TIMESTAMP + " INTEGER NOT NULL DEFAULT 0,\n"
 					+ DB.DEFAULT + " INTEGER NOT NULL DEFAULT 0\n"
 					+ ");");
 		}
 		
 		@Override
 		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-			
+			// from 1 to 2
+			//    dbSize changed to dbTimestamp - just discard old value
+			//    smaeid corrected to sameId
+			try {
+				db.beginTransaction();
+				db.execSQL("ALTER TABLE " + DB.TABLE_NAME 
+						+ " RENAME TO tmp" + DB.TABLE_NAME + ";");
+				onCreate(db);
+				db.execSQL("INSERT INTO " + DB.TABLE_NAME + "(" + DB.ID + "," + DB.HOST + ","
+						+ DB.PORT + "," + DB.DEFAULT + "," + DB.SAME_ID + ") "
+						+ "SELECT " + DB.ID + "," + DB.HOST + "," + DB.PORT + "," + DB.DEFAULT
+						+ ",smaeid FROM tmp" + DB.TABLE_NAME + ";");
+				db.execSQL("DROP TABLE tmp" + DB.TABLE_NAME + ";");
+				db.setTransactionSuccessful();
+			} finally {
+				db.endTransaction();
+			}
 		}
 	}
 	
@@ -328,8 +344,8 @@ public class BansheeServer {
 		public static final String ID = "_id";
 		public static final String HOST = "host";
 		public static final String PORT = "port";
-		public static final String SAME_ID = "smaeid";
-		public static final String DB_SIZE = "dbsize";
+		public static final String SAME_ID = "sameId";
+		public static final String DB_TIMESTAMP = "dbTimestamp";
 		public static final String DEFAULT = "isDefault";
 	}
 }

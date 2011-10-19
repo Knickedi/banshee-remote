@@ -727,6 +727,8 @@ namespace Banshee.RemoteListener
 			}
 			
 			try {
+				_dbCompressTime = Timestamp();
+				
 				File.Delete(DatabasePath(true));
 				File.Delete(DatabasePath(true) + "-journal");
 				File.Copy(DatabasePath(false), DatabasePath(true));
@@ -928,12 +930,7 @@ namespace Banshee.RemoteListener
 						return IntToByte((uint) new FileInfo(DatabasePath(true)).Length);
 					} else {
 						CompressDatabase();
-						
-						if (File.Exists(DatabasePath(true))) {
-							return IntToByte((uint) new FileInfo(DatabasePath(true)).Length);
-						} else {
-							return IntToByte(0);
-						}
+						return IntToByte(File.Exists(DatabasePath(true)) ? (uint) _dbCompressTime : 0);
 					}
 				} else if (_buffer[1] == 2) {
 					if (File.Exists(DatabasePath(true))) {

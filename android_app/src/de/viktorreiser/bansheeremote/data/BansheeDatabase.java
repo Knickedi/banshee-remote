@@ -42,12 +42,12 @@ public class BansheeDatabase {
 	 * 
 	 * @param server
 	 *            banshee server to check
-	 * @param dbSize
-	 *            size of new database in bytes
+	 * @param timestamp
+	 *            timestamp
 	 * 
 	 * @return {@code true} if database exists and has the same byte size
 	 */
-	public static boolean isDatabaseUpToDate(BansheeServer server, long dbSize) {
+	public static boolean isDatabaseUpToDate(BansheeServer server, long timestamp) {
 		long id = server.mSameHostId;
 		BansheeServer same = BansheeServer.getServer(id);
 		
@@ -63,7 +63,7 @@ public class BansheeDatabase {
 		if (!new File(App.BANSHEE_PATH + id + ".db").exists()) {
 			return false;
 		} else {
-			return dbSize == server.mDbSize;
+			return timestamp == server.mDbTimestamp;
 		}
 	}
 	
@@ -109,10 +109,10 @@ public class BansheeDatabase {
 			}
 			
 			if (same == null) {
-				server.mDbSize = dbData.length;
+				server.mDbTimestamp = dbData.length;
 				BansheeServer.updateServer(server);
 			} else {
-				same.mDbSize = dbData.length;
+				same.mDbTimestamp = dbData.length;
 				BansheeServer.updateServer(same);
 			}
 			
