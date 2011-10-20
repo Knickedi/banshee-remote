@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Addin 
     id="Banshee.RemoteListener"
-    version="2.0"
+    version="1.0"
     compatVersion="1.0"
     copyright=""
     name="Remote Listener"
     category="Remote Control"
     description="Remote Listener allows controlling Banshee from another device on your local network."
-    author="Viktor Reiser/Nikitas Stamatopoulos/Kristopher Dick"
-    url="https://launchpad.net/banshee-remote-plugin"
+    author="Viktor Reiser / Nikitas Stamatopoulos / Kristopher Dick"
+    url="https://github.com/Knickedi/banshee-remote"
     defaultEnabled="true">
 
   <Dependencies>
