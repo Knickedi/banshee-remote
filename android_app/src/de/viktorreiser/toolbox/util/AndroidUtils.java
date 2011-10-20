@@ -4,8 +4,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import android.content.Context;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.net.ConnectivityManager;
@@ -31,7 +29,6 @@ public class AndroidUtils {
 	
 	// PRIVATE ====================================================================================
 	
-	private static String mSQLiteVersion = null;
 	private static Rect mStatusBarRect = new Rect();
 	private static int [] mLocation = new int [2];
 	private static Field mFlingEndField = null;
@@ -219,34 +216,6 @@ public class AndroidUtils {
 	
 	
 	/**
-	 * Get installed SQLite version as string.
-	 * 
-	 * @return installed SQLite version as string (e.g. {@code "3.5.9"})
-	 */
-	public static String getSQLiteVersion() {
-		if (mSQLiteVersion == null) {
-			SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(":memory:", null);
-			Cursor cursor = db.rawQuery("select sqlite_version() AS sqlite_version", null);
-			
-			mSQLiteVersion = "";
-			
-			while (cursor.moveToNext()) {
-				mSQLiteVersion += "." + cursor.getString(0);
-			}
-			
-			if (mSQLiteVersion.startsWith(".")) {
-				mSQLiteVersion = mSQLiteVersion.substring(1);
-			}
-			
-			cursor.close();
-			db.close();
-		}
-		
-		return mSQLiteVersion;
-	}
-	
-	
-	/**
 	 * Convert a DIP value to pixel.
 	 * 
 	 * @param context
@@ -286,9 +255,12 @@ public class AndroidUtils {
 	 * 
 	 * @return height of status bar in pixel
 	 */
-	public static int getTitleBarHeight(Window window) {
-		return getStatusBarHeight(window) - window
-				.findViewById(Window.ID_ANDROID_CONTENT).getMeasuredHeight();
+	public static int getTitleBarHeight(View view) {
+		view.getWindowVisibleDisplayFrame(mStatusBarRect);
+		return mStatusBarRect.top;
+		
+//		return getStatusBarHeight(window) - window
+//				.findViewById(Window.ID_ANDROID_CONTENT).getMeasuredHeight();
 	}
 	
 	/**
@@ -303,7 +275,14 @@ public class AndroidUtils {
 	 * @return offset to top in pixel
 	 */
 	public static int getContentOffsetFromTop(View view) {
-		return view.getRootView().findViewById(Window.ID_ANDROID_CONTENT).getTop();
+		int offset = view.getRootView().findViewById(Window.ID_ANDROID_CONTENT).getTop();
+		
+		if (offset == 0) {
+			view.getWindowVisibleDisplayFrame(mStatusBarRect);
+			offset = mStatusBarRect.top;
+		}
+		
+		return offset;
 	}
 	
 	/**

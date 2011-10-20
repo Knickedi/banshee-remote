@@ -8,6 +8,7 @@ import android.view.animation.Interpolator;
 import de.viktorreiser.bansheeremote.R;
 import de.viktorreiser.toolbox.content.NetworkStateBroadcast;
 import de.viktorreiser.toolbox.util.AndroidUtils;
+import de.viktorreiser.toolbox.util.L;
 import de.viktorreiser.toolbox.widget.HiddenQuickActionSetup;
 
 /**
@@ -189,5 +190,10 @@ public class App extends Application {
 	public void onCreate() {
 		mContext = getApplicationContext();
 		NetworkStateBroadcast.initialCheck(mContext);
+		
+		L.setGlobalTag("Banshee Remote");
+		L.setLogLevel(L.LVL_VERBOSE);
+		L.setLogTraceLevel(L.LVL_VERBOSE);
+		L.setLogTraceFormat(true, false, true);
 	}
 }
