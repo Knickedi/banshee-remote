@@ -49,6 +49,14 @@ namespace Banshee.RemoteListener
 		private static int _PREVIOUS_TRACK_OFFSET = 15;
 		
 		/// <summary>
+		/// Banshee is not understanding that another track is chosen to be played and reports that
+		/// player engine has stopped playing for a while. This constant is correcting this
+		/// behavior and tells that playing status report should be forced for the given amount of
+		/// milliseconds.
+		/// </summary>
+		private static int _PLAY_TIMEOUT = 200;
+		
+		/// <summary>
 		/// Volume step down / up steps.
 		/// </summary>
 		private int [] _VolumeSteps = new int [] {
@@ -71,7 +79,6 @@ namespace Banshee.RemoteListener
 				PlaybackRepeatMode.RepeatAll
 		};
 		
-		
 		/// <summary>
 		/// Remote control socket listener.
 		/// </summary>
@@ -86,6 +93,11 @@ namespace Banshee.RemoteListener
 		/// Timestamp of last database compression
 		/// </summary>
 		private int _dbCompressTime = 0;
+		
+		/// <summary>
+		/// See _PLAY_TIMEOUT
+		/// </summary>
+		private int _playTimeout = -_PLAY_TIMEOUT - 1;
 		
 		/// <summary>
 		/// Banshee port preference.
@@ -827,6 +839,7 @@ namespace Banshee.RemoteListener
 			SyncDatabase = 3,
 			Cover = 4,
 			Playlist = 5,
+			PlaylistControl = 6,
 		}
 		
 		public byte [] Test(int readBytes) {
@@ -861,12 +874,21 @@ namespace Banshee.RemoteListener
 			}
 			
 			byte [] result = PlayerStatusResult();
+			bool forcePlaying = Timestamp() - _playTimeout <= _PLAY_TIMEOUT;
 			
-			if (paused != null) {
+			if (paused != null && !forcePlaying) {
+				if (forcePlaying) {
+					paused = false;
+				}
+				
 				result[0] = (byte) ((result[0] & 0x7f) + ((bool) paused ? 0x80 : 0x0));
 			}
 			
-			if (playing != null) {
+			if (playing != null || forcePlaying) {
+				if (forcePlaying) {
+					playing = true;
+				}
+				
 				result[0] = (byte) ((result[0] & 0xbf) + ((bool) playing ? 0x40 : 0x0));
 			}
 			
@@ -1011,6 +1033,26 @@ namespace Banshee.RemoteListener
 			} else {
 				return new byte [] {0, 0, 0, 0};
 			}
+		}
+		
+		public byte [] PlaylistControl(int readBytes) {
+			if (readBytes > 1) {
+				switch (_buffer[1]) {
+				case 1: {
+					TrackInfo track = new DatabaseTrackModelProvider<DatabaseTrackInfo>(
+							ServiceManager.DbConnection).FetchSingle(IntFromBuffer(2));
+					
+					if (track != null) {
+						ServiceManager.PlayerEngine.OpenPlay(track);
+						_playTimeout = Timestamp();
+						return new byte [] {1};
+					}
+					break;
+				}
+				}
+			}
+			
+			return new byte [] {0};
 		}
 		
 		#endregion

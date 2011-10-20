@@ -13,6 +13,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -87,6 +89,19 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		setContentView(R.layout.playlist);
 		
 		mList = (ListView) findViewById(R.id.list);
+		mList.setOnItemClickListener(new OnItemClickListener() {
+			public void onItemClick(AdapterView<?> a, View v, int p, long id) {
+				if (p >= mPlaylist.size()) {
+					return;
+				}
+				
+				PlaylistEntry entry = mPlaylist.get(p);
+				
+				CurrentSongActivity.mConnection.sendCommand(Command.PLAYLIST_CONTROL,
+						Command.PlaylistControl.encodePlay(entry.id));
+			}
+		});
+		
 		mAdapter = new PlaylistAdapter();
 		mList.setAdapter(mAdapter);
 		mList.setOnScrollListener(new OnScrollListener() {
@@ -192,6 +207,10 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 			if (mPlaylist.size() != 0) {
 				mAdapter.notifyDataSetChanged();
 			}
+			break;
+			
+		case PLAYLIST_CONTROL:
+			CurrentSongActivity.mConnection.sendCommand(Command.PLAYER_STATUS, null);
 			break;
 		}
 	}

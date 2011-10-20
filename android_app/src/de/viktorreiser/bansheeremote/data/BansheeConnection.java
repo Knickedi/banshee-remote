@@ -114,7 +114,9 @@ public class BansheeConnection {
 		 * You can control how much tracks you want to have returned and from which position the
 		 * return should start (see {@link Playlist} for more).
 		 */
-		PLAYLIST(5, 15000);
+		PLAYLIST(5, 15000),
+		
+		PLAYLIST_CONTROL(6, 2000);
 		
 		private final int mCode;
 		private final int mTimeout;
@@ -467,6 +469,21 @@ public class BansheeConnection {
 			public static int decodeCount(byte [] response) {
 				return decodeShort(response, 0);
 			}
+		}
+		
+		public static class PlaylistControl {
+			
+			public static byte [] encodePlay(long trackId) {
+				byte [] result = new byte [5];
+				result[0] = 1;
+				System.arraycopy(encodeInt(trackId), 0, result, 1, 4);
+				return result;
+			}
+			
+			// TODO enqueue tracks
+//			public static byte [] endcode(long [] tracksIds, long [] artistIds, long [] albumIds) {
+//				
+//			}
 		}
 		
 		private static byte [] encodeShort(int value) {

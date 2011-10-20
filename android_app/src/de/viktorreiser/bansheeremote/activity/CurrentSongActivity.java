@@ -126,6 +126,10 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		}
 		
 		public void handleMessage(Message msg) {
+			if (mConnection	== null) {
+				return;
+			}
+			
 			switch (msg.what) {
 			case MESSAGE_GET_STATUS:
 				mConnection.sendCommand(Command.PLAYER_STATUS, null);
