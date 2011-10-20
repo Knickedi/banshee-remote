@@ -125,6 +125,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			}
 		}
 		
+		@Override
 		public void handleMessage(Message msg) {
 			if (mConnection	== null) {
 				return;
@@ -407,8 +408,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	}
 	
 	/**
-	 * Callback of inital server check task.
+	 * Callback of initial server check task.
 	 */
+	@Override
 	public void onBansheeServerCheck(boolean success) {
 		BansheeServer server = mCheckTask.getServer();
 		mCheckTask = null;
@@ -450,6 +452,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	 */
 	private void setupPhoneStateListener() {
 		PhoneStateListener phoneStateListener = new PhoneStateListener() {
+			@Override
 			public void onCallStateChanged(int state, String incomingNumber) {
 				if (state == TelephonyManager.CALL_STATE_RINGING
 						&& App.isStopOnCall()) {
@@ -479,6 +482,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	 */
 	private void setupViewControls() {
 		findViewById(R.id.back).setOnClickListener(new OnClickListener() {
+			@Override
 			public void onClick(View v) {
 				mConnection.sendCommand(Command.PLAYER_STATUS,
 						Command.PlayerStatus.encodePlayPrevious(null));
@@ -486,6 +490,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		});
 		
 		findViewById(R.id.play_pause).setOnClickListener(new OnClickListener() {
+			@Override
 			public void onClick(View v) {
 				mConnection.sendCommand(Command.PLAYER_STATUS,
 						Command.PlayerStatus.encodePlayToggle(null));
@@ -493,6 +498,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		});
 		
 		findViewById(R.id.forward).setOnClickListener(new OnClickListener() {
+			@Override
 			public void onClick(View v) {
 				mConnection.sendCommand(Command.PLAYER_STATUS,
 						Command.PlayerStatus.encodePlayNext(null));
@@ -501,6 +507,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		
 		View repeatClick = mRepeat2 != null ? findViewById(R.id.repeat_container) : mRepeat;
 		repeatClick.setOnClickListener(new OnClickListener() {
+			@Override
 			public void onClick(View v) {
 				mConnection.sendCommand(Command.PLAYER_STATUS,
 						Command.PlayerStatus.encodeRepeatToggle(null));
@@ -509,6 +516,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		
 		View shuffleClick = mShuffle2 != null ? findViewById(R.id.shuffle_container) : mShuffle;
 		shuffleClick.setOnClickListener(new OnClickListener() {
+			@Override
 			public void onClick(View v) {
 				mConnection.sendCommand(Command.PLAYER_STATUS,
 						Command.PlayerStatus.encodeShuffleToggle(null));
@@ -516,6 +524,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		});
 		
 		mSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+			@Override
 			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromTouch) {
 				if (fromTouch && mData.totalTime > 0) {
 					long value = Math.max(1, (long) (1.0 * mData.totalTime * progress
@@ -528,14 +537,17 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				}
 			}
 			
+			@Override
 			public void onStartTrackingTouch(SeekBar seekBar) {
 			}
 			
+			@Override
 			public void onStopTrackingTouch(SeekBar seekBar) {
 			}
 		});
 		
 		findViewById(R.id.browse_songs).setOnClickListener(new OnClickListener() {
+			@Override
 			public void onClick(View v) {
 				if (BansheeDatabase.isOpen()) {
 					// TODO react on button click
@@ -547,6 +559,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		});
 		
 		findViewById(R.id.browse_artists).setOnClickListener(new OnClickListener() {
+			@Override
 			public void onClick(View v) {
 				if (BansheeDatabase.isOpen()) {
 					// TODO react on button click
@@ -558,6 +571,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		});
 		
 		findViewById(R.id.playlist).setOnClickListener(new OnClickListener() {
+			@Override
 			public void onClick(View v) {
 				if (BansheeDatabase.isOpen()) {
 					startActivityForResult(
@@ -571,6 +585,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		});
 		
 		findViewById(R.id.browse_albums).setOnClickListener(new OnClickListener() {
+			@Override
 			public void onClick(View v) {
 				if (BansheeDatabase.isOpen()) {
 					// TODO react on button click
@@ -724,6 +739,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			}
 		}
 		
+		@Override
 		public void onBansheeCommandHandled(Command command, byte [] params, byte [] response) {
 			if (command == null) {
 				handleFail();
@@ -951,6 +967,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			mmAnimationHandler.postDelayed(this, FADE_STEP);
 		}
 		
+		@Override
 		public void run() {
 			boolean animate = false;
 			float step = 255f * (System.currentTimeMillis() - mmLastStep) / FADE_COMPLETE;

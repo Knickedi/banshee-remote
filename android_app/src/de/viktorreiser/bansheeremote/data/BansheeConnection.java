@@ -880,6 +880,7 @@ public class BansheeConnection {
 		private void handleFail(final CommandQueue queue) {
 			if (queue.command == Command.SYNC_DATABASE || queue.command == Command.PLAYLIST) {
 				mCommandHandler.post(new Runnable() {
+					@Override
 					public void run() {
 						mHandleCallback.onBansheeCommandHandled(
 								queue.command, queue.params, null);
@@ -896,6 +897,7 @@ public class BansheeConnection {
 				}
 				
 				mCommandHandler.post(new Runnable() {
+					@Override
 					public void run() {
 						mHandleCallback.onBansheeCommandHandled(null, null, null);
 					}
@@ -907,6 +909,7 @@ public class BansheeConnection {
 			mFailCount = 0;
 			
 			mCommandHandler.post(new Runnable() {
+				@Override
 				public void run() {
 					mHandleCallback.onBansheeCommandHandled(
 							queue.command, queue.params, result);

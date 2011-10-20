@@ -62,6 +62,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		
 		mOldCommandHandler = CurrentSongActivity.mConnection.getHandleCallback();
 		CurrentSongActivity.mConnection.updateHandleCallback(new OnBansheeCommandHandle() {
+			@Override
 			public void onBansheeCommandHandled(Command command, byte [] params, byte [] result) {
 				mOldCommandHandler.onBansheeCommandHandled(command, params, result);
 				PlaylistActivity.this.onBansheeCommandHandled(command, params, result);
@@ -90,6 +91,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		
 		mList = (ListView) findViewById(R.id.list);
 		mList.setOnItemClickListener(new OnItemClickListener() {
+			@Override
 			public void onItemClick(AdapterView<?> a, View v, int p, long id) {
 				if (p >= mPlaylist.size()) {
 					return;
@@ -105,10 +107,12 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		mAdapter = new PlaylistAdapter();
 		mList.setAdapter(mAdapter);
 		mList.setOnScrollListener(new OnScrollListener() {
+			@Override
 			public void onScrollStateChanged(AbsListView view, int scrollState) {
 				
 			}
 			
+			@Override
 			public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
 					int totalItemCount) {
 				if (!mPlaylistRequested
@@ -146,11 +150,13 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		}
 	}
 	
+	@Override
 	public Object onRetainNonConfigurationInstance() {
 		return new Object [] {mOldCommandHandler, mPlaylist, mLoadingDismissed, mPlaylistCount,
 				mPlaylistRequested, mRequestedCovers, mDbOutOfDateHintShown};
 	}
 	
+	@Override
 	public void onBansheeCommandHandled(Command command, byte [] params, byte [] result) {
 		if (command == null) {
 			return;
@@ -243,11 +249,13 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 	
 	private class PlaylistAdapter extends BaseAdapter {
 		
+		@Override
 		public int getCount() {
 			int size = mPlaylist.size();
 			return size == mPlaylistCount ? size : size + 1;
 		}
 		
+		@Override
 		public int getItemViewType(int position) {
 			if (position == mPlaylist.size()) {
 				return 2;
@@ -276,18 +284,22 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 			}
 		}
 		
+		@Override
 		public int getViewTypeCount() {
 			return 4;
 		}
 		
+		@Override
 		public Object getItem(int position) {
 			return null;
 		}
 		
+		@Override
 		public long getItemId(int position) {
 			return position;
 		}
 		
+		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 			int type = getItemViewType(position);
 			

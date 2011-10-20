@@ -34,6 +34,7 @@ public class SettingsActivity extends PreferenceActivity {
 		mMobilePoll = findPreference("mobilepollinterval");
 	}
 	
+	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
 		Object listItem = getListView().getAdapter().getItem(
 				((AdapterView.AdapterContextMenuInfo) menuInfo).position);

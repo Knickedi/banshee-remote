@@ -47,6 +47,7 @@ public class NewServerActivity extends Activity implements OnBansheeServerCheck 
 		mSameHost = (Spinner) findViewById(R.id.same_host);
 		
 		findViewById(R.id.create).setOnClickListener(new OnClickListener() {
+			@Override
 			public void onClick(View v) {
 				int port = 8484;
 				
@@ -93,6 +94,7 @@ public class NewServerActivity extends Activity implements OnBansheeServerCheck 
 		return mCheckTask;
 	}
 	
+	@Override
 	public void onBansheeServerCheck(boolean success) {
 		BansheeServer server = mCheckTask.getServer();
 		mCheckTask = null;

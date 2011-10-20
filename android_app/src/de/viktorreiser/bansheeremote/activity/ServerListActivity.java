@@ -111,6 +111,7 @@ public class ServerListActivity extends Activity implements OnItemClickListener,
 		return false;
 	}
 	
+	@Override
 	public void onItemClick(AdapterView<?> adapter, View v, int position, long id) {
 		if (position == mServer.size()) {
 			startActivityForResult(new Intent(ServerListActivity.this, NewServerActivity.class),
@@ -143,6 +144,7 @@ public class ServerListActivity extends Activity implements OnItemClickListener,
 		}
 	}
 	
+	@Override
 	public void onBansheeServerCheck(boolean success) {
 		BansheeServer server = mCheckTask.getServer();
 		mCheckTask = null;
@@ -161,18 +163,22 @@ public class ServerListActivity extends Activity implements OnItemClickListener,
 	
 	private class ServerAdapter extends BaseAdapter {
 		
+		@Override
 		public int getCount() {
 			return mServer.size() + 1;
 		}
 		
+		@Override
 		public Object getItem(int position) {
 			return position == mServer.size() ? null : mServer.get(position);
 		}
 		
+		@Override
 		public long getItemId(int position) {
 			return position == mServer.size() ? -1 : mServer.get(position).getId();
 		}
 		
+		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 			if (convertView == null) {
 				convertView = getLayoutInflater().inflate(
