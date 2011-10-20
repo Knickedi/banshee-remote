@@ -250,7 +250,7 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 		 * @return {@code true} if hidden view is completely covered or the hidden view is not
 		 *         managed by a {@link SwipeableHiddenView} right now
 		 */
-		public final boolean isHiddenViewCovored() {
+		public final boolean isHiddenViewCovered() {
 			if (currentSwipeableHiddenView != null) {
 				return currentSwipeableHiddenView.isHiddenViewCovered();
 			}

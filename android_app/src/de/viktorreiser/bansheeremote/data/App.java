@@ -148,7 +148,7 @@ public class App extends Application {
 				.getBoolean("dboutofdatehint", true);
 	}
 	
-	public static HiddenQuickActionSetup getDefaultHiddenViewSetup(Context context) {
+	public static HiddenQuickActionSetup getDefaultHiddenViewSetup(Context context, boolean add) {
 		HiddenQuickActionSetup setup = new HiddenQuickActionSetup(context);
 		
 		setup.setOpenAnimation(new Interpolator() {
@@ -175,7 +175,11 @@ public class App extends Application {
 		setup.setSwipeOnLongClick(true);
 		
 		setup.addAction(QUICK_ACTION_ENQUEUE, R.string.quick_enqueue, R.drawable.enqueue);
-		setup.addAction(QUICK_ACTION_ADD, R.string.quick_add, R.drawable.add);
+		
+		if (add) {
+			setup.addAction(QUICK_ACTION_ADD, R.string.quick_add, R.drawable.add);
+		}
+		
 		setup.addAction(QUICK_ACTION_REMOVE, R.string.quick_remove, R.drawable.remove);
 		
 		return setup;

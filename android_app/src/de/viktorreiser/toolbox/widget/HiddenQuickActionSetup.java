@@ -10,12 +10,13 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.MeasureSpec;
 import android.view.View.OnTouchListener;
+import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
-import android.view.ViewGroup.MarginLayoutParams;
 import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import de.viktorreiser.toolbox.util.AndroidUtils;
@@ -64,14 +65,11 @@ public class HiddenQuickActionSetup extends HiddenViewSetup {
 	/** Height which is used for the image views. */
 	private int mImageHeight = LayoutParams.WRAP_CONTENT;
 	
-	/** Spacing between the image views. */
-	private int mImageSpacing = -1;
-	
 	/** Action click listener. */
 	private OnQuickActionListener mQuickActionListener;
 	
-	/** Touch listener for image views which triggers the click. */
-	private OnTouchListener mImageTouchListener;
+	/** Touch listener for quick action views which triggers the click. */
+	private OnTouchListener mTouchListener;
 	
 	/** Popup which will contain and display the indicator. */
 	private PopupWindow mIndicatorPopup;
@@ -194,31 +192,8 @@ public class HiddenQuickActionSetup extends HiddenViewSetup {
 	 * @param p
 	 *            padding in pixel
 	 */
-	public void setViewPadding(int p) {
-		mLinearLayout.setPadding(p, p, p, p);
-		mLinearLayout.invalidate();
-	}
-	
-	/**
-	 * Set spacing between quick action images in pixel.
-	 * 
-	 * @param spacing
-	 *            spacing in pixel (negative will put equal space between all actions)
-	 */
-	public void setImageSpacing(int spacing) {
-		mImageSpacing = spacing;
-		
-		if (mImageSpacing < 0) {
-			return;
-		}
-		
-		int count = mLinearLayout.getChildCount() - 1;
-		
-		for (int i = 0; i < count; i++) {
-			((MarginLayoutParams) mLinearLayout.getChildAt(i)
-					.getLayoutParams()).rightMargin = spacing;
-		}
-		
+	public void setViewPadding(int left, int top, int right, int bottom) {
+		mLinearLayout.setPadding(left, top, right, bottom);
 		mLinearLayout.invalidate();
 	}
 	
@@ -241,7 +216,7 @@ public class HiddenQuickActionSetup extends HiddenViewSetup {
 		
 		for (int i = 0; i < count; i++) {
 			LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams)
-					mLinearLayout.getChildAt(i).getLayoutParams();
+					((ViewGroup) mLinearLayout.getChildAt(i)).getChildAt(0).getLayoutParams();
 			lp.width = width;
 			lp.height = height;
 		}
@@ -428,22 +403,29 @@ public class HiddenQuickActionSetup extends HiddenViewSetup {
 			}
 		}
 		
+		ImageView iv = new ImageView(mLinearLayout.getContext());
+		
+		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
+				mImageWidth, mImageHeight);
+		params.addRule(RelativeLayout.CENTER_IN_PARENT);
+
+		iv.setLayoutParams(params);
+		iv.setImageDrawable(drawable);
+		
 		ActionInfo info = new ActionInfo();
 		info.id = actionId;
 		info.description = actionDescription;
 		
-		ImageView iv = new ImageView(mLinearLayout.getContext());
-		iv.setTag(info);
-		iv.setLayoutParams(new LinearLayout.LayoutParams(mImageWidth, mImageHeight));
-		iv.setImageDrawable(drawable);
-		iv.setOnTouchListener(mImageTouchListener);
+		RelativeLayout rl = new RelativeLayout(mLinearLayout.getContext());
+		LinearLayout.LayoutParams params2 = new LinearLayout.LayoutParams(
+				0, LayoutParams.FILL_PARENT);
+		params2.weight = 1;
+		rl.setLayoutParams(params2);
+		rl.addView(iv);
+		rl.setTag(info);
+		rl.setOnTouchListener(mTouchListener);
 		
-		if (count > 0) {
-			((MarginLayoutParams) mLinearLayout.getChildAt(count - 1)
-					.getLayoutParams()).rightMargin = mImageSpacing >= 0 ? mImageSpacing : 0;
-		}
-		
-		mLinearLayout.addView(iv);
+		mLinearLayout.addView(rl);
 		
 		return true;
 	}
@@ -461,7 +443,7 @@ public class HiddenQuickActionSetup extends HiddenViewSetup {
 		int count = mLinearLayout.getChildCount();
 		
 		for (int i = 0; i < count; i++) {
-			if (actionId == (Integer) mLinearLayout.getChildAt(i).getTag()) {
+			if (actionId == (Integer) ((ActionInfo) mLinearLayout.getChildAt(i).getTag()).id) {
 				mLinearLayout.removeViewAt(i);
 				return true;
 			}
@@ -518,17 +500,17 @@ public class HiddenQuickActionSetup extends HiddenViewSetup {
 	}
 	
 	private void setupQuickActionTouchListener() {
-		mImageTouchListener = new OnTouchListener() {
+		mTouchListener = new OnTouchListener() {
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
-				if (!isHiddenViewVisible()) {
+				if (isHiddenViewCovered()) {
 					return false;
 				}
 				
 				int a = event.getAction();
 				
 				if (a == MotionEvent.ACTION_DOWN) {
-					Drawable drawable = ((ImageView) v).getDrawable();
+					Drawable drawable = ((ImageView) ((ViewGroup) v).getChildAt(0)).getDrawable();
 					
 					if (drawable instanceof StateListDrawable) {
 						drawable = ((StateListDrawable) drawable).getCurrent();
@@ -612,37 +594,6 @@ public class HiddenQuickActionSetup extends HiddenViewSetup {
 		@Override
 		public void dispatchSetPressed(boolean pressed) {
 			
-		}
-		
-		@Override
-		public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-			super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-			
-			if (mImageSpacing < 0) {
-				float unusedWidth = MeasureSpec.getSize(widthMeasureSpec);
-				int childCount = getChildCount();
-				
-				for (int i = 0; i < childCount; i++) {
-					View child = getChildAt(i);
-					unusedWidth -= child.getMeasuredWidth();
-				}
-				
-				if (unusedWidth > 0) {
-					for (int i = 0; i < childCount; i++) {
-						View child = getChildAt(i);
-						int margin = (int) unusedWidth / (childCount + 1 - i);
-						((MarginLayoutParams) child.getLayoutParams()).leftMargin = margin;
-						unusedWidth -= margin;
-						
-						if (i + 1 == childCount) {
-							((MarginLayoutParams) child.getLayoutParams()).rightMargin =
-									(int) unusedWidth;
-						}
-					}
-				}
-				
-				super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-			}
 		}
 	}
 	

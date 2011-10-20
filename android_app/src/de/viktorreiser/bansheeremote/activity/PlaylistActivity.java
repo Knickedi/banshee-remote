@@ -108,9 +108,8 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 			}
 		});
 		
-		mQuickActionSetup = App.getDefaultHiddenViewSetup(PlaylistActivity.this);
+		mQuickActionSetup = App.getDefaultHiddenViewSetup(PlaylistActivity.this, false);
 		mQuickActionSetup.setOnQuickActionListener(PlaylistActivity.this);
-		
 		
 		mAdapter = new PlaylistAdapter();
 		mList.setAdapter(mAdapter);
