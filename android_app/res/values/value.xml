@@ -5,7 +5,6 @@
 	<string name="unknown_artist">Unknown artist</string>
 	<string name="unknown_album">Unknown album</string>
 	<string name="settings">Settings</string>
-	<string name="banshee_settings">Banshee remote settings</string>
 	<string name="choose_server">Choose server</string>
 	<string name="new_server">Add new server</string>
 	<string name="create_server">Create server</string>
@@ -29,6 +28,11 @@
 	<string name="playlist">Playlist</string>
 	<string name="no_playlist">No playlist available or loaded...</string>
 	<string name="loading_playlist">Loading %1$s to %2$s of %3$s tracks...</string>
+	<string name="quick_add">Add selection to playlist</string>
+	<string name="quick_remove">Remove selection from playlist</string>
+	<string name="quick_enqueue">Add selection to playing queue</string>
+	
+	<!-- settings -->
 	
 	<string name="user_interface">User interface</string>
 	<string name="function">Function</string>

@@ -262,14 +262,15 @@ public class SwipeableListView extends ListView implements OnScrollListener,
 			super.setOnScrollListener(new OnScrollListener() {
 				@Override
 				public void onScrollStateChanged(AbsListView view, int scrollState) {
-					this.onScrollStateChanged(view, scrollState);
+					SwipeableListView.this.onScrollStateChanged(view, scrollState);
 					l.onScrollStateChanged(view, scrollState);
 				}
 				
 				@Override
 				public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
 						int totalItemCount) {
-					this.onScroll(view, firstVisibleItem, visibleItemCount, totalItemCount);
+					SwipeableListView.this.onScroll(
+							view, firstVisibleItem, visibleItemCount, totalItemCount);
 					l.onScroll(view, firstVisibleItem, visibleItemCount, totalItemCount);
 				}
 			});

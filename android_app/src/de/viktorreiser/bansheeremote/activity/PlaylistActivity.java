@@ -28,13 +28,16 @@ import de.viktorreiser.bansheeremote.data.BansheeDatabase;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase.TrackInfo;
 import de.viktorreiser.bansheeremote.data.CoverCache;
 import de.viktorreiser.toolbox.content.NetworkStateBroadcast;
+import de.viktorreiser.toolbox.widget.HiddenQuickActionSetup;
+import de.viktorreiser.toolbox.widget.SwipeableHiddenView;
+import de.viktorreiser.toolbox.widget.HiddenQuickActionSetup.OnQuickActionListener;
 
 /**
  * Here we will load the current player play list, show it and interact with it.
  * 
  * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
  */
-public class PlaylistActivity extends Activity implements OnBansheeCommandHandle {
+public class PlaylistActivity extends Activity implements OnBansheeCommandHandle, OnQuickActionListener {
 	
 	// PRIVATE ====================================================================================
 	
@@ -47,6 +50,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 	private boolean mPlaylistRequested;
 	private Set<String> mRequestedCovers = new HashSet<String>();
 	private boolean mDbOutOfDateHintShown = false;
+	private HiddenQuickActionSetup mQuickActionSetup;
 	
 	// OVERRIDDEN =================================================================================
 	
@@ -103,6 +107,10 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 						Command.PlaylistControl.encodePlay(entry.id));
 			}
 		});
+		
+		mQuickActionSetup = App.getDefaultHiddenViewSetup(PlaylistActivity.this);
+		mQuickActionSetup.setOnQuickActionListener(PlaylistActivity.this);
+		
 		
 		mAdapter = new PlaylistAdapter();
 		mList.setAdapter(mAdapter);
@@ -247,8 +255,13 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		public ImageView playing;
 	}
 	
-	private class PlaylistAdapter extends BaseAdapter {
+	@Override
+	public void onQuickAction(AdapterView<?> parent, View view, int position, int quickActionId) {
 		
+	}
+	
+	private class PlaylistAdapter extends BaseAdapter {
+
 		@Override
 		public int getCount() {
 			int size = mPlaylist.size();
@@ -306,6 +319,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 			if (convertView == null) {
 				if (type == 0) {
 					convertView = getLayoutInflater().inflate(R.layout.track_list_item, null);
+					((SwipeableHiddenView) convertView).setHiddenViewSetup(mQuickActionSetup);
 					
 					ViewHolder holder = new ViewHolder();
 					holder.cover = (ImageView) convertView.findViewById(R.id.cover1);
@@ -317,6 +331,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 				} else if (type == 1) {
 					convertView = getLayoutInflater().inflate(R.layout.track_list_item_compact,
 							null);
+					((SwipeableHiddenView) convertView).setHiddenViewSetup(mQuickActionSetup);
 					
 					ViewHolder holder = new ViewHolder();
 					holder.track = (TextView) convertView.findViewById(R.id.song_title);

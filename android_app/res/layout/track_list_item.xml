@@ -1,66 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
+<de.viktorreiser.toolbox.widget.SwipeableHiddenView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content" >
 
-<RelativeLayout
-	xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="fill_parent"
-	android:layout_height="wrap_content"
-	android:padding="10dip">
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dip" >
 
-	<ImageView
-		android:layout_centerVertical="true"
-		android:src="@drawable/ic_media_play"
-		android:layout_width="25dip"
-		android:layout_height="25dip"
-		android:id="@+id/playing"
-		android:scaleType="fitCenter"
-		android:layout_alignParentRight="true"
-		android:layout_centerHorizontal="true" />
+        <ImageView
+            android:id="@+id/playing"
+            android:layout_width="25dip"
+            android:layout_height="25dip"
+            android:layout_alignParentRight="true"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_media_play" />
 
-	<ImageView
-		android:layout_centerVertical="true"
-		android:layout_alignParentLeft="true"
-		android:layout_marginRight="10dip"
-		android:id="@+id/cover1"
-		android:src="@drawable/no_cover"
-		android:layout_width="40dip"
-		android:layout_height="40dip"
-		android:scaleType="fitCenter" />
+        <ImageView
+            android:id="@+id/cover1"
+            android:layout_width="40dip"
+            android:layout_height="40dip"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="10dip"
+            android:scaleType="fitCenter"
+            android:src="@drawable/no_cover" />
 
-	<TextView
-		android:id="@+id/song_title"
-		android:layout_alignParentTop="true"
-		android:layout_toLeftOf="@id/playing"
-		android:layout_toRightOf="@id/cover1"
-		android:ellipsize="end"
-		android:singleLine="true"
-		android:scrollHorizontally="false"
-		android:textAppearance="?android:attr/textAppearanceMedium"
-		android:text="@string/unknown_track"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content" />
+        <TextView
+            android:id="@+id/song_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_toLeftOf="@id/playing"
+            android:layout_toRightOf="@id/cover1"
+            android:ellipsize="end"
+            android:scrollHorizontally="false"
+            android:singleLine="true"
+            android:text="@string/unknown_track"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
 
-	<TextView
-		android:id="@+id/song_artist"
-		android:layout_below="@id/song_title"
-		android:layout_toLeftOf="@id/playing"
-		android:layout_toRightOf="@id/cover1"
-		android:ellipsize="end"
-		android:singleLine="true"
-		android:scrollHorizontally="false"
-		android:text="@string/unknown_artist"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content" />
+        <TextView
+            android:id="@+id/song_artist"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/song_title"
+            android:layout_toLeftOf="@id/playing"
+            android:layout_toRightOf="@id/cover1"
+            android:ellipsize="end"
+            android:scrollHorizontally="false"
+            android:singleLine="true"
+            android:text="@string/unknown_artist" />
 
-	<TextView
-		android:id="@+id/song_album"
-		android:layout_below="@id/song_artist"
-		android:layout_toLeftOf="@id/playing"
-		android:layout_toRightOf="@id/cover1"
-		android:ellipsize="end"
-		android:singleLine="true"
-		android:scrollHorizontally="false"
-		android:text="@string/unknown_album"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content" />
+        <TextView
+            android:id="@+id/song_album"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/song_artist"
+            android:layout_toLeftOf="@id/playing"
+            android:layout_toRightOf="@id/cover1"
+            android:ellipsize="end"
+            android:scrollHorizontally="false"
+            android:singleLine="true"
+            android:text="@string/unknown_album" />
+    </RelativeLayout>
 
-</RelativeLayout>
+</de.viktorreiser.toolbox.widget.SwipeableHiddenView>

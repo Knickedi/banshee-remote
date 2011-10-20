@@ -1,10 +1,14 @@
 package de.viktorreiser.bansheeremote.data;
 
-import de.viktorreiser.toolbox.content.NetworkStateBroadcast;
 import android.app.Application;
 import android.content.Context;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.view.animation.Interpolator;
+import de.viktorreiser.bansheeremote.R;
+import de.viktorreiser.toolbox.content.NetworkStateBroadcast;
+import de.viktorreiser.toolbox.util.AndroidUtils;
+import de.viktorreiser.toolbox.widget.HiddenQuickActionSetup;
 
 /**
  * Static application data.
@@ -18,6 +22,11 @@ public class App extends Application {
 	private static Context mContext;
 	
 	// PUBLIC =====================================================================================
+	
+	public static final int QUICK_ACTION_ADD = 1;
+	public static final int QUICK_ACTION_REMOVE = 2;
+	public static final int QUICK_ACTION_ENQUEUE = 3;
+	
 	
 	public static final String BANSHEE_PATH = Environment.getExternalStorageDirectory()
 			.getAbsolutePath() + "/BansheeRemote/";
@@ -136,6 +145,39 @@ public class App extends Application {
 	public static boolean isShowDbOutOfDateHint() {
 		return PreferenceManager.getDefaultSharedPreferences(mContext)
 				.getBoolean("dboutofdatehint", true);
+	}
+	
+	public static HiddenQuickActionSetup getDefaultHiddenViewSetup(Context context) {
+		HiddenQuickActionSetup setup = new HiddenQuickActionSetup(context);
+		
+		setup.setOpenAnimation(new Interpolator() {
+			@Override
+			public float getInterpolation(float v) {
+				v -= 1;
+				return v * v * v + 1;
+			}
+		});
+		setup.setCloseAnimation(new Interpolator() {
+			@Override
+			public float getInterpolation(float v) {
+				return v * v * v;
+			}
+		});
+		
+		int imageSize = AndroidUtils.dipToPixel(context, 25);
+		
+		setup.setBackgroundResource(R.drawable.quickaction_background);
+		setup.setImageSize(imageSize, imageSize);
+		setup.setAnimationSpeed(700);
+		setup.setStartOffset(AndroidUtils.dipToPixel(context, 30));
+		setup.setStopOffset(AndroidUtils.dipToPixel(context, 50));
+		setup.setSwipeOnLongClick(true);
+		
+		setup.addAction(QUICK_ACTION_ENQUEUE, R.string.quick_enqueue, R.drawable.enqueue);
+		setup.addAction(QUICK_ACTION_ADD, R.string.quick_add, R.drawable.add);
+		setup.addAction(QUICK_ACTION_REMOVE, R.string.quick_remove, R.drawable.remove);
+		
+		return setup;
 	}
 	
 	// OVERRIDDEN =================================================================================

@@ -99,7 +99,13 @@ public class BansheeServerCheckTask extends AsyncTask<Void, Void, Boolean> {
 	
 	@Override
 	protected void onPostExecute(Boolean result) {
-		mDialog.dismiss();
+		try {
+			mDialog.dismiss();
+		} catch (Exception e) {
+			// this is causing a IllegalArgumentException (view not attached to window manager)
+			// I can't tell why, always when returning to application
+			e.printStackTrace();
+		}
 		
 		Activity a = mCallback.get();
 		

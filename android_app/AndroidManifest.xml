@@ -43,7 +43,6 @@
 			android:theme="@android:style/Theme.NoTitleBar" />
 		<activity
 			android:name=".activity.SettingsActivity"
-			android:label="@string/banshee_settings"
 			android:theme="@android:style/Theme.NoTitleBar" />
 
 		<receiver android:name="de.viktorreiser.toolbox.content.WifiStateBroadcast">

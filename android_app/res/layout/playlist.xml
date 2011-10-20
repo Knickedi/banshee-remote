@@ -38,11 +38,11 @@
 		android:layout_height="0dip"
 		android:layout_weight="1">
 
-		<ListView
+		<de.viktorreiser.toolbox.widget.SwipeableListView
 			android:id="@+id/list"
 			android:layout_width="fill_parent"
 			android:layout_height="fill_parent">
-		</ListView>
+		</de.viktorreiser.toolbox.widget.SwipeableListView>
 
 		<ProgressBar
 			android:id="@+id/loading_progress"
