@@ -49,14 +49,6 @@ namespace Banshee.RemoteListener
 		private static int _PREVIOUS_TRACK_OFFSET = 15;
 		
 		/// <summary>
-		/// Banshee is not understanding that another track is chosen to be played and reports that
-		/// player engine has stopped playing for a while. This constant is correcting this
-		/// behavior and tells that playing status report should be forced for the given amount of
-		/// milliseconds.
-		/// </summary>
-		private static int _PLAY_TIMEOUT = 200;
-		
-		/// <summary>
 		/// Volume step down / up steps.
 		/// </summary>
 		private int [] _VolumeSteps = new int [] {
@@ -95,9 +87,11 @@ namespace Banshee.RemoteListener
 		private int _dbCompressTime = 0;
 		
 		/// <summary>
-		/// See _PLAY_TIMEOUT
+		/// Banshee is not understanding that another track is chosen to be played and reports that
+		/// player engine has stopped playing for a while. So we will force the playing status for
+		/// two seconds.
 		/// </summary>
-		private int _playTimeout = -_PLAY_TIMEOUT - 1;
+		private int _playTimeout = 0;
 		
 		/// <summary>
 		/// Banshee port preference.
@@ -874,7 +868,7 @@ namespace Banshee.RemoteListener
 			}
 			
 			byte [] result = PlayerStatusResult();
-			bool forcePlaying = Timestamp() - _playTimeout <= _PLAY_TIMEOUT;
+			bool forcePlaying = Timestamp() - _playTimeout <= 1;
 			
 			if (paused != null && !forcePlaying) {
 				if (forcePlaying) {
@@ -1047,6 +1041,14 @@ namespace Banshee.RemoteListener
 						_playTimeout = Timestamp();
 						return new byte [] {1};
 					}
+					break;
+				}
+				case 2: {
+					int trackIdCount = ShortFromBuffer(2);
+					int artisIdCount = ShortFromBuffer(4);
+					int albumIdCount = ShortFromBuffer(6);
+					int failedCount = 0;
+					
 					break;
 				}
 				}
