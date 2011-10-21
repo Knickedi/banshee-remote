@@ -404,6 +404,7 @@ public class SwipeableListView extends ListView implements OnScrollListener,
 		
 		if (ev.getAction() == MotionEvent.ACTION_DOWN) {
 			setupSwipeableClick(ev);
+			mStartAlreadyRequested = false;
 		} else if (ev.getAction() == MotionEvent.ACTION_UP) {
 			// swipeable is active and started, send stop
 			if (mHasSwipeable && mSwipeableStarted) {
@@ -429,10 +430,6 @@ public class SwipeableListView extends ListView implements OnScrollListener,
 				mSwipeOffset = 0;
 				cancelSwipe();
 			}
-		}
-		
-		if (ev.getAction() != MotionEvent.ACTION_DOWN) {
-			mStartAlreadyRequested = false;
 		}
 		
 		int offset = (int) (ViewConfiguration.getTouchSlop()

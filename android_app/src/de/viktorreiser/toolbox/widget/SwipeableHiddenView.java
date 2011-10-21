@@ -175,7 +175,7 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 		protected Interpolator closeAnimation = openAnimation;
 		
 		/** Interrupt offset see {@link #setAnimationInteruptionOffset(float)}. */
-		protected float interruptOffset = 0;
+		protected float interruptOffset = 1f;
 		
 		// PUBLIC ---------------------------------------------------------------------------------
 		
@@ -276,7 +276,7 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 				float offset = Math.abs(currentSwipeableHiddenView.mOffset);
 				float iOffset = currentSwipeableHiddenView.mData.interruptOffset;
 				
-				return !started || started && offset >= 1 - iOffset;
+				return !started || started && offset >= iOffset;
 			}
 			
 			return false;
@@ -414,16 +414,17 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 		}
 		
 		/**
-		 * Offset which is needed to interrupt a running animation (default is {@code 0}).<br>
+		 * Offset which is needed to interrupt a running animation (default is {@code 1}).<br>
 		 * <br>
 		 * Consider that that the given value doesn't relate to the visual effect but to the given
 		 * ease function (e.g. if it's linear then the given value is proportional to the visual
 		 * effect).
 		 * 
 		 * @param offset
-		 *            {@code 0} means that you can stop a swipe animation at any time, e.g.
-		 *            {@code 0.5} means not in the first quarter and last quarter, {@code 1} means
-		 *            that you can't stop a swiped view
+		 *            {@code 1} means that you can't stop a swipe animation, {@code 0.5} means that
+		 *            you can't stop it when it already passed half of the animation, {@code 1}
+		 *            means that you can stop a swiped view animation at any time as long it has not
+		 *            finished
 		 */
 		public final void setAnimationInteruptionOffset(float offset) {
 			if (offset < 0f || offset > 1f) {
@@ -569,8 +570,7 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 	public boolean onViewSwipe(ListView listView, SwipeEvent event, int offset, int position) {
 		checkRequirements();
 		
-		boolean mayInterruptAnimation = mAnimating && Math.abs(mOffset) > mData.interruptOffset
-				&& Math.abs(mOffset) < 1 - mData.interruptOffset;
+		boolean mayInterruptAnimation = mAnimating && Math.abs(mOffset) < mData.interruptOffset;
 		
 		if (event == SwipeEvent.START) {
 			mStarted = mayInterruptAnimation;
