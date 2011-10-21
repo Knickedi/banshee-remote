@@ -584,13 +584,14 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 		
 		switch (event) {
 		case START:
+			bindHiddenView();
+			
 			if (!mAnimating || mayInterruptAnimation) {
 				mCurrentPosition = position;
 				mCurrentListView = listView;
 				mAnimationHandler.removeCallbacks(mAnimationStep);
 				mAnimating = false;
 				mData.currentSwipeableHiddenView = this;
-				bindHiddenView();
 			}
 			break;
 		
@@ -610,7 +611,7 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 							|| Math.abs(lastOffset) - Math.abs(mOffset) < 0);
 				}
 				
-				if (wasCoveredBefore && !isHiddenViewCovered()) {
+				if (wasCoveredBefore != isHiddenViewCovered()) {
 					requestLayout();
 				}
 				
@@ -743,10 +744,15 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 	public void onLayout(boolean changed, int left, int top, int right, int bottom) {
 		// ignore that fancy stuff with gravity, padding and margins
 		final int count = getChildCount();
+		int height = 0;
+		
+		for (int i = 0; i < count; i++) {
+			height = Math.max(height, getChildAt(i).getMeasuredHeight());
+		}
 		
 		for (int i = 0; i < count; i++) {
 			View child = getChildAt(i);
-			child.layout(0, 0, child.getMeasuredWidth(), child.getMeasuredHeight());
+			child.layout(0, 0, child.getMeasuredWidth(), height);
 		}
 	}
 	
