@@ -10,6 +10,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
 
+import de.viktorreiser.toolbox.util.L;
+
 import android.os.Handler;
 
 /**
@@ -61,7 +63,7 @@ public class BansheeConnection {
 	 * <i>Why?</i> There might always a bad connection or something. It's annoying to lose
 	 * connection just because a single failed request so...
 	 */
-	public static final int MAX_FAIL_COMMANDS = 2;
+	public static final int MAX_FAIL_COMMANDS = 4;
 	
 	
 	/**
@@ -834,6 +836,33 @@ public class BansheeConnection {
 		public byte [] params;
 	}
 	
+	private void logFail(CommandQueue queue) {
+		if (L.isW()) {
+			StringBuilder s = new StringBuilder();
+			s.append("Fail ");
+			s.append(queue.command.toString());
+			
+			if (queue.params == null) {
+				s.append(" no parameters");
+			} else {
+				s.append("[ ");
+				
+				for (int i = 0; i < Math.min(queue.params.length, 20); i++) {
+					s.append(Integer.toHexString(queue.params[i]));
+					s.append(" ");
+				}
+				
+				if (queue.params.length > 20) {
+					s.append("... ");
+				}
+				
+				s.append("]");
+			}
+			
+			L.w(s.toString());
+		}
+	}
+	
 	
 	/**
 	 * Thread which takes request from queue and delegates the response to the connection callback.
@@ -887,6 +916,8 @@ public class BansheeConnection {
 					}
 				});
 			}
+			
+			logFail(queue);
 			
 			mFailCount++;
 			
