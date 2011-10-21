@@ -45,7 +45,7 @@
 			android:name=".activity.SettingsActivity"
 			android:theme="@android:style/Theme.NoTitleBar" />
 
-		<receiver android:name="de.viktorreiser.toolbox.content.WifiStateBroadcast">
+		<receiver android:name="de.viktorreiser.toolbox.content.NetworkStateBroadcast">
 			<intent-filter>
 				<action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
 				<action android:name="android.net.wifi.supplicant.CONNECTION_CHANGE" />
