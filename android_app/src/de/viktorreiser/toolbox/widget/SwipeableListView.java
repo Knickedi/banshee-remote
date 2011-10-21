@@ -416,7 +416,12 @@ public class SwipeableListView extends ListView implements OnScrollListener,
 			if (mHasSwipeable && (sendSwipe(SwipeEvent.MOVE) || mSwipeableStarted)) {
 				mSwipeableStarted = true;
 				mConsumeClick = true;
-				mConsumeSelection = !mSwipeableView.swipeDoesntHideListSelector();
+				
+				if (mSwipeableView != null) {
+					mConsumeSelection = !mSwipeableView.swipeDoesntHideListSelector(); 
+				} else {
+					mConsumeSelection = true;
+				}
 			}
 		} else if (ev.getAction() == MotionEvent.ACTION_CANCEL) {
 			// swipeable is active, send cancel
@@ -556,7 +561,11 @@ public class SwipeableListView extends ListView implements OnScrollListener,
 	 * @return {@link SwipeableListItem#onViewSwipe(ListView, SwipeEvent, int, int)}
 	 */
 	private boolean sendSwipe(SwipeEvent type) {
-		return mSwipeableView.onViewSwipe(this, type, mSwipeOffset, mSwipeablePosition);
+		if (mSwipeableView != null) {
+			return mSwipeableView.onViewSwipe(this, type, mSwipeOffset, mSwipeablePosition);
+		} else {
+			return false;
+		}
 	}
 	
 	/**

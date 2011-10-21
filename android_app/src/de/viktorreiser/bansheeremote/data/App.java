@@ -170,8 +170,11 @@ public class App extends Application {
 		setup.setBackgroundResource(R.drawable.quickaction_background);
 		setup.setImageSize(imageSize, imageSize);
 		setup.setAnimationSpeed(700);
+		// the ease animation is nice but we don't want it to intercept quick action clicks
+		setup.setAnimationInteruptionOffset(0.7f);
 		setup.setStartOffset(AndroidUtils.dipToPixel(context, 30));
 		setup.setStopOffset(AndroidUtils.dipToPixel(context, 50));
+		setup.setStickyStart(true);
 		setup.setSwipeOnLongClick(true);
 		
 		setup.addAction(QUICK_ACTION_ENQUEUE, R.string.quick_enqueue, R.drawable.enqueue);

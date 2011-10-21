@@ -1,6 +1,7 @@
 package de.viktorreiser.toolbox.widget;
 
 import android.content.Context;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.StateListDrawable;
 import android.os.Handler;
@@ -92,11 +93,8 @@ public class HiddenQuickActionSetup extends HiddenViewSetup {
 	/** Reference to current clicked quick action (image view). */
 	private View mClickedActionView;
 	
-	/** Spacing between display edge and indicator popup. */
-	private int mPopupHorizontalSpacing;
-	
 	/** Spacing between display edge / list item and indicator popup. */
-	private int mPopupVerticalSpacing;
+	private Rect mIndicatorSpacing;
 	
 	/** {@code true} if swipeable view should be closed on quick action click. */
 	private boolean mCloseSwipeableOnQuickAction = true;
@@ -140,8 +138,7 @@ public class HiddenQuickActionSetup extends HiddenViewSetup {
 		mLinearLayout.setGravity(Gravity.CENTER);
 		mLinearLayout.setPadding(0, 0, 0, 0);
 		
-		mPopupHorizontalSpacing = 0;
-		mPopupVerticalSpacing = AndroidUtils.dipToPixel(context, 10);
+		mIndicatorSpacing = new Rect(0, 0, 0, AndroidUtils.dipToPixel(context, 10));
 		
 		setupQuickActionTouchListener();
 		setupShowPopupStart();
@@ -227,7 +224,8 @@ public class HiddenQuickActionSetup extends HiddenViewSetup {
 	/**
 	 * Should swipeable view be close if a quick action is clicked (default is {@code true})?
 	 * 
-	 * @param close {@code true} will close the swipeable view
+	 * @param close
+	 *            {@code true} will close the swipeable view
 	 */
 	public void setCloseSwipableOnQuickActionClick(boolean close) {
 		mCloseSwipeableOnQuickAction = close;
@@ -318,15 +316,17 @@ public class HiddenQuickActionSetup extends HiddenViewSetup {
 	/**
 	 * Set spacings of indicator popup in pixel.
 	 * 
-	 * @param horizontal
-	 *            spacing between popup and left and right display edge
-	 * @param vertical
-	 *            spacing between popup and top and bottom display edge but also the spacing between
-	 *            popup and list item on which quick action is touched
+	 * @param left
+	 *            spacing to left display edge
+	 * @param top
+	 *            spacing to top display edge
+	 * @param right
+	 *            spacing to right display edge
+	 * @param bottom
+	 *            to swipeable item
 	 */
-	public void setIndicatorSpacing(int horizontal, int vertical) {
-		mPopupHorizontalSpacing = Math.max(horizontal, 0);
-		mPopupVerticalSpacing = Math.max(vertical, 0);
+	public void setIndicatorSpacing(int left, int top, int right, int bottom) {
+		mIndicatorSpacing = new Rect(left, top, right, bottom);
 	}
 	
 	/**
@@ -408,7 +408,7 @@ public class HiddenQuickActionSetup extends HiddenViewSetup {
 		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
 				mImageWidth, mImageHeight);
 		params.addRule(RelativeLayout.CENTER_IN_PARENT);
-
+		
 		iv.setLayoutParams(params);
 		iv.setImageDrawable(drawable);
 		
@@ -503,13 +503,13 @@ public class HiddenQuickActionSetup extends HiddenViewSetup {
 		mTouchListener = new OnTouchListener() {
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
-				if (isHiddenViewCovered()) {
-					return false;
-				}
-				
 				int a = event.getAction();
 				
 				if (a == MotionEvent.ACTION_DOWN) {
+					if (!isHiddenViewInteractionPossible()) {
+						return false;
+					}
+					
 					Drawable drawable = ((ImageView) ((ViewGroup) v).getChildAt(0)).getDrawable();
 					
 					if (drawable instanceof StateListDrawable) {
@@ -555,7 +555,8 @@ public class HiddenQuickActionSetup extends HiddenViewSetup {
 		mIndicatorStart = new Runnable() {
 			@Override
 			public void run() {
-				int width = mLinearLayout.getRootView().getWidth() - mPopupHorizontalSpacing * 2;
+				int width = mLinearLayout.getRootView().getWidth() - mIndicatorSpacing.left
+						- mIndicatorSpacing.right;
 				mIndicatorPopup.getContentView().measure(width | MeasureSpec.AT_MOST, 0);
 				int height = mIndicatorPopup.getContentView().getMeasuredHeight();
 				
@@ -565,15 +566,15 @@ public class HiddenQuickActionSetup extends HiddenViewSetup {
 				
 				int hiddenViewY = AndroidUtils.getContentLocation(mLinearLayout).y;
 				
-				if (height + mPopupVerticalSpacing * 2 <= hiddenViewY) {
+				if (height + mIndicatorSpacing.top + mIndicatorSpacing.bottom <= hiddenViewY) {
 					mIndicatorPopup.showAtLocation(mLinearLayout,
 							Gravity.TOP | Gravity.CENTER_HORIZONTAL,
-							mPopupHorizontalSpacing, hiddenViewY - height - mPopupVerticalSpacing
+							mIndicatorSpacing.left, hiddenViewY - height - mIndicatorSpacing.top
 									+ AndroidUtils.getContentOffsetFromTop(mLinearLayout));
 				} else {
 					mIndicatorPopup.showAtLocation(mLinearLayout,
 							Gravity.TOP | Gravity.CENTER_HORIZONTAL,
-							mPopupHorizontalSpacing, mPopupVerticalSpacing
+							mIndicatorSpacing.left, mIndicatorSpacing.top
 									+ AndroidUtils.getContentOffsetFromTop(mLinearLayout));
 				}
 			}
