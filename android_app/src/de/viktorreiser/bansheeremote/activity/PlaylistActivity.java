@@ -29,8 +29,8 @@ import de.viktorreiser.bansheeremote.data.BansheeDatabase.TrackInfo;
 import de.viktorreiser.bansheeremote.data.CoverCache;
 import de.viktorreiser.toolbox.content.NetworkStateBroadcast;
 import de.viktorreiser.toolbox.widget.HiddenQuickActionSetup;
-import de.viktorreiser.toolbox.widget.SwipeableHiddenView;
 import de.viktorreiser.toolbox.widget.HiddenQuickActionSetup.OnQuickActionListener;
+import de.viktorreiser.toolbox.widget.SwipeableHiddenView;
 
 /**
  * Here we will load the current player play list, show it and interact with it.
@@ -122,7 +122,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 			@Override
 			public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
 					int totalItemCount) {
-				if (!mPlaylistRequested
+				if (!mPlaylistRequested && mPlaylistCount != mPlaylist.size()
 						&& firstVisibleItem + visibleItemCount + 5 >= mPlaylist.size()) {
 					mPlaylistRequested = true;
 					CurrentSongActivity.mConnection.sendCommand(Command.PLAYLIST,
