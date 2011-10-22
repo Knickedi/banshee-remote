@@ -316,7 +316,8 @@ public interface SwipeableListItem {
 		 * It's like view is loosing focus. It should clean its state which was caused by previous
 		 * swipe interaction. Like {@link #CANCEL} this event is soft.
 		 */
-		CLOSE
+		CLOSE,
+		RESTORE
 	}
 	
 	
@@ -338,7 +339,8 @@ public interface SwipeableListItem {
 	 *         actions - return of {@code true} on {@link SwipeEvent#START} will begin the swipe
 	 *         action immediately and consume any clicks and long clicks instantly
 	 */
-	public boolean onViewSwipe(ListView listView, SwipeEvent event, int offset, int position);
+	public boolean onViewSwipe(ListView listView, SwipeEvent event, int offset, int position,
+			SwipeableListItem restoreItem);
 	
 	/**
 	 * Reset (immediately) any prior swipe state so it looks like this view hasn't ever been swiped.<br>

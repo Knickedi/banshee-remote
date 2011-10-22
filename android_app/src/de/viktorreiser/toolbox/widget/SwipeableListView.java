@@ -84,11 +84,10 @@ public class SwipeableListView extends ListView implements OnScrollListener,
 				if (mSwipeStarted) {
 					// onScroll will try to recover current swipe
 					mRestorePosition = mSwipeablePosition;
+				} else {
+					mSwipeableView.swipeStateReset();
+					mSwipeableView = null;
 				}
-				
-				// reset current swipeable
-				mSwipeableView.swipeStateReset();
-				mSwipeableView = null;
 			}
 		}
 	};
@@ -132,11 +131,10 @@ public class SwipeableListView extends ListView implements OnScrollListener,
 			if (mSwipeStarted) {
 				// onScroll will try to recover current swipe
 				mRestorePosition = mSwipeablePosition;
+			} else {
+				mSwipeableView.swipeStateReset();
+				mSwipeableView = null;
 			}
-			
-			// reset current swipeable
-			mSwipeableView.swipeStateReset();
-			mSwipeableView = null;
 		}
 		
 		if (getAdapter() != null) {
@@ -433,7 +431,7 @@ public class SwipeableListView extends ListView implements OnScrollListener,
 	 * Try to restore swipeable by given {@link #mRestorePosition}.
 	 */
 	private void restoreSwipe() {
-		if (mRestorePosition == INVALID_POSITION) {
+		if (mRestorePosition == INVALID_POSITION || mSwipeableView == null) {
 			return;
 		}
 		
@@ -444,26 +442,19 @@ public class SwipeableListView extends ListView implements OnScrollListener,
 				|| !(v instanceof SwipeableListItem)) {
 			// nothing to restore
 			mSwipeStarted = false;
+			mSwipeableView = null;
 		} else {
+			SwipeableListItem previous = mSwipeableView;
 			mSwipeableView = (SwipeableListItem) v;
 			mSwipeableView.swipeStateReset();
 			mSwipeablePosition = mRestorePosition;
-			int previousOffset = mStartOffset;
 			
-			// restart swipe action on view at previous position
-			mStartOffset = 0;
-			// -> default context menu requested -> no context menu received -> list performs click!
-
-			mSwipeStarted = sendSwipe(SwipeEvent.START);
-			
-			mStartOffset = previousOffset;
-			
-			if (mSwipeStarted |= sendSwipe(SwipeEvent.MOVE)) {
-				mConsumeClick = true;
+			if (mSwipeableView.onViewSwipe(this, SwipeEvent.RESTORE, mStartOffset,
+					mSwipeablePosition, previous)) {
+				mCachedPositions.put(mSwipeableView, mRestorePosition);
+			} else  {
+				mSwipeableView = null;
 			}
-			
-			// restore position of view so it won't be cleared in onScroll
-			mCachedPositions.put(mSwipeableView, mRestorePosition);
 		}
 		
 		mRestorePosition = INVALID_POSITION;
@@ -478,7 +469,7 @@ public class SwipeableListView extends ListView implements OnScrollListener,
 	 * @return {@link SwipeableListItem#onViewSwipe(ListView, SwipeEvent, int, int)}
 	 */
 	private boolean sendSwipe(SwipeEvent type) {
-		return mSwipeableView.onViewSwipe(this, type, mStartOffset, mSwipeablePosition);
+		return mSwipeableView.onViewSwipe(this, type, mStartOffset, mSwipeablePosition, null);
 	}
 	
 	/**

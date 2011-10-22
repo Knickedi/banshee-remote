@@ -292,7 +292,7 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 		 */
 		public final void closeHiddenView() {
 			if (currentSwipeableHiddenView != null) {
-				currentSwipeableHiddenView.onViewSwipe(null, SwipeEvent.CLOSE, 0, 0);
+				currentSwipeableHiddenView.onViewSwipe(null, SwipeEvent.CLOSE, 0, 0, null);
 			}
 		}
 		
@@ -568,7 +568,8 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 	 * <i>Overridden for internal use!</i>
 	 */
 	@Override
-	public boolean onViewSwipe(ListView listView, SwipeEvent event, int offset, int position) {
+	public boolean onViewSwipe(ListView listView, SwipeEvent event, int offset, int position,
+			SwipeableListItem restoreItem) {
 		checkRequirements();
 		
 		boolean mayInterruptAnimation = mAnimating && Math.abs(mOffset) < mData.interruptOffset
@@ -585,6 +586,27 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 		}
 		
 		switch (event) {
+		case RESTORE:
+			if (restoreItem instanceof SwipeableHiddenView) {
+				SwipeableHiddenView v = (SwipeableHiddenView) restoreItem;
+				
+				mAnimateForward = v.mAnimateForward;
+				mAnimating = v.mAnimating;
+				mAnimationStepTime = v.mAnimationStepTime;
+				mStarted = v.mStarted;
+				mCurrentListView = v.mCurrentListView;
+				mCurrentPosition = v.mCurrentPosition;
+				mLastOffset = v.mLastOffset;
+				mOffset = v.mOffset;
+				
+				bindHiddenView();
+				requestLayout();
+				
+				return true;
+			} else {
+				return false;
+			}
+			
 		case START:
 			bindHiddenView();
 			
