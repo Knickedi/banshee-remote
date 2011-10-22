@@ -1,6 +1,5 @@
 package de.viktorreiser.toolbox.widget;
 
-import de.viktorreiser.toolbox.util.L;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -145,8 +144,8 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 	 * all instances. The view will be shared between them since hidden view won't ever be visible
 	 * in more than one {@link SwipeableHiddenView}.<br>
 	 * <br>
-	 * Always determinate whether {@link #isHiddenViewInteractionPossible()} before interacting with
-	 * the hidden view (like performing click actions)!<br>
+	 * Always determinate whether {@link #isHiddenViewCovered()} is {@code false} before interacting
+	 * with the hidden view (like performing click actions)!<br>
 	 * When hidden view triggers an action you can use {@link #getCurrentSwipeableHiddenView()},
 	 * {@link #getCurrentListView()} and {@link #getCurrentPosition()} to determinate on which
 	 * {@link SwipeableHiddenView}, list view and list item the action is performed.<br>
@@ -258,30 +257,6 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 			}
 			
 			return true;
-		}
-		
-		/**
-		 * Can the user interact with the hidden view?<br>
-		 * <br>
-		 * You could break the swipeable list behavior and the disturb the user when your disregard
-		 * this constraint.
-		 * 
-		 * @return {@code false} is telling you that you shouldn't process any actions on the hidden
-		 *         view because the is (visually) not allowed to perform any actions
-		 */
-		public final boolean isHiddenViewInteractionPossible() {
-			if (currentSwipeableHiddenView != null
-					&& currentSwipeableHiddenView.isHiddenViewSetupSet()
-					&& !currentSwipeableHiddenView.isHiddenViewCovered()) {
-				boolean started = currentSwipeableHiddenView.mStarted;
-				float offset = Math.abs(currentSwipeableHiddenView.mOffset);
-				float iOffset = currentSwipeableHiddenView.mData.interruptOffset;
-				L.i("can touch " + (!started || started && offset >= iOffset));
-				return currentSwipeableHiddenView.mAnimateForward
-						&& (!started || started && offset >= iOffset);
-			}
-			
-			return false;
 		}
 		
 		/**
@@ -768,15 +743,8 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 	public void onLayout(boolean changed, int left, int top, int right, int bottom) {
 		// ignore that fancy stuff with gravity, padding and margins
 		final int count = getChildCount();
-		int height = 0;
-		
 		for (int i = 0; i < count; i++) {
-			height = Math.max(height, getChildAt(i).getMeasuredHeight());
-		}
-		
-		for (int i = 0; i < count; i++) {
-			View child = getChildAt(i);
-			child.layout(0, 0, child.getMeasuredWidth(), height);
+			getChildAt(i).layout(0, 0, getMeasuredWidth(), getMeasuredHeight());
 		}
 	}
 	
