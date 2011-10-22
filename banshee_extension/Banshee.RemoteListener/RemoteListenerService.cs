@@ -229,7 +229,7 @@ namespace Banshee.RemoteListener
 				client = (Socket)ar.AsyncState;
 				int readBytes = client.EndReceive(ar);
 				
-				string requestName = ((RequestCode) _buffer[0]).ToString();
+				string requestName = "Request" + ((RequestCode) _buffer[0]).ToString();
 				byte [] result = (byte []) typeof(RemoteListenerService).InvokeMember(
 					requestName,
 					BindingFlags.Default | BindingFlags.InvokeMethod,
@@ -817,6 +817,37 @@ namespace Banshee.RemoteListener
 			}
 		}
 		
+		public bool PlayTrack(long id) {
+			DatabaseTrackInfo track = new DatabaseTrackModelProvider<DatabaseTrackInfo>(
+					ServiceManager.DbConnection).FetchSingle(id);
+					
+			if (track != null) {
+				TrackListModel model = ServiceManager.PlaybackController.Source.TrackModel;
+				int i;
+				
+				for (i = 0; i < model.Count; i++) {
+					TrackInfo t = (TrackInfo) model.GetItem(i);
+					
+					if (t is DatabaseTrackInfo && ((DatabaseTrackInfo) t).TrackId == track.TrackId) {
+						break;
+					}
+				}
+				
+				if (i != model.Count) {
+					Log.Information("HIER");
+					ServiceManager.PlayerEngine.OpenPlay((TrackInfo) model.GetItem(i));
+					_playTimeout = Timestamp();
+				} else {
+					ServiceManager.PlayerEngine.OpenPlay(track);
+					_playTimeout = Timestamp();
+				}
+				
+				return true;
+			}
+			
+			return false;
+		}
+		
 		#endregion
 		
 		
@@ -836,11 +867,11 @@ namespace Banshee.RemoteListener
 			PlaylistControl = 6,
 		}
 		
-		public byte [] Test(int readBytes) {
+		public byte [] RequestTest(int readBytes) {
 			return new byte[] {0};
 		}
 		
-		public byte [] PlayerStatus(int readBytes) {
+		public byte [] RequestPlayerStatus(int readBytes) {
 			bool? playing = null;
 			bool? paused = null;
 			uint? newPosition = null;
@@ -897,7 +928,7 @@ namespace Banshee.RemoteListener
 			return result;
 		}
 		
-		public byte [] SongInfo(int readBytes) {
+		public byte [] RequestSongInfo(int readBytes) {
 			TrackInfo track = ServiceManager.PlayerEngine.CurrentTrack;
 			byte [] totalTime, year, song, artist, album, genre, artId;
 			
@@ -938,7 +969,7 @@ namespace Banshee.RemoteListener
 			return result;
 		}
 		
-		public byte [] SyncDatabase(int readBytes) {
+		public byte [] RequestSyncDatabase(int readBytes) {
 			if (readBytes > 1) {
 				if (_buffer[1] == 1) {
 					if (File.Exists(DatabasePath(true))) {
@@ -961,7 +992,7 @@ namespace Banshee.RemoteListener
 			return new byte [] {0};
 		}
 		
-		public byte [] Cover(int readBytes) {
+		public byte [] RequestCover(int readBytes) {
 			string artId = null;
 			
 			if (readBytes > 2) {
@@ -988,7 +1019,7 @@ namespace Banshee.RemoteListener
 			return new byte [] {0};
 		}
 		
-		public byte [] Playlist(int readBytes) {
+		public byte [] RequestPlaylist(int readBytes) {
 			TrackListModel model = ServiceManager.PlaybackController.Source.TrackModel;
 			
 			int maxReturn = 0;
@@ -1017,10 +1048,18 @@ namespace Banshee.RemoteListener
 				byte [] result = new byte [2 + 2 + 4 * returned];
 				Array.Copy(ShortToByte((ushort) count), 0, result, 0, 2);
 				Array.Copy(ShortToByte((ushort) returned), 0, result, 2, 2);
+				byte [] zeroId = new byte [] {0, 0, 0, 0};
 				
 				for (int i = startPosition; i < toCount; i++) {
-					int id = DatabaseTrackInfo.GetTrackIdForUri(((TrackInfo) model.GetItem(i)).Uri);
-					Array.Copy(IntToByte((uint) id), 0, result, (i - startPosition) * 4 + 4, 4);
+					TrackInfo track = (TrackInfo) model.GetItem(i);
+					
+					if (track is DatabaseTrackInfo) {
+						Array.Copy(IntToByte((uint) ((DatabaseTrackInfo) track).TrackId),
+						                     0, result, (i - startPosition) * 4 + 4, 4);
+					} else {
+						Array.Copy(zeroId, 0, result, (i - startPosition) * 4 + 4, 4);
+					}
+					//int id = DatabaseTrackInfo.GetTrackIdForUri(((TrackInfo) ).Uri);
 				}
 				
 				return result;
@@ -1029,19 +1068,11 @@ namespace Banshee.RemoteListener
 			}
 		}
 		
-		public byte [] PlaylistControl(int readBytes) {
+		public byte [] RequestPlaylistControl(int readBytes) {
 			if (readBytes > 1) {
 				switch (_buffer[1]) {
 				case 1: {
-					TrackInfo track = new DatabaseTrackModelProvider<DatabaseTrackInfo>(
-							ServiceManager.DbConnection).FetchSingle(IntFromBuffer(2));
-					
-					if (track != null) {
-						ServiceManager.PlayerEngine.OpenPlay(track);
-						_playTimeout = Timestamp();
-						return new byte [] {1};
-					}
-					break;
+					return new byte [] {(byte) (PlayTrack(IntFromBuffer(2)) ? 1 : 0)};
 				}
 				case 2: {
 					int trackIdCount = ShortFromBuffer(2);
