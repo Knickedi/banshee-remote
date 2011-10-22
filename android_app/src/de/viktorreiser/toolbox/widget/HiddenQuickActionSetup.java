@@ -506,7 +506,7 @@ public class HiddenQuickActionSetup extends HiddenViewSetup {
 				int a = event.getAction();
 				
 				if (a == MotionEvent.ACTION_DOWN) {
-					if (!isHiddenViewInteractionPossible()) {
+					if (isHiddenViewCovered()) {
 						return false;
 					}
 					

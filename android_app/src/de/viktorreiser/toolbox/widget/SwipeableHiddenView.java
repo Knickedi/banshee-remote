@@ -1,5 +1,6 @@
 package de.viktorreiser.toolbox.widget;
 
+import de.viktorreiser.toolbox.util.L;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -275,8 +276,9 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 				boolean started = currentSwipeableHiddenView.mStarted;
 				float offset = Math.abs(currentSwipeableHiddenView.mOffset);
 				float iOffset = currentSwipeableHiddenView.mData.interruptOffset;
-				
-				return !started || started && offset >= iOffset;
+				L.i("can touch " + (!started || started && offset >= iOffset));
+				return currentSwipeableHiddenView.mAnimateForward
+						&& (!started || started && offset >= iOffset);
 			}
 			
 			return false;
@@ -434,7 +436,6 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 			interruptOffset = offset / 2;
 		}
 		
-		
 		// PRIVATE --------------------------------------------------------------------------------
 		
 		/**
@@ -570,7 +571,8 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 	public boolean onViewSwipe(ListView listView, SwipeEvent event, int offset, int position) {
 		checkRequirements();
 		
-		boolean mayInterruptAnimation = mAnimating && Math.abs(mOffset) < mData.interruptOffset;
+		boolean mayInterruptAnimation = mAnimating && Math.abs(mOffset) < mData.interruptOffset
+				|| mAnimating && !mAnimateForward;
 		
 		if (event == SwipeEvent.START) {
 			mStarted = mayInterruptAnimation;
@@ -648,7 +650,7 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 		
 		mLastOffset = offset;
 		
-		return mStarted || isHiddenViewVisible();
+		return mStarted;
 	}
 	
 	/**

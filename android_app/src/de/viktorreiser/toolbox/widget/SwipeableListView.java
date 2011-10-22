@@ -1,11 +1,8 @@
 package de.viktorreiser.toolbox.widget;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
-
-import de.viktorreiser.toolbox.widget.SwipeableListItem.SwipeEvent;
 
 import android.content.Context;
 import android.database.DataSetObserver;
@@ -22,6 +19,7 @@ import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+import de.viktorreiser.toolbox.widget.SwipeableListItem.SwipeEvent;
 
 /**
  * List which supports swipeable item views.<br>
@@ -48,146 +46,47 @@ public class SwipeableListView extends ListView implements OnScrollListener,
 	
 	// PRIVATE ====================================================================================
 	
-	/** Reflected helper for selection clearance. */
+	// reflection hack to force list selector clearance
 	private static Field mSelectorRect = null;
-	
-	/** Reflected helper for selection clearance. */
-	private static Method mRectSetEmpty = null;
 	
 	static {
 		try {
 			mSelectorRect = AbsListView.class.getDeclaredField("mSelectorRect");
 			mSelectorRect.setAccessible(true);
-			mRectSetEmpty = Rect.class.getDeclaredMethod("setEmpty");
-			mRectSetEmpty.setAccessible(true);
 		} catch (Exception e) {
-			mRectSetEmpty = null;
 		}
 	}
 	
 	
-	/**
-	 * Try to restore old swipeable view state on list data change.<br>
-	 * <br>
-	 * When {@link #setAdapter(ListAdapter)} is called or data change on the current adapter is
-	 * performed and list is currently performing a swipe action this variable will be set to its
-	 * position. When list is refreshed it will be checked whether the swiped position is still
-	 * visible. When this is the case then the swipe action will be performed on the (new) view at
-	 * this position.<br>
-	 * <br>
-	 * This might restore a swipe state on a completely different swipeable view or the swipe could
-	 * have an awkward offset. But it's the way the list view handles a data change on (long) click
-	 * too. It will also click or long click a different item. So we just follow this pattern!
-	 */
 	private int mRestorePosition = INVALID_POSITION;
 	
-	/**
-	 * Motion event value of X coordinate when swipe was started.<br>
-	 * <br>
-	 * This is used to calculate the swipe offset.
-	 */
-	private int mSwipeX;
+	private int mStartX;
+	private int mStartY;
+	private int mStartOffset;
 	
-	/**
-	 * Motion event value of X coordinate when swipe was started.<br>
-	 * <br>
-	 * Used to intercept view item click for swipe motion.
-	 */
-	private int mSwipeY;
-	
-	/**
-	 * Does list currently handles a swipe action?<br>
-	 * <br>
-	 * Is {@code true} after {@link SwipeEvent#START}, while {@link SwipeEvent#MOVE}, until
-	 * {@link SwipeEvent#CANCEL} or (long) click (whether {@link SwipeEvent#CLICK} or
-	 * {@link SwipeEvent#LONG_CLICK} is sent or not).
-	 */
-	private boolean mHasSwipeable = false;
-	
-	/**
-	 * Reference to swipeable view on which the list is currently operating.<br>
-	 * <br>
-	 * Is at least available as long {@link #mHasSwipeable} is {@code true}. But it's often
-	 * available until next swipe and represents the last swiped view.
-	 */
 	private SwipeableListItem mSwipeableView;
 	
-	/**
-	 * Position of swipeable view in list.<br>
-	 * <br>
-	 * It has the same lifecycle like {@link #mSwipeableView}.
-	 */
+	private boolean mSwipeStarted = false;
 	private int mSwipeablePosition = INVALID_POSITION;
 	
-	/**
-	 * X motion offset of swipe (positive when right of and negative to left of started position).<br>
-	 * <br>
-	 * This is the last offset calculated for a swipe action. It has the same lifecycle like
-	 * {@link #mSwipeableView}.
-	 */
-	private int mSwipeOffset;
-	
-	/**
-	 * Swipe was stated by view.<br>
-	 * <br>
-	 * Swipe action performed and {@link SwipeableListItem#onViewSwipe} returned {@code true}.<br>
-	 * It has the same lifecycle like {@link #mHasSwipeable} besides the fact that this variable
-	 * waits for a swipe start of view.
-	 */
-	private boolean mSwipeableStarted;
-	
-	/**
-	 * {@code true} if next incoming click event has to be consumed.<br>
-	 * <br>
-	 * This will suppress the default click. It will be set with {@link #mSwipeableStarted} or on
-	 * long click when swipeable view consumes it. Item will remain pressed and trigger a click on
-	 * touch up which we have to consume.
-	 */
-	private boolean mConsumeClick;
-	
-	/** Flag which avoids double initialization by touch and interception touch event. */
-	private boolean mStartAlreadyRequested = false;
-	
-	/**
-	 * Flag disables selection in draw method.
-	 */
+	private boolean mConsumeClick = false;
 	boolean mConsumeSelection = false;
-	
-	/** {@code true} if swipe should be canceled on focus loss. */
 	boolean mCancelSwipeOnFocusLoss = false;
 	
-	/**
-	 * Reused swipeable views and their current associated item view positions.<br>
-	 * <br>
-	 * This is used in {@code onScroll}, The views will be added to this map if they are not already
-	 * in it. If they are then we get their last saved position and if it is reused it will differ
-	 * so {@link SwipeableListItem#swipeStateReset()} will be called.
-	 */
 	private Map<SwipeableListItem, Integer> mCachedPositions =
 			new HashMap<SwipeableListItem, Integer>();
 	
-	
-	/**
-	 * Create context menu listener set from outside of class.<br>
-	 * <br>
-	 * Only call it if swipe view doesn't consume long click.
-	 */
 	private OnCreateContextMenuListener mCreateContextMenuListener = null;
-	
-	/**
-	 * Listener for data changes of adapter.<br>
-	 * <br>
-	 * This will try to restore current swipe action.
-	 */
 	private DataSetObserver mChangeObserver = new DataSetObserver() {
 		@Override
 		public void onChanged() {
 			if (mSwipeableView != null) {
-				if (mHasSwipeable) {
+				if (mSwipeStarted) {
 					// onScroll will try to recover current swipe
 					mRestorePosition = mSwipeablePosition;
 				}
 				
+				// reset current swipeable
 				mSwipeableView.swipeStateReset();
 				mSwipeableView = null;
 			}
@@ -230,20 +129,23 @@ public class SwipeableListView extends ListView implements OnScrollListener,
 	@Override
 	public void setAdapter(ListAdapter adapter) {
 		if (mSwipeableView != null) {
-			if (mHasSwipeable) {
+			if (mSwipeStarted) {
 				// onScroll will try to recover current swipe
 				mRestorePosition = mSwipeablePosition;
 			}
 			
+			// reset current swipeable
 			mSwipeableView.swipeStateReset();
 			mSwipeableView = null;
 		}
 		
 		if (getAdapter() != null) {
+			// detach data observer from old adapter
 			getAdapter().unregisterDataSetObserver(mChangeObserver);
 		}
 		
 		if (adapter != null) {
+			// attach to new adapter
 			adapter.registerDataSetObserver(mChangeObserver);
 		}
 		
@@ -255,10 +157,10 @@ public class SwipeableListView extends ListView implements OnScrollListener,
 	 */
 	@Override
 	public void setOnScrollListener(final OnScrollListener l) {
-		// merge given scroll listener with or own
 		if (l == null || l == this) {
 			super.setOnScrollListener(this);
 		} else {
+			// merge given scroll listener with our own
 			super.setOnScrollListener(new OnScrollListener() {
 				@Override
 				public void onScrollStateChanged(AbsListView view, int scrollState) {
@@ -285,8 +187,8 @@ public class SwipeableListView extends ListView implements OnScrollListener,
 			int totalItemCount) {
 		restoreSwipe();
 		
-		// track all swipeable views and reset them if they don't point to the same position
-		// anymore -> this resets recycled swipeable views
+		// track all swipeable views and reset their swipe states if they don't point to
+		// the same position anymore -> this resets recycled swipeable views (for reuse)
 		for (int i = 0; i < visibleItemCount; i++) {
 			View child = getChildAt(i);
 			
@@ -310,7 +212,7 @@ public class SwipeableListView extends ListView implements OnScrollListener,
 	@Override
 	public void onScrollStateChanged(AbsListView view, int scrollState) {
 		if (scrollState == SCROLL_STATE_FLING || scrollState == SCROLL_STATE_TOUCH_SCROLL) {
-			// scroll state cancels swipeable view
+			// scroll state cancels swipeable view (list scroll is performed)
 			cancelSwipe();
 		}
 	}
@@ -321,7 +223,7 @@ public class SwipeableListView extends ListView implements OnScrollListener,
 	@Override
 	public void setOnCreateContextMenuListener(OnCreateContextMenuListener l) {
 		// merge create context listener with our own
-		mCreateContextMenuListener = l == null || l == this ? null : l;
+		mCreateContextMenuListener = (l == this ? null : l);
 	}
 	
 	/**
@@ -329,16 +231,15 @@ public class SwipeableListView extends ListView implements OnScrollListener,
 	 */
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
-		if (mHasSwipeable) {
-			if (mSwipeableStarted) {
+		if (mSwipeableView != null) {
+			if (mSwipeStarted) {
 				// swipeable started, consume all click events
 				mConsumeClick = true;
 				return;
 			} else if (mSwipeableView.swipeOnLongClick()) {
 				// swipeable requests context click event and consumes it
 				sendSwipe(SwipeEvent.LONG_CLICK);
-				mConsumeClick = true;
-				mHasSwipeable = false;
+				mSwipeStarted = mConsumeClick = true;
 				mConsumeSelection = !mSwipeableView.swipeDoesntHideListSelector();
 				invalidate();
 				return;
@@ -349,9 +250,6 @@ public class SwipeableListView extends ListView implements OnScrollListener,
 		if (mCreateContextMenuListener != null) {
 			mCreateContextMenuListener.onCreateContextMenu(menu, v, menuInfo);
 		}
-		
-		mHasSwipeable = false;
-		mSwipeableStarted = false;
 	}
 	
 	/**
@@ -360,23 +258,16 @@ public class SwipeableListView extends ListView implements OnScrollListener,
 	@Override
 	public boolean performItemClick(View view, int position, long id) {
 		// swipeable consumes item click
-		if (mConsumeClick || mHasSwipeable && mSwipeableStarted) {
+		if (mConsumeClick) {
 			return false;
 		}
 		
 		// swipeable requests click event and consumes it
-		//
-		// we check for view directly instead for swipeable flag for a good reason:
-		// context click performed -> swipeable dind't want to consume it -> reset swipeable state
-		// -> default context menu requested -> no context menu received -> list performs click!
 		if (mSwipeableView != null && mSwipeableView.swipeOnClick()) {
 			sendSwipe(SwipeEvent.CLICK);
-			mHasSwipeable = false;
+			mSwipeStarted = false;
 			return false;
 		}
-		
-		// click requested so cancel swipeable
-		// cancelSwipe();
 		
 		return super.performItemClick(view, position, id);
 	}
@@ -400,45 +291,7 @@ public class SwipeableListView extends ListView implements OnScrollListener,
 	 */
 	@Override
 	public boolean onTouchEvent(MotionEvent ev) {
-		mSwipeOffset = (int) ev.getX() - mSwipeX;
-		
-		if (ev.getAction() == MotionEvent.ACTION_DOWN) {
-			setupSwipeableClick(ev);
-			mStartAlreadyRequested = false;
-		} else if (ev.getAction() == MotionEvent.ACTION_UP) {
-			// swipeable is active and started, send stop
-			if (mHasSwipeable && mSwipeableStarted) {
-				sendSwipe(SwipeEvent.STOP);
-			}
-			
-			mSwipeableStarted = false;
-		} else if (ev.getAction() == MotionEvent.ACTION_MOVE) {
-			// swipeable is active, move event reports start, not started yet, do it now
-			if (mHasSwipeable && (sendSwipe(SwipeEvent.MOVE) || mSwipeableStarted)) {
-				mSwipeableStarted = true;
-				mConsumeClick = true;
-				
-				if (mSwipeableView != null) {
-					mConsumeSelection = !mSwipeableView.swipeDoesntHideListSelector(); 
-				} else {
-					mConsumeSelection = true;
-				}
-			}
-		} else if (ev.getAction() == MotionEvent.ACTION_CANCEL) {
-			// swipeable is active, send cancel
-			if (mHasSwipeable) {
-				mSwipeOffset = 0;
-				cancelSwipe();
-			}
-		}
-		
-		int offset = (int) (ViewConfiguration.getTouchSlop()
-				* getContext().getResources().getDisplayMetrics().density + 0.5f) * 2;
-		
-		// while interacting with a swipeable view we double the offset until list scroll kicks in
-		return ev.getAction() != MotionEvent.ACTION_MOVE || !mHasSwipeable || !mSwipeableStarted
-				|| Math.abs((int) ev.getY() - mSwipeY) > offset
-				? super.onTouchEvent(ev) : true;
+		return handleTouchEvent(ev, false);
 	}
 	
 	/**
@@ -446,49 +299,31 @@ public class SwipeableListView extends ListView implements OnScrollListener,
 	 */
 	@Override
 	public boolean onInterceptTouchEvent(MotionEvent ev) {
-		if (ev.getAction() == MotionEvent.ACTION_DOWN) {
-			setupSwipeableClick(ev);
-		} else {
-			mStartAlreadyRequested = false;
-		}
-		
-		if (super.onInterceptTouchEvent(ev)) {
-			return true;
-		} else if (mHasSwipeable
-				&& Math.abs((int) ev.getX() - mSwipeX) > ViewConfiguration.getTouchSlop()) {
-			// we intercept for horizontal scroll of a swipeable view
-			// to set the selector list view needs a touch down event
-			int oldAction = ev.getAction();
-			ev.setAction(MotionEvent.ACTION_DOWN);
-			super.onTouchEvent(ev);
-			ev.setAction(oldAction);
-			return true;
-		} else {
-			return false;
-		}
+		return handleTouchEvent(ev, true);
 	}
 	
 	/**
 	 * <i>Overridden for internal use!</i>
 	 */
 	@Override
-	public void draw(Canvas canvas) {
+	public void dispatchDraw(Canvas canvas) {
 		if (mConsumeSelection) {
 			// list insists on drawing the selector
-			// cancel this on last possible moment before actual draw
+			// cancel this in last possible moment before actual draw
 			
 			setPressed(false);
+			
 			if (mSwipeableView != null) {
 				((View) mSwipeableView).setPressed(false);
 			}
 			
 			try {
-				mRectSetEmpty.invoke(mSelectorRect.get(this));
+				((Rect) mSelectorRect.get(this)).setEmpty();
 			} catch (Exception e) {
 			}
 		}
 		
-		super.draw(canvas);
+		super.dispatchDraw(canvas);
 	}
 	
 	// PRIVATE ====================================================================================
@@ -498,15 +333,99 @@ public class SwipeableListView extends ListView implements OnScrollListener,
 		super.setOnCreateContextMenuListener(this);
 	}
 	
+	private boolean handleTouchEvent(MotionEvent ev, boolean intercept) {
+		mStartOffset = (int) ev.getX() - mStartX;
+		int action = ev.getAction();
+		
+		
+		if (action == MotionEvent.ACTION_DOWN) {
+			if (intercept) {
+				setupSwipeableClick(ev);
+				super.onInterceptTouchEvent(ev);
+			} else {
+				// let the non intercept call always wont to take control
+				super.onTouchEvent(ev);
+			}
+			
+		} else if (action == MotionEvent.ACTION_MOVE) {
+			// this calculated slop will always trigger the list to scroll
+			// so a started swipe should be canceled anyway
+			if (mSwipeableView != null
+					&& Math.abs((int) ev.getY() - mStartY) > ViewConfiguration.getTouchSlop()
+							* getContext().getResources().getDisplayMetrics().density + 0.5f * 2) {
+				cancelSwipe();
+				return super.onTouchEvent(ev);
+			}
+			
+			if (intercept) {
+				if (mSwipeableView != null) {
+					if (sendSwipe(SwipeEvent.MOVE)) {
+						// we have a swipeable view ready and it reports a start
+						// remember that, clear selection if needed and intercept
+						mSwipeStarted = mConsumeClick = true;
+						mConsumeSelection = !mSwipeableView.swipeDoesntHideListSelector();
+						
+						if (!mConsumeSelection) {
+							ev.setAction(MotionEvent.ACTION_DOWN);
+							super.onTouchEvent(ev);
+							ev.setAction(action);
+						}
+					}
+				} else {
+					// let the list take control of everything else
+					if (super.onInterceptTouchEvent(ev)) {
+						cancelSwipe();
+						return true;
+					} else {
+						return false;
+					}
+				}
+			} else {
+				if (mSwipeableView == null) {
+					// no swipeable view (or already cancel) - just call the list touch routine
+					return super.onTouchEvent(ev);
+				} else if (mSwipeStarted) {
+					// swipe started, report move
+					sendSwipe(SwipeEvent.MOVE);
+				} else if (sendSwipe(SwipeEvent.MOVE)) {
+					// swipe started, remember that and clear selection if needed
+					mSwipeStarted = mConsumeClick = true;
+					mConsumeSelection = !mSwipeableView.swipeDoesntHideListSelector();
+					return true;
+				} else {
+					// let the list take control of everything else
+					return super.onTouchEvent(ev);
+				}
+			}
+		} else if (action == MotionEvent.ACTION_UP) {
+			if (mSwipeStarted) {
+				sendSwipe(SwipeEvent.STOP);
+			} else {
+				mConsumeClick = false;
+			}
+			
+			if (intercept) {
+				super.onInterceptTouchEvent(ev);
+			} else {
+				super.onTouchEvent(ev);
+			}
+		} else if (action == MotionEvent.ACTION_CANCEL) {
+			cancelSwipe();
+			mConsumeClick = false;
+			return super.onTouchEvent(ev);
+		}
+
+		return intercept ? mSwipeStarted : true;
+	}
 	
 	/**
-	 * Send {@link SwipeEvent#CANCEL} if {@link #mHasSwipeable}.
+	 * Send {@link SwipeEvent#CANCEL} if {@link #mSwipeStarted}.
 	 */
 	private void cancelSwipe() {
-		if (mHasSwipeable) {
-			mSwipeableStarted = false;
-			mHasSwipeable = false;
+		if (mSwipeStarted) {
 			sendSwipe(SwipeEvent.CANCEL);
+			mSwipeStarted = false;
+			mSwipeableView = null;
 		}
 	}
 	
@@ -524,23 +443,24 @@ public class SwipeableListView extends ListView implements OnScrollListener,
 		if (wantedChild < 0 || wantedChild >= getChildCount()
 				|| !(v instanceof SwipeableListItem)) {
 			// nothing to restore
-			mHasSwipeable = false;
-			mConsumeClick = false;
+			mSwipeStarted = false;
 		} else {
 			mSwipeableView = (SwipeableListItem) v;
 			mSwipeableView.swipeStateReset();
 			mSwipeablePosition = mRestorePosition;
-			int previousOffset = mSwipeOffset;
+			int previousOffset = mStartOffset;
 			
 			// restart swipe action on view at previous position
-			mSwipeOffset = 0;
+			mStartOffset = 0;
+			// -> default context menu requested -> no context menu received -> list performs click!
+
+			mSwipeStarted = sendSwipe(SwipeEvent.START);
 			
-			mSwipeableStarted = sendSwipe(SwipeEvent.START);
+			mStartOffset = previousOffset;
 			
-			mSwipeOffset = previousOffset;
-			mSwipeableStarted |= sendSwipe(SwipeEvent.MOVE);
-			
-			mConsumeClick = mSwipeableStarted;
+			if (mSwipeStarted |= sendSwipe(SwipeEvent.MOVE)) {
+				mConsumeClick = true;
+			}
 			
 			// restore position of view so it won't be cleared in onScroll
 			mCachedPositions.put(mSwipeableView, mRestorePosition);
@@ -558,11 +478,7 @@ public class SwipeableListView extends ListView implements OnScrollListener,
 	 * @return {@link SwipeableListItem#onViewSwipe(ListView, SwipeEvent, int, int)}
 	 */
 	private boolean sendSwipe(SwipeEvent type) {
-		if (mSwipeableView != null) {
-			return mSwipeableView.onViewSwipe(this, type, mSwipeOffset, mSwipeablePosition);
-		} else {
-			return false;
-		}
+		return mSwipeableView.onViewSwipe(this, type, mStartOffset, mSwipeablePosition);
 	}
 	
 	/**
@@ -572,20 +488,13 @@ public class SwipeableListView extends ListView implements OnScrollListener,
 	 *            current touch down event
 	 */
 	private void setupSwipeableClick(MotionEvent ev) {
-		if (mStartAlreadyRequested) {
-			return;
-		}
-		
-		mStartAlreadyRequested = true;
 		int oldPosition = mSwipeablePosition;
 		
-		mConsumeClick = false;
-		mSwipeX = (int) ev.getX();
-		mSwipeY = (int) ev.getY();
-		mHasSwipeable = false;
-		mSwipeableStarted = false;
+		mStartX = (int) ev.getX();
+		mStartY = (int) ev.getY();
+		mSwipeStarted = false;
 		mConsumeSelection = false;
-		mSwipeOffset = 0;
+		mStartOffset = 0;
 		
 		mSwipeablePosition = pointToPosition((int) ev.getX(), (int) ev.getY());
 		int wantedChild = mSwipeablePosition - getFirstVisiblePosition();
@@ -604,11 +513,9 @@ public class SwipeableListView extends ListView implements OnScrollListener,
 		if (view != null) {
 			// start swipe
 			mSwipeableView = (SwipeableListItem) view;
-			mHasSwipeable = true;
 			
 			if (sendSwipe(SwipeEvent.START)) {
-				mSwipeableStarted = true;
-				mConsumeClick = true;
+				mConsumeClick = mSwipeStarted = true;
 				mConsumeSelection = !mSwipeableView.swipeDoesntHideListSelector();
 			}
 		} else {
