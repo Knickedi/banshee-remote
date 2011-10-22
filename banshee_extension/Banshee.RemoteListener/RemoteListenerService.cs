@@ -230,10 +230,12 @@ namespace Banshee.RemoteListener
 				int readBytes = client.EndReceive(ar);
 				
 				string requestName = "Request" + ((RequestCode) _buffer[0]).ToString();
+				Array.Copy(_buffer, 1, _buffer, 0, _buffer.Length - 1);
+				
 				byte [] result = (byte []) typeof(RemoteListenerService).InvokeMember(
 					requestName,
 					BindingFlags.Default | BindingFlags.InvokeMethod,
-                    null, this, new object [] {readBytes});
+                    null, this, new object [] {readBytes - 1});
 				
 				// we handled the request and have the data, handle other requests now
 				isListenerAccepting = true;
@@ -817,6 +819,15 @@ namespace Banshee.RemoteListener
 			}
 		}
 		
+		/// <summary>
+		/// Set track to play (immediately).
+		/// </summary>
+		/// <param name="id">
+		/// ID of track in database.
+		/// </param>
+		/// <returns>
+		/// Returns true if track is available and is plaing now.
+		/// </returns>
 		public bool PlayTrack(long id) {
 			DatabaseTrackInfo track = new DatabaseTrackModelProvider<DatabaseTrackInfo>(
 					ServiceManager.DbConnection).FetchSingle(id);
@@ -877,25 +888,25 @@ namespace Banshee.RemoteListener
 			uint? newPosition = null;
 			bool? resetSeek = null;
 			
-			if (readBytes > 1) {
-				SetupPlayMode((_buffer[1] >> 4) & 0xf, out playing, out paused, out resetSeek);
-				SetupRepeatMode(_buffer[1] & 0xf);
+			if (readBytes > 0) {
+				SetupPlayMode((_buffer[0] >> 4) & 0xf, out playing, out paused, out resetSeek);
+				SetupRepeatMode(_buffer[0] & 0xf);
 				
 				if (resetSeek != null) {
 					newPosition = 0;
 				}
 			}
 			
+			if (readBytes > 1) {
+				SetupShuffleMode(_buffer[1] & 0xf);
+			}
+			
 			if (readBytes > 2) {
-				SetupShuffleMode(_buffer[2] & 0xf);
+				SetupVolume(_buffer[2]);
 			}
 			
-			if (readBytes > 3) {
-				SetupVolume(_buffer[3]);
-			}
-			
-			if (readBytes > 7) {
-				SetupSeekPosition(IntFromBuffer(4), out newPosition);
+			if (readBytes > 6) {
+				SetupSeekPosition(IntFromBuffer(3), out newPosition);
 			}
 			
 			byte [] result = PlayerStatusResult();
@@ -970,19 +981,19 @@ namespace Banshee.RemoteListener
 		}
 		
 		public byte [] RequestSyncDatabase(int readBytes) {
-			if (readBytes > 1) {
-				if (_buffer[1] == 1) {
+			if (readBytes > 0) {
+				if (_buffer[0] == 1) {
 					if (File.Exists(DatabasePath(true))) {
 						return IntToByte((uint) new FileInfo(DatabasePath(true)).Length);
 					} else {
 						CompressDatabase();
 						return IntToByte(File.Exists(DatabasePath(true)) ? (uint) _dbCompressTime : 0);
 					}
-				} else if (_buffer[1] == 2) {
+				} else if (_buffer[0] == 2) {
 					if (File.Exists(DatabasePath(true))) {
 						return File.ReadAllBytes(DatabasePath(true));
 					}
-				} else if (_buffer[2] == 3) {
+				} else if (_buffer[0] == 3) {
 					_dbCompressTime = 0;
 					CompressDatabase();
 					return new byte [] {1};
@@ -995,9 +1006,9 @@ namespace Banshee.RemoteListener
 		public byte [] RequestCover(int readBytes) {
 			string artId = null;
 			
-			if (readBytes > 2) {
+			if (readBytes > 1) {
 				int notNeeded;
-				artId = StringFromBuffer(1, out notNeeded);
+				artId = StringFromBuffer(0, out notNeeded);
 			}
 			
 			if (artId == null) {
@@ -1025,12 +1036,12 @@ namespace Banshee.RemoteListener
 			int maxReturn = 0;
 			int startPosition = 0;
 			
-			if (readBytes > 2) {
-				maxReturn = ShortFromBuffer(1);
+			if (readBytes > 1) {
+				maxReturn = ShortFromBuffer(0);
 			}
 			
-			if (readBytes > 4) {
-				startPosition = ShortFromBuffer(3);
+			if (readBytes > 3) {
+				startPosition = ShortFromBuffer(2);
 			}
 			
 			if (model != null) {
@@ -1069,10 +1080,13 @@ namespace Banshee.RemoteListener
 		}
 		
 		public byte [] RequestPlaylistControl(int readBytes) {
-			if (readBytes > 1) {
-				switch (_buffer[1]) {
+			if (readBytes > 0) {
+				switch (_buffer[0]) {
 				case 1: {
-					return new byte [] {(byte) (PlayTrack(IntFromBuffer(2)) ? 1 : 0)};
+					if (readBytes > 4) {
+						return new byte [] {(byte) (PlayTrack(IntFromBuffer(1)) ? 1 : 0)};
+					}
+					break;
 				}
 				case 2: {
 					int trackIdCount = ShortFromBuffer(2);
