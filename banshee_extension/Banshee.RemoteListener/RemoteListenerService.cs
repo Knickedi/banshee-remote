@@ -154,6 +154,7 @@ namespace Banshee.RemoteListener
 			}
 			
 			CompressDatabase();
+			_passId = (int) _prefs["RemoteControl"]["BansheeRemote"]["remote_control_passid"].BoxedValue;
 			StartRemoteListener();
 		}
 
@@ -244,13 +245,17 @@ namespace Banshee.RemoteListener
 				client = (Socket)ar.AsyncState;
 				int readBytes = client.EndReceive(ar);
 				
+				byte [] result = null;
 				string requestName = "Request" + ((RequestCode) _buffer[0]).ToString();
-				Array.Copy(_buffer, 1, _buffer, 0, _buffer.Length - 1);
 				
-				byte [] result = (byte []) typeof(RemoteListenerService).InvokeMember(
-					requestName,
-					BindingFlags.Default | BindingFlags.InvokeMethod,
-                    null, this, new object [] {readBytes - 1});
+				if (ShortFromBuffer(1) == _passId) {
+					Array.Copy(_buffer, 3, _buffer, 0, _buffer.Length - 3);
+					result = (byte []) typeof(RemoteListenerService).InvokeMember(
+						requestName, BindingFlags.Default | BindingFlags.InvokeMethod,
+                    	null, this, new object [] {readBytes - 1});
+				} else if ((RequestCode) _buffer[0] == RequestCode.Test) {
+					result = new byte [] {0};
+				}
 				
 				// we handled the request and have the data, handle other requests now
 				isListenerAccepting = true;
@@ -860,7 +865,6 @@ namespace Banshee.RemoteListener
 				}
 				
 				if (i != model.Count) {
-					Log.Information("HIER");
 					ServiceManager.PlayerEngine.OpenPlay((TrackInfo) model.GetItem(i));
 					_playTimeout = Timestamp();
 				} else {
@@ -894,7 +898,7 @@ namespace Banshee.RemoteListener
 		}
 		
 		public byte [] RequestTest(int readBytes) {
-			return new byte[] {0};
+			return new byte[] {1};
 		}
 		
 		public byte [] RequestPlayerStatus(int readBytes) {

@@ -155,15 +155,17 @@ public class ServerListActivity extends Activity implements OnItemClickListener,
 	}
 	
 	@Override
-	public void onBansheeServerCheck(boolean success) {
+	public void onBansheeServerCheck(Integer success) {
 		BansheeServer server = mCheckTask.getServer();
 		mCheckTask = null;
 		
-		if (success) {
+		if (success == 1) {
 			// checked server is okay, so persist as default it and return to main activity
 			BansheeServer.setDefaultServer(server.getId());
 			setResult(RESULT_OK);
 			finish();
+		} else if (success == 0) {
+			Toast.makeText(this, R.string.host_denied_password, Toast.LENGTH_LONG).show();
 		} else {
 			Toast.makeText(this, R.string.host_not_reachable, Toast.LENGTH_LONG).show();
 		}

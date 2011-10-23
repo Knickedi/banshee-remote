@@ -54,13 +54,15 @@ public class BansheeDatabase {
 		long id = server.mSameHostId;
 		BansheeServer same = BansheeServer.getServer(id);
 		
-		if (same == null) {
+		if (id > 0 && same == null) {
 			// referenced server is dead, update that
 			server.mSameHostId = -1;
 			BansheeServer.updateServer(server.getId(), server);
 			id = server.getId();
-		} else {
+		} else if (id > 0) {
 			server = same;
+		} else {
+			id = server.getId();
 		}
 		
 		if (!new File(App.BANSHEE_PATH + id + App.DB_EXT).exists()) {
@@ -90,10 +92,12 @@ public class BansheeDatabase {
 		long id = server.mSameHostId;
 		BansheeServer same = BansheeServer.getServer(id);
 		
-		if (same != null) {
+		if (id > 0 && same == null) {
 			// referenced server is dead, update that
 			server.mSameHostId = -1;
 			BansheeServer.updateServer(server.getId(), server);
+			id = server.getId();
+		} else if (id < 1) {
 			id = server.getId();
 		}
 		

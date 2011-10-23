@@ -127,7 +127,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		
 		@Override
 		public void handleMessage(Message msg) {
-			if (mConnection	== null) {
+			if (mConnection == null) {
 				return;
 			}
 			
@@ -200,7 +200,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	protected void onCreate(Bundle bundle) {
 		super.onCreate(bundle);
 		setContentView(R.layout.current_song);
-
+		
 		mStatusPollHandler = new StatusPollHandler();
 		
 		setupViewReferences();
@@ -253,7 +253,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-
+		
 		mStatusPollHandler = null;
 		
 		if (mConnection != null) {
@@ -411,12 +411,16 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	 * Callback of initial server check task.
 	 */
 	@Override
-	public void onBansheeServerCheck(boolean success) {
+	public void onBansheeServerCheck(Integer success) {
 		BansheeServer server = mCheckTask.getServer();
 		mCheckTask = null;
 		
-		if (success) {
+		if (success == 1) {
 			setupServerConnection(server);
+		} else if (success == 0) {
+			// check failed, force user to choose a valid server (or leave on back press)
+			Toast.makeText(this, R.string.host_denied_password, Toast.LENGTH_LONG).show();
+			startActivityForResult(new Intent(this, ServerListActivity.class), REQUEST_SERVER_LIST);
 		} else {
 			// check failed, force user to choose a valid server (or leave on back press)
 			Toast.makeText(this, R.string.host_not_reachable, Toast.LENGTH_LONG).show();

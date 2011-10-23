@@ -18,7 +18,7 @@ import de.viktorreiser.bansheeremote.R;
  * 
  * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
  */
-public class BansheeServerCheckTask extends AsyncTask<Void, Void, Boolean> {
+public class BansheeServerCheckTask extends AsyncTask<Void, Void, Integer> {
 	
 	// PRIVATE ====================================================================================
 	
@@ -30,7 +30,14 @@ public class BansheeServerCheckTask extends AsyncTask<Void, Void, Boolean> {
 	
 	public interface OnBansheeServerCheck {
 		
-		public void onBansheeServerCheck(boolean success);
+		/**
+		 * Server test request response.
+		 * 
+		 * @param success
+		 *            {@code -1} not reachable, {@code 0} reachable but wrong password, {@code 1}
+		 *            everything okay
+		 */
+		public void onBansheeServerCheck(Integer success);
 	}
 	
 	
@@ -93,12 +100,12 @@ public class BansheeServerCheckTask extends AsyncTask<Void, Void, Boolean> {
 	// OVERRIDDEN =================================================================================
 	
 	@Override
-	protected Boolean doInBackground(Void... params) {
+	protected Integer doInBackground(Void... params) {
 		return BansheeConnection.checkConnection(mServer);
 	}
 	
 	@Override
-	protected void onPostExecute(Boolean result) {
+	protected void onPostExecute(Integer result) {
 		try {
 			mDialog.dismiss();
 		} catch (Exception e) {

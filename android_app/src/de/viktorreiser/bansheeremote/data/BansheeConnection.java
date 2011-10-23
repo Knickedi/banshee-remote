@@ -741,10 +741,10 @@ public class BansheeConnection {
 	 * 
 	 * @return {@code true} if the given banshee server was available
 	 */
-	public static boolean checkConnection(BansheeServer server) {
+	public static int checkConnection(BansheeServer server) {
 		// request code 0 is a test request which does nothing
 		byte [] result = sendRequest(server, 0, null, CHECK_CONNECTION_TIMEOUT);
-		return result != null && result.length != 0;
+		return result != null && result.length != 0 ? result[0] : -1;
 	}
 	
 	// OVERRIDDEN =================================================================================
@@ -781,13 +781,14 @@ public class BansheeConnection {
 		int read = -1;
 		
 		if (params == null) {
-			request = new byte [1];
+			request = new byte [3];
 		} else {
-			request = new byte [1 + params.length];
-			System.arraycopy(params, 0, request, 1, params.length);
+			request = new byte [3 + params.length];
+			System.arraycopy(params, 0, request, 3, params.length);
 		}
 		
 		request[0] = (byte) (requestCode);
+		System.arraycopy(Command.encodeShort(server.getPasswordId()), 0, request, 1, 2);
 		
 		try {
 			socket = new Socket(server.getHost(), server.getPort());
@@ -841,11 +842,14 @@ public class BansheeConnection {
 			StringBuilder s = new StringBuilder();
 			s.append("Fail ");
 			s.append(queue.command.toString());
+			s.append(" (pass ");
+			s.append(mServer.getPasswordId());
+			s.append(" )");
 			
 			if (queue.params == null) {
 				s.append(" no parameters");
 			} else {
-				s.append("[ ");
+				s.append(" [ ");
 				
 				for (int i = 0; i < Math.min(queue.params.length, 20); i++) {
 					s.append(Integer.toHexString(queue.params[i]));
