@@ -131,13 +131,13 @@ namespace Banshee.RemoteListener
 			
 			_portPref = BansheeRemotePrefs.Add(new SchemaPreference<int>(
 				RemotePortSchema,
-				Catalog.GetString("Banshee Remote port"),
+				Catalog.GetString("Port"),
 			    Catalog.GetString("Banshee will listen for remote control requests on this port")
 			));
 			
 			_portPref = BansheeRemotePrefs.Add(new SchemaPreference<int>(
 				RemotePassIdSchema,
-				Catalog.GetString("Banshee Remote password ID"),
+				Catalog.GetString("Password ID"),
 			    Catalog.GetString("\"Secret\" ID which is required to be specified in incoming requests")
 			));
 			

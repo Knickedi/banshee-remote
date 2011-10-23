@@ -6,7 +6,7 @@
     copyright=""
     name="Remote Listener"
     category="Remote Control"
-    description="Remote Listener allows controlling Banshee from another device on your local network."
+    description="Remote Listener allows controlling Banshee by network request"
     author="Viktor Reiser / Nikitas Stamatopoulos / Kristopher Dick"
     url="https://github.com/Knickedi/banshee-remote"
     defaultEnabled="true">
