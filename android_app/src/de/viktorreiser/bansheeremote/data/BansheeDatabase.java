@@ -16,13 +16,16 @@ public class BansheeDatabase {
 	
 	// PRIVATE ====================================================================================
 	
-	/**
-	 * Global instance of currently used database.
-	 */
 	private static SQLiteDatabase mBansheeDatabase;
+	private static BansheeServer mServer;
 	
 	// PUBLIC =====================================================================================
 	
+	/**
+	 * Track data returned by a database request.
+	 * 
+	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+	 */
 	public static class TrackInfo {
 		public long id;
 		public long aritstId;
@@ -43,9 +46,9 @@ public class BansheeDatabase {
 	 * @param server
 	 *            banshee server to check
 	 * @param timestamp
-	 *            timestamp
+	 *            timestamp returned by server
 	 * 
-	 * @return {@code true} if database exists and has the same byte size
+	 * @return {@code true} if database exists and has the same timestamp
 	 */
 	public static boolean isDatabaseUpToDate(BansheeServer server, long timestamp) {
 		long id = server.mSameHostId;
@@ -54,13 +57,13 @@ public class BansheeDatabase {
 		if (same == null) {
 			// referenced server is dead, update that
 			server.mSameHostId = -1;
-			BansheeServer.updateServer(server);
+			BansheeServer.updateServer(server.getId(), server);
 			id = server.getId();
 		} else {
 			server = same;
 		}
 		
-		if (!new File(App.BANSHEE_PATH + id + ".db").exists()) {
+		if (!new File(App.BANSHEE_PATH + id + App.DB_EXT).exists()) {
 			return false;
 		} else {
 			return timestamp == server.mDbTimestamp;
@@ -71,12 +74,13 @@ public class BansheeDatabase {
 	 * Persist a new database for a banshee server.
 	 * 
 	 * @param server
-	 *            banshee server for which the database is used
+	 *            banshee server for which will use the database
 	 * @param dbData
-	 *            database file as byte data
+	 *            database file as raw byte array
 	 * 
 	 * @return {@code true} if database was updated successfully ({@link #open(BansheeServer)} is
-	 *         called automatically) otherwise {@code false} and no database is bound anymore
+	 *         called automatically) otherwise {@code false} and no database is bound anymore (e.g.
+	 *         when given data doesn't represent a valid database)
 	 */
 	public static boolean updateDatabase(BansheeServer server, byte [] dbData) {
 		if (server.getId() < 1) {
@@ -86,15 +90,15 @@ public class BansheeDatabase {
 		long id = server.mSameHostId;
 		BansheeServer same = BansheeServer.getServer(id);
 		
-		if (same == null) {
+		if (same != null) {
 			// referenced server is dead, update that
 			server.mSameHostId = -1;
-			BansheeServer.updateServer(server);
+			BansheeServer.updateServer(server.getId(), server);
 			id = server.getId();
 		}
 		
 		try {
-			File file = new File(App.BANSHEE_PATH + id + ".db");
+			File file = new File(App.BANSHEE_PATH + id + App.DB_EXT);
 			
 			file.getParentFile().mkdir();
 			file.delete();
@@ -110,10 +114,10 @@ public class BansheeDatabase {
 			
 			if (same == null) {
 				server.mDbTimestamp = dbData.length;
-				BansheeServer.updateServer(server);
+				BansheeServer.updateServer(server.getId(), server);
 			} else {
 				same.mDbTimestamp = dbData.length;
-				BansheeServer.updateServer(same);
+				BansheeServer.updateServer(server.getId(), same);
 			}
 			
 			return true;
@@ -132,6 +136,8 @@ public class BansheeDatabase {
 	 *         (because there is no synchronized database)
 	 */
 	public static boolean open(BansheeServer server) {
+		mServer = null;
+		
 		if (server.getId() < 1) {
 			throw new IllegalArgumentException("server is not a valid added server");
 		}
@@ -139,32 +145,39 @@ public class BansheeDatabase {
 		long id = server.mSameHostId;
 		BansheeServer same = BansheeServer.getServer(id);
 		
-		if (same == null) {
+		if (id > 0 && same == null) {
 			// referenced server is dead, update that
 			server.mSameHostId = -1;
-			BansheeServer.updateServer(server);
+			BansheeServer.updateServer(server.getId(), server);
+		}
+		
+		if (id < 1) {
 			id = server.getId();
 		}
 		
-		if (isOpen()) {
-			mBansheeDatabase.close();
-		}
+		close();
 		
-		File file = new File(App.BANSHEE_PATH + id + ".db");
+		File file = new File(App.BANSHEE_PATH + id + App.DB_EXT);
 		
-		try {
-			mBansheeDatabase = SQLiteDatabase.openDatabase(file.getAbsolutePath(), null,
-					SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
-		} catch (Exception e) {
-			mBansheeDatabase = null;
+		if (file.exists()) {
+			try {
+				mBansheeDatabase = SQLiteDatabase.openDatabase(file.getAbsolutePath(), null,
+						SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
+			} catch (Exception e) {
+				mBansheeDatabase = null;
+				return false;
+			}
+		} else {
 			return false;
 		}
+		
+		mServer = server;
 		
 		return true;
 	}
 	
 	/**
-	 * Is there a open database?
+	 * Is there an open database?
 	 * 
 	 * @return {@code true} if a database is open and ready for access
 	 */
@@ -172,6 +185,35 @@ public class BansheeDatabase {
 		return mBansheeDatabase != null;
 	}
 	
+	/**
+	 * Force database close.
+	 */
+	public static void close() {
+		if (isOpen()) {
+			mBansheeDatabase.close();
+			mBansheeDatabase = null;
+			mServer = null;
+		}
+	}
+	
+	/**
+	 * Get the banshee server which was given to open the database.
+	 * 
+	 * @return banshee server or {@code null} when no database is open
+	 */
+	public static BansheeServer getServer() {
+		return mServer;
+	}
+	
+	/**
+	 * Get track info for a track.
+	 * 
+	 * @param id
+	 *            ID of track
+	 * 
+	 * @return track info or {@code null} if no database is open or the given track ID is not found
+	 *         in the database
+	 */
 	public static TrackInfo getTrackInfo(long id) {
 		if (!isOpen()) {
 			return null;
@@ -211,6 +253,8 @@ public class BansheeDatabase {
 		}
 	}
 	
+	// PRIVATE ====================================================================================
+	
 	private static String cleanString(Cursor c, int index) {
 		return c.isNull(index) ? "" : c.getString(index);
 	}
@@ -223,7 +267,7 @@ public class BansheeDatabase {
 		public static final String TABLE_TRACKS = "tracks";
 		public static final String TABLE_ARTISTS = "artists";
 		public static final String TABLE_ALBUM = "albums";
-
+		
 		public static final String ID = "_id";
 		public static final String ARTIST_ID = "artistId";
 		public static final String ALBUM_ID = "albumId";

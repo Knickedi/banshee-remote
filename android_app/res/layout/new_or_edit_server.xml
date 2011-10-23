@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/title_gradient"
+        android:gravity="center"
+        android:padding="10dip"
+        android:text="@string/new_server"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textStyle="bold" />
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dip"
+        android:background="#ff888888" />
+
+    <ScrollView
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:fillViewport="true"
+        android:padding="10dip" >
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:orientation="vertical" >
+
+            <EditText
+                android:id="@+id/host"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:hint="Server"
+                android:imeOptions="actionNext" >
+
+                <requestFocus >
+                </requestFocus>
+            </EditText>
+
+            <TextView
+                android:id="@+id/same_host_text"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dip"
+                android:text="@string/same_db_as"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+            <Spinner
+                android:id="@+id/same_host"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dip" >
+            </Spinner>
+
+            <EditText
+                android:id="@+id/port"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dip"
+                android:hint="Port (8484)"
+                android:inputType="number" >
+            </EditText>
+
+            <EditText
+                android:id="@+id/password_id"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dip"
+                android:hint="Password (0)"
+                android:inputType="number" >
+            </EditText>
+
+            <View
+                android:layout_width="fill_parent"
+                android:layout_height="0dip"
+                android:layout_weight="1" />
+
+            <Button
+                android:id="@+id/create"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dip"
+                android:text="@string/create_server" />
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

@@ -18,6 +18,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import de.viktorreiser.bansheeremote.R;
+import de.viktorreiser.bansheeremote.data.BansheeDatabase;
 import de.viktorreiser.bansheeremote.data.BansheeServer;
 import de.viktorreiser.bansheeremote.data.BansheeServerCheckTask;
 import de.viktorreiser.bansheeremote.data.BansheeServerCheckTask.OnBansheeServerCheck;
@@ -69,6 +70,7 @@ public class ServerListActivity extends Activity implements OnItemClickListener,
 		switch (requestCode) {
 		case REQUEST_NEW_SERVER:
 			if (resultCode == RESULT_OK) {
+				resetServerSettings();
 				mServer = BansheeServer.getServers();
 				((ServerAdapter) mList.getAdapter()).notifyDataSetChanged();
 			}
@@ -94,15 +96,22 @@ public class ServerListActivity extends Activity implements OnItemClickListener,
 		int position = ((AdapterView.AdapterContextMenuInfo) menuInfo).position;
 		
 		if (position != mServer.size()) {
-			menu.add(Menu.NONE, position, Menu.NONE, R.string.remove_server);
+			menu.add(Menu.NONE, 1, Menu.NONE, R.string.edit_server);
+			menu.add(Menu.NONE, 2, Menu.NONE, R.string.remove_server);
 		}
 	}
 	
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
-		if (item.getItemId() < mServer.size()) {
-			BansheeServer.removeServer(
-					((AdapterView.AdapterContextMenuInfo) item.getMenuInfo()).id);
+		if (item.getItemId() == 1) {
+			Intent intent = new Intent(ServerListActivity.this, NewOrEditServerActivity.class);
+			intent.putExtra("id", ((AdapterView.AdapterContextMenuInfo) item.getMenuInfo()).id);
+			startActivityForResult(intent, REQUEST_NEW_SERVER);
+			return true;
+		} else if (item.getItemId() == 2) {
+			resetServerSettings();
+			long id = ((AdapterView.AdapterContextMenuInfo) item.getMenuInfo()).id;
+			BansheeServer.removeServer(id);
 			mServer = BansheeServer.getServers();
 			((ServerAdapter) mList.getAdapter()).notifyDataSetChanged();
 			return true;
@@ -114,7 +123,8 @@ public class ServerListActivity extends Activity implements OnItemClickListener,
 	@Override
 	public void onItemClick(AdapterView<?> adapter, View v, int position, long id) {
 		if (position == mServer.size()) {
-			startActivityForResult(new Intent(ServerListActivity.this, NewServerActivity.class),
+			startActivityForResult(
+					new Intent(ServerListActivity.this, NewOrEditServerActivity.class),
 					REQUEST_NEW_SERVER);
 		} else {
 			// check selected server whether it's reachable
@@ -160,6 +170,15 @@ public class ServerListActivity extends Activity implements OnItemClickListener,
 	}
 	
 	// PRIVATE ====================================================================================
+	
+	private void resetServerSettings() {
+		BansheeDatabase.close();
+		
+		if (CurrentSongActivity.mConnection != null) {
+			CurrentSongActivity.mConnection.close();
+			CurrentSongActivity.mConnection = null;
+		}
+	}
 	
 	private class ServerAdapter extends BaseAdapter {
 		

@@ -31,6 +31,7 @@ public class App extends Application {
 	
 	public static final String BANSHEE_PATH = Environment.getExternalStorageDirectory()
 			.getAbsolutePath() + "/BansheeRemote/";
+	public static final String DB_EXT = ".sqlite";
 	
 	
 	/**

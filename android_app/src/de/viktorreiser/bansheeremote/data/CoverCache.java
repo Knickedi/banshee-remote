@@ -40,7 +40,7 @@ public class CoverCache {
 	 * @param id
 	 *            cover ID returned by server
 	 * 
-	 * @return cover as bitmap or {@code null} when there is no cover for given ID available
+	 * @return cover as bitmap or {@code null} when there is no cover for given ID
 	 */
 	public static Bitmap getCover(String id) {
 		int hash = id.hashCode();
@@ -63,6 +63,16 @@ public class CoverCache {
 		return cover;
 	}
 	
+	/**
+	 * Put cover into cache.
+	 * 
+	 * @param id
+	 *            cover ID for which the cover should be persisted
+	 * @param bitmapData
+	 *            image data as raw byte array
+	 * 
+	 * @return cover as bitmap or {@code null} if failed to persist or the given data was invalid
+	 */
 	public static Bitmap addCover(String id, byte [] bitmapData) {
 		Bitmap cover = BitmapFactory.decodeByteArray(bitmapData, 0, bitmapData.length);
 		

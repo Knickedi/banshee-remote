@@ -9,6 +9,7 @@
 	<string name="new_server">Add new server</string>
 	<string name="create_server">Create server</string>
 	<string name="remove_server">Remove server</string>
+	<string name="edit_server">Edit server</string>
 	<string name="checking_server">Checking banshee server...</string>
 	<string name="host_not_reachable">Server not reachable or Banshee with remote control plugin is not running on host.</string>
 	<string name="host_offline_or_banshee_closed">Host went offline or Banshee was closed.</string>

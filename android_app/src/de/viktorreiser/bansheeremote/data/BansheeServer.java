@@ -1,5 +1,6 @@
 package de.viktorreiser.bansheeremote.data;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,6 +31,7 @@ public class BansheeServer {
 	private int mPort;
 	long mSameHostId = -1;
 	long mDbTimestamp = -1;
+	int mPasswordId = 0;
 	
 	// PUBLIC =====================================================================================
 	
@@ -44,32 +46,41 @@ public class BansheeServer {
 	}
 	
 	/**
-	 * Create banshee server with host and port.
+	 * Create banshee server with host, port and same banshee server ID.
 	 * 
 	 * @param host
 	 *            host of banshee server
-	 * @param port
-	 *            port of banshee server
+	 * @param sameHostId
+	 *            ID of same banshee server (see {@link #getSameHostId()})
 	 */
-	public BansheeServer(String host, int port) {
+	public BansheeServer(String host, long sameHostId) {
+		BansheeServer same = getServer(sameHostId);
+		
+		if (same == null) {
+			throw new IllegalArgumentException("same host ID is invalid");
+		}
+		
 		mHost = host;
-		mPort = port;
+		mSameHostId = sameHostId;
+		mPort = same.mPort;
+		mPasswordId = same.mPasswordId;
+		mDbTimestamp = same.mDbTimestamp;
 	}
 	
 	/**
 	 * Create banshee server with host, port and same banshee server ID.
 	 * 
-	 * @param sameHostId
-	 *            ID of same banshee server (see {@link #getSameHostId()})
 	 * @param host
 	 *            host of banshee server
 	 * @param port
 	 *            port of banshee server
+	 * @param passwordId
+	 *            secret password (number) needed for communication
 	 */
-	public BansheeServer(long sameHostId, String host, int port) {
-		mSameHostId = sameHostId;
+	public BansheeServer(String host, int port, int passwordId) {
 		mHost = host;
 		mPort = port;
+		mPasswordId = passwordId;
 	}
 	
 	
@@ -104,6 +115,24 @@ public class BansheeServer {
 		return mPort;
 	}
 	
+	/**
+	 * Get password ID for banshee server.
+	 * 
+	 * @return password ID for banshee server
+	 */
+	public int getPasswordId() {
+		return mPasswordId;
+	}
+	
+	/**
+	 * Get id of server which database will be used by this server.
+	 * 
+	 * @return id of parent server or {@code -1} for none
+	 */
+	public long getSameHostId() {
+		return mSameHostId;
+	}
+	
 	
 	/**
 	 * Get list of created banshee servers.
@@ -115,16 +144,11 @@ public class BansheeServer {
 	public static List<BansheeServer> getServers() {
 		List<BansheeServer> server = new ArrayList<BansheeServer>();
 		
-		Cursor cursor = getDb().query(DB.TABLE_NAME,
-				new String [] {DB.ID, DB.HOST, DB.PORT, DB.SAME_ID, DB.DB_TIMESTAMP},
+		Cursor cursor = getDb().query(DB.TABLE_NAME, DB.ALL_COLUMNS,
 				null, null, null, null, null);
 		
 		while (cursor.moveToNext()) {
-			BansheeServer s = new BansheeServer(cursor.getString(1), cursor.getInt(2));
-			s.mId = cursor.getLong(0);
-			s.mSameHostId = cursor.getLong(3);
-			s.mDbTimestamp = cursor.getLong(4);
-			server.add(s);
+			server.add(fillFromCursor(cursor));
 		}
 		
 		cursor.close();
@@ -141,23 +165,17 @@ public class BansheeServer {
 	 * @return banshee server with given ID or {@code null} if the ID is invalid
 	 */
 	public static BansheeServer getServer(long id) {
-		Cursor cursor = getDb().query(DB.TABLE_NAME,
-				new String [] {DB.ID, DB.HOST, DB.PORT, DB.SAME_ID, DB.DB_TIMESTAMP},
+		BansheeServer s = null;
+		
+		Cursor cursor = getDb().query(DB.TABLE_NAME, DB.ALL_COLUMNS,
 				DB.ID + "=" + id, null, null, null, null);
 		
-		try {
-			if (cursor.moveToFirst()) {
-				BansheeServer s = new BansheeServer(cursor.getString(1), cursor.getInt(2));
-				s.mId = cursor.getLong(0);
-				s.mSameHostId = cursor.getLong(3);
-				s.mDbTimestamp = cursor.getLong(4);
-				return s;
-			} else {
-				return null;
-			}
-		} finally {
-			cursor.close();
+		if (cursor.moveToFirst()) {
+			s = fillFromCursor(cursor);
 		}
+		
+		cursor.close();
+		return s;
 	}
 	
 	/**
@@ -173,11 +191,48 @@ public class BansheeServer {
 			throw new IllegalArgumentException("given server has already a valid ID");
 		}
 		
+		BansheeServer sameServer = getServer(server.mSameHostId);
+		
+		if (server.mSameHostId > 0 && sameServer == null) {
+			throw new IllegalArgumentException("same host id is invalid");
+		}
+		
 		ContentValues v = new ContentValues();
 		v.put(DB.HOST, server.mHost);
-		v.put(DB.PORT, server.mPort);
+		v.put(DB.PORT, sameServer == null ? server.mPort : 0);
 		v.put(DB.SAME_ID, server.mSameHostId);
+		v.put(DB.PASSWORD_ID, sameServer == null ? server.mPasswordId : 0);
 		server.mId = getDb().insert(DB.TABLE_NAME, null, v);
+	}
+	
+	/**
+	 * Update server.
+	 * 
+	 * @param id
+	 *            ID of server
+	 * @param server
+	 *            server to update (server should be added with {@link #addServer(BansheeServer)}
+	 *            before)
+	 */
+	public static void updateServer(long id, BansheeServer server) {
+		if (getServer(id) == null) {
+			throw new IllegalArgumentException("given server has no valid ID");
+		}
+		
+		BansheeServer sameServer = getServer(server.mSameHostId);
+		
+		if (server.mSameHostId > 0 && sameServer == null) {
+			throw new IllegalArgumentException("same host id is invalid");
+		}
+		
+		ContentValues v = new ContentValues();
+		v.put(DB.SAME_ID, sameServer == null ? -1 : server.mSameHostId);
+		v.put(DB.DB_TIMESTAMP, sameServer == null ? server.mDbTimestamp : 0);
+		v.put(DB.HOST, server.mHost);
+		v.put(DB.PORT, sameServer == null ? server.mPort : 0);
+		v.put(DB.SAME_ID, server.mSameHostId);
+		v.put(DB.PASSWORD_ID, sameServer == null ? server.mPasswordId : 0);
+		getDb().update(DB.TABLE_NAME, v, DB.ID + "=" + id, null);
 	}
 	
 	/**
@@ -189,7 +244,50 @@ public class BansheeServer {
 	 * @see #getId()
 	 */
 	public static void removeServer(long id) {
-		getDb().delete(DB.TABLE_NAME, DB.ID + "=" + id, null);
+		BansheeServer dbServer = BansheeDatabase.getServer();
+		BansheeDatabase.close();
+		BansheeServer server = getServer(id);
+		
+		if (server == null) {
+			throw new IllegalArgumentException("given server has already a valid ID");
+		}
+		
+		List<BansheeServer> childServers = new ArrayList<BansheeServer>();
+		
+		for (BansheeServer cs : BansheeServer.getServers()) {
+			if (cs.mSameHostId == server.mId) {
+				childServers.add(cs);
+			}
+		}
+		
+		if (!childServers.isEmpty()) {
+			if (dbServer != null) {
+				BansheeServer firstChild = childServers.get(0);
+				
+				if (dbServer.mSameHostId == server.mId) {
+					new File(App.BANSHEE_PATH + server.mId + App.DB_EXT).renameTo(
+							new File(App.BANSHEE_PATH + firstChild.mId + App.DB_EXT));
+				}
+				
+				if (dbServer.mId == server.mId) {
+					new File(App.BANSHEE_PATH + server.mId + App.DB_EXT).delete();
+				}
+				
+				for (int i = 0; i < childServers.size(); i++) {
+					BansheeServer cs = childServers.get(i);
+					cs.mSameHostId = i == 0 ? -1 : firstChild.mId;
+					cs.mDbTimestamp = server.mDbTimestamp;
+					cs.mPort = server.mPort;
+					cs.mPasswordId = server.mPasswordId;
+					updateServer(cs.mId, cs);
+				}
+			}
+		} else {
+			new File(App.BANSHEE_PATH + server.mId + App.DB_EXT).delete();
+		}
+		
+		getDb().delete(DB.TABLE_NAME, DB.ID + "=" + server.mId + " OR "
+				+ DB.SAME_ID + "=" + DB.ID, null);
 	}
 	
 	/**
@@ -202,16 +300,11 @@ public class BansheeServer {
 	public static BansheeServer getDefaultServer() {
 		BansheeServer s = null;
 		
-		Cursor cursor = getDb().query(
-				DB.TABLE_NAME,
-				new String [] {DB.ID, DB.HOST, DB.PORT, DB.SAME_ID, DB.DB_TIMESTAMP},
+		Cursor cursor = getDb().query(DB.TABLE_NAME, DB.ALL_COLUMNS,
 				DB.DEFAULT + "!=0", null, null, null, null, "1");
 		
 		if (cursor.moveToNext()) {
-			s = new BansheeServer(cursor.getString(1), cursor.getInt(2));
-			s.mId = cursor.getLong(0);
-			s.mSameHostId = cursor.getLong(3);
-			s.mDbTimestamp = cursor.getLong(4);
+			s = fillFromCursor(cursor);
 		}
 		
 		cursor.close();
@@ -230,32 +323,6 @@ public class BansheeServer {
 	public static void setDefaultServer(long id) {
 		getDb().execSQL("UPDATE " + DB.TABLE_NAME + " SET " + DB.DEFAULT
 				+ "= (CASE WHEN " + DB.ID + "=" + id + " THEN 1 ELSE 0 END);");
-	}
-	
-	// PACKAGE ====================================================================================
-	
-	/**
-	 * Update added server with and local database size.
-	 * 
-	 * @param server
-	 *            server to update (server should be added with {@link #addServer(BansheeServer)}
-	 *            before)
-	 * @param dbSize
-	 *            database size in bytes
-	 * 
-	 * @see #getDbSize()
-	 */
-	static void updateServer(BansheeServer server) {
-		if (server.mId < 0) {
-			throw new IllegalArgumentException("given server has no valid ID");
-		}
-		
-		ContentValues v = new ContentValues();
-		v.put(DB.DB_TIMESTAMP, server.mDbTimestamp);
-		v.put(DB.HOST, server.mHost);
-		v.put(DB.PORT, server.mPort);
-		v.put(DB.SAME_ID, server.mSameHostId);
-		getDb().update(DB.TABLE_NAME, v, DB.ID + "=" + server.mId, null);
 	}
 	
 	// OVERRIDDEN =================================================================================
@@ -280,9 +347,38 @@ public class BansheeServer {
 	
 	// PRIVATE ====================================================================================
 	
+	private BansheeServer() {
+		
+	}
+	
+	private static BansheeServer fillFromCursor(Cursor cursor) {
+		BansheeServer s = new BansheeServer();
+		s.mId = cursor.getLong(0);
+		s.mHost = cursor.getString(1);
+		s.mPort = cursor.getInt(2);
+		s.mSameHostId = cursor.getLong(3);
+		s.mDbTimestamp = cursor.getLong(4);
+		s.mPasswordId = cursor.getInt(5);
+		
+		if (s.mSameHostId > 0) {
+			BansheeServer p = getServer(s.mSameHostId);
+			
+			if (p != null) {
+				s.mPasswordId = p.mPasswordId;
+				s.mPort = p.mPort;
+				s.mDbTimestamp = p.mDbTimestamp;
+			} else {
+				s.mSameHostId = -1;
+			}
+		}
+		
+		return s;
+	}
+	
+	
 	private static SQLiteDatabase getDb() {
 		if (mDbinstance == null) {
-			return mDbinstance = new BasheeDbHelper(App.getContext()).getWritableDatabase();
+			return mDbinstance = new BansheeDbHelper(App.getContext()).getWritableDatabase();
 		} else {
 			return mDbinstance;
 		}
@@ -293,12 +389,11 @@ public class BansheeServer {
 	 * 
 	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
 	 */
-	private static class BasheeDbHelper extends SQLiteOpenHelper {
+	private static class BansheeDbHelper extends SQLiteOpenHelper {
 		
-		public BasheeDbHelper(Context context) {
-			super(context, "bansheeserver.db", null, 2);
+		public BansheeDbHelper(Context context) {
+			super(context, "bansheeserver.db", null, 3);
 		}
-		
 		
 		@Override
 		public void onCreate(SQLiteDatabase db) {
@@ -314,19 +409,31 @@ public class BansheeServer {
 		
 		@Override
 		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-			// from 1 to 2
-			//    dbSize changed to dbTimestamp - just discard old value
-			//    smaeid corrected to sameId
 			try {
 				db.beginTransaction();
-				db.execSQL("ALTER TABLE " + DB.TABLE_NAME 
-						+ " RENAME TO tmp" + DB.TABLE_NAME + ";");
-				onCreate(db);
-				db.execSQL("INSERT INTO " + DB.TABLE_NAME + "(" + DB.ID + "," + DB.HOST + ","
-						+ DB.PORT + "," + DB.DEFAULT + "," + DB.SAME_ID + ") "
-						+ "SELECT " + DB.ID + "," + DB.HOST + "," + DB.PORT + "," + DB.DEFAULT
-						+ ",smaeid FROM tmp" + DB.TABLE_NAME + ";");
-				db.execSQL("DROP TABLE tmp" + DB.TABLE_NAME + ";");
+				
+				switch (oldVersion) {
+				case 1:
+					// from 1 to 2
+					// dbSize changed to dbTimestamp - just discard old value
+					// smaeid corrected to sameId
+					db.execSQL("ALTER TABLE " + DB.TABLE_NAME
+							+ " RENAME TO tmp" + DB.TABLE_NAME + ";");
+					onCreate(db);
+					db.execSQL("INSERT INTO " + DB.TABLE_NAME + "(" + DB.ID + "," + DB.HOST + ","
+							+ DB.PORT + "," + DB.DEFAULT + "," + DB.SAME_ID + ") "
+							+ "SELECT " + DB.ID + "," + DB.HOST + "," + DB.PORT + "," + DB.DEFAULT
+							+ ",smaeid FROM tmp" + DB.TABLE_NAME + ";");
+					db.execSQL("DROP TABLE tmp" + DB.TABLE_NAME + ";");
+					
+				case 2:
+					// from 2 to 3 we have a new column: password id
+					db.execSQL("ALTER TABLE " + DB.TABLE_NAME
+							+ " ADD COLUMN " + DB.PASSWORD_ID + " INTEGER NOT NULL DEFAULT 0;");
+					
+					break;
+				}
+				
 				db.setTransactionSuccessful();
 			} finally {
 				db.endTransaction();
@@ -347,5 +454,10 @@ public class BansheeServer {
 		public static final String SAME_ID = "sameId";
 		public static final String DB_TIMESTAMP = "dbTimestamp";
 		public static final String DEFAULT = "isDefault";
+		public static final String PASSWORD_ID = "passId";
+		
+		public static final String [] ALL_COLUMNS = new String [] {
+				DB.ID, DB.HOST, DB.PORT, DB.SAME_ID, DB.DB_TIMESTAMP, DB.PASSWORD_ID
+		};
 	}
 }
