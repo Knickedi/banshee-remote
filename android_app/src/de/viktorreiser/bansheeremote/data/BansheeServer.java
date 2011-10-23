@@ -208,16 +208,12 @@ public class BansheeServer {
 	/**
 	 * Update server.
 	 * 
-	 * @param id
-	 *            ID of server
 	 * @param server
 	 *            server to update (server should be added with {@link #addServer(BansheeServer)}
 	 *            before)
 	 */
-	public static void updateServer(long id, BansheeServer server) {
-		if (getServer(id) == null) {
-			throw new IllegalArgumentException("given server has no valid ID");
-		}
+	public static void updateServer(BansheeServer server) {
+		
 		
 		BansheeServer sameServer = getServer(server.mSameHostId);
 		
@@ -232,7 +228,24 @@ public class BansheeServer {
 		v.put(DB.PORT, sameServer == null ? server.mPort : 0);
 		v.put(DB.SAME_ID, server.mSameHostId);
 		v.put(DB.PASSWORD_ID, sameServer == null ? server.mPasswordId : 0);
-		getDb().update(DB.TABLE_NAME, v, DB.ID + "=" + id, null);
+		getDb().update(DB.TABLE_NAME, v, DB.ID + "=" + server.mId, null);
+	}
+	
+	/**
+	 * Update server.
+	 * 
+	 * @param id
+	 *            ID of server
+	 * @param server
+	 *            server to update
+	 */
+	public static void updateServer(long id, BansheeServer server) {
+		if (getServer(id) == null) {
+			throw new IllegalArgumentException("given server has no valid ID");
+		}
+		
+		server.mId = id;
+		updateServer(server);
 	}
 	
 	/**
@@ -279,7 +292,7 @@ public class BansheeServer {
 					cs.mDbTimestamp = server.mDbTimestamp;
 					cs.mPort = server.mPort;
 					cs.mPasswordId = server.mPasswordId;
-					updateServer(cs.mId, cs);
+					updateServer(cs);
 				}
 			}
 		} else {

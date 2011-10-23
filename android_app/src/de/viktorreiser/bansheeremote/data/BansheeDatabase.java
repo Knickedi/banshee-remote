@@ -57,7 +57,7 @@ public class BansheeDatabase {
 		if (id > 0 && same == null) {
 			// referenced server is dead, update that
 			server.mSameHostId = -1;
-			BansheeServer.updateServer(server.getId(), server);
+			BansheeServer.updateServer(server);
 			id = server.getId();
 		} else if (id > 0) {
 			server = same;
@@ -95,7 +95,7 @@ public class BansheeDatabase {
 		if (id > 0 && same == null) {
 			// referenced server is dead, update that
 			server.mSameHostId = -1;
-			BansheeServer.updateServer(server.getId(), server);
+			BansheeServer.updateServer(server);
 			id = server.getId();
 		} else if (id < 1) {
 			id = server.getId();
@@ -118,10 +118,10 @@ public class BansheeDatabase {
 			
 			if (same == null) {
 				server.mDbTimestamp = dbData.length;
-				BansheeServer.updateServer(server.getId(), server);
+				BansheeServer.updateServer(server);
 			} else {
 				same.mDbTimestamp = dbData.length;
-				BansheeServer.updateServer(server.getId(), same);
+				BansheeServer.updateServer(same);
 			}
 			
 			return true;
@@ -152,7 +152,7 @@ public class BansheeDatabase {
 		if (id > 0 && same == null) {
 			// referenced server is dead, update that
 			server.mSameHostId = -1;
-			BansheeServer.updateServer(server.getId(), server);
+			BansheeServer.updateServer(server);
 		}
 		
 		if (id < 1) {
