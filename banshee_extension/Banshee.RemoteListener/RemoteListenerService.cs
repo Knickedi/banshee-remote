@@ -94,6 +94,11 @@ namespace Banshee.RemoteListener
 		private int _playTimeout = 0;
 		
 		/// <summary>
+		/// Contains the required request password ID which was specified in banshee.
+		/// </summary>
+		private int _passId;
+		
+		/// <summary>
 		/// Banshee port preference.
 		/// </summary>
 		private PreferenceBase _portPref;
@@ -125,13 +130,22 @@ namespace Banshee.RemoteListener
 				new Section("BansheeRemote", "Banshee Remote", 0));
 			
 			_portPref = BansheeRemotePrefs.Add(new SchemaPreference<int>(
-				RemotePortSchema, Catalog.GetString("Banshee Remote port"),
-			    Catalog.GetString("Banshee will listen for the Android Banshee "
-						+ "Remote app on this port")
+				RemotePortSchema,
+				Catalog.GetString("Banshee Remote port"),
+			    Catalog.GetString("Banshee will listen for remote control requests on this port")
 			));
 			
-			_prefs["RemoteControl"]["BansheeRemote"]["remote_control_port"]
-					.ValueChanged += delegate {
+			_portPref = BansheeRemotePrefs.Add(new SchemaPreference<int>(
+				RemotePassIdSchema,
+				Catalog.GetString("Banshee Remote password ID"),
+			    Catalog.GetString("\"Secret\" ID which is required to be specified in incoming requests")
+			));
+			
+			_prefs["RemoteControl"]["BansheeRemote"]["remote_control_passid"].ValueChanged += delegate {
+				_passId = (int) _prefs["RemoteControl"]["BansheeRemote"]["remote_control_passid"].BoxedValue;
+			};
+			
+			_prefs["RemoteControl"]["BansheeRemote"]["remote_control_port"].ValueChanged += delegate {
 				StartRemoteListener();
 			};
 			
@@ -159,9 +173,11 @@ namespace Banshee.RemoteListener
 		}
 
 		public static readonly SchemaEntry<int> RemotePortSchema = new SchemaEntry<int>(
-			"remote_control", "remote_control_port",
-			8484, 1024, 49151, "BansheeRemote Port",
-			"BansheeRemoteListener will listen for the BansheeRemote Android app on this port"
+			"remote_control", "remote_control_port", 8484, 1024, 49151, "t", ""
+		);
+		
+		public static readonly SchemaEntry<int> RemotePassIdSchema = new SchemaEntry<int>(
+			"remote_control", "remote_control_passid", 0, 0, 65536, "", ""
 		);
 
 		#endregion
@@ -174,8 +190,7 @@ namespace Banshee.RemoteListener
 		/// </summary>
 		public void StartRemoteListener ()
 		{
-			int port = (int) _prefs["RemoteControl"]["BansheeRemote"]["remote_control_port"]
-					.BoxedValue;
+			int port = (int) _prefs["RemoteControl"]["BansheeRemote"]["remote_control_port"].BoxedValue;
 			
 			if (_listener != null) {
 				_listener.Disconnect(false);
