@@ -10,6 +10,7 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -125,6 +126,7 @@ public class NewOrEditServerActivity extends Activity implements OnBansheeServer
 		if (server == null) {
 			mEditId = -1;
 		} else {
+			((Button) findViewById(R.id.create)).setText(R.string.save_changes);
 			mHost.setText(server.getHost());
 			mPort.setText(server.getPort() + "");
 			mPassword.setText(server.getPasswordId() + "");
