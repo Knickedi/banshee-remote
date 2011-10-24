@@ -13,6 +13,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 import de.viktorreiser.bansheeremote.R;
 import de.viktorreiser.bansheeremote.data.BansheeServer;
@@ -127,6 +128,7 @@ public class NewOrEditServerActivity extends Activity implements OnBansheeServer
 			mEditId = -1;
 		} else {
 			((Button) findViewById(R.id.create)).setText(R.string.save_changes);
+			((TextView) findViewById(R.id.title)).setText(R.string.edit_server);
 			mHost.setText(server.getHost());
 			mPort.setText(server.getPort() + "");
 			mPassword.setText(server.getPasswordId() + "");
