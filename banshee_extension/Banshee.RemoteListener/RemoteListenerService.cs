@@ -1055,12 +1055,12 @@ namespace Banshee.RemoteListener
 			int maxReturn = 0;
 			int startPosition = 0;
 			
-			if (readBytes > 1) {
-				maxReturn = ShortFromBuffer(0);
+			if (readBytes > 3) {
+				maxReturn = (int) IntFromBuffer(0);
 			}
 			
-			if (readBytes > 3) {
-				startPosition = ShortFromBuffer(2);
+			if (readBytes > 7) {
+				startPosition = (int) IntFromBuffer(4);
 			}
 			
 			if (model != null) {
@@ -1075,9 +1075,9 @@ namespace Banshee.RemoteListener
 					toCount = startPosition + maxReturn;
 				}
 				
-				byte [] result = new byte [2 + 2 + 4 * returned];
-				Array.Copy(ShortToByte((ushort) count), 0, result, 0, 2);
-				Array.Copy(ShortToByte((ushort) returned), 0, result, 2, 2);
+				byte [] result = new byte [4 + 4 + 4 * returned];
+				Array.Copy(IntToByte((uint) count), 0, result, 0, 4);
+				Array.Copy(IntToByte((uint) returned), 0, result, 4, 4);
 				byte [] zeroId = new byte [] {0, 0, 0, 0};
 				
 				for (int i = startPosition; i < toCount; i++) {
@@ -1085,9 +1085,9 @@ namespace Banshee.RemoteListener
 					
 					if (track is DatabaseTrackInfo) {
 						Array.Copy(IntToByte((uint) ((DatabaseTrackInfo) track).TrackId),
-						                     0, result, (i - startPosition) * 4 + 4, 4);
+						                     0, result, (i - startPosition) * 4 + 8, 4);
 					} else {
-						Array.Copy(zeroId, 0, result, (i - startPosition) * 4 + 4, 4);
+						Array.Copy(zeroId, 0, result, (i - startPosition) * 4 + 8, 4);
 					}
 					//int id = DatabaseTrackInfo.GetTrackIdForUri(((TrackInfo) ).Uri);
 				}

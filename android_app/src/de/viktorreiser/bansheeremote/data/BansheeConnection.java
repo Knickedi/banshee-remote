@@ -116,7 +116,7 @@ public class BansheeConnection {
 		 * You can control how much tracks you want to have returned and from which position the
 		 * return should start (see {@link Playlist} for more).
 		 */
-		PLAYLIST(5, 15000),
+		PLAYLIST(5, 10000),
 		
 		PLAYLIST_CONTROL(6, 2000);
 		
@@ -442,24 +442,24 @@ public class BansheeConnection {
 		 */
 		public static class Playlist {
 			
-			public static byte [] encode(int startPosition, int maxReturns) {
-				byte [] params = new byte [4];
-				System.arraycopy(encodeShort(maxReturns), 0, params, 0, 2);
-				System.arraycopy(encodeShort(startPosition), 0, params, 2, 2);
+			public static byte [] encode(long startPosition, long maxReturns) {
+				byte [] params = new byte [8];
+				System.arraycopy(encodeInt(maxReturns), 0, params, 0, 4);
+				System.arraycopy(encodeInt(startPosition), 0, params, 4, 4);
 				return params;
 			}
 			
-			public static int getStartPosition(byte [] params) {
-				return decodeShort(params, 0);
+			public static long getStartPosition(byte [] params) {
+				return decodeInt(params, 0);
 			}
 			
 			public static long [] decodeTrackIds(byte [] response) {
 				try {
-					int count = decodeShort(response, 2);
+					int count = (int) decodeInt(response, 4);
 					long [] result = new long [count];
 					
 					for (int i = 0; i < count; i++) {
-						result[i] = decodeInt(response, i * 4 + 4);
+						result[i] = decodeInt(response, i * 4 + 8);
 					}
 					
 					return result;
@@ -844,7 +844,7 @@ public class BansheeConnection {
 			s.append(queue.command.toString());
 			s.append(" (pass ");
 			s.append(mServer.getPasswordId());
-			s.append(" )");
+			s.append(")");
 			
 			if (queue.params == null) {
 				s.append(" no parameters");

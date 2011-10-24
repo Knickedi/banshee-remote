@@ -210,15 +210,17 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 				for (int i = 0; i < ids.length; i++) {
 					mPlaylist.add(new PlaylistEntry(ids[i]));
 				}
-			}
-			
-			mPlaylistRequested = false;
-			mLoadingDismissed = true;
-			findViewById(R.id.loading_progress).setVisibility(View.GONE);
-			refreshTitle();
-			
-			if (mPlaylist.size() != 0) {
+				
+				mPlaylistRequested = false;
+				mLoadingDismissed = true;
+				
+				findViewById(R.id.loading_progress).setVisibility(View.GONE);
+				refreshTitle();
 				mAdapter.notifyDataSetChanged();
+			} else {
+				CurrentSongActivity.mConnection.sendCommand(Command.PLAYLIST,
+						Command.Playlist.encode( mPlaylist.size(),
+								App.getPlaylistPreloadCount()));
 			}
 			break;
 			
