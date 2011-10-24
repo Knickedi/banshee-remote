@@ -136,8 +136,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 							&& firstVisibleItem + visibleItemCount + 5 >= mPlaylist.size()) {
 						mPlaylistRequested = true;
 						CurrentSongActivity.mConnection.sendCommand(Command.PLAYLIST,
-								Command.Playlist.encode(
-										mPlaylistEnd,
+								Command.Playlist.encode(mPlaylistEnd,
 										App.getPlaylistPreloadCount()));
 					} else if (mPlaylistStart > 0 && firstVisibleItem <= 4) {
 						mPlaylistRequested = true;
@@ -528,8 +527,8 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 				entry.requestedTrackInfo = true;
 				entry.trackInfo = BansheeDatabase.getTrackInfo(entry.id);
 				
-				if (!mDbOutOfDateHintShown && entry.trackInfo == null && BansheeDatabase.isOpen()
-						&& App.isShowDbOutOfDateHint()) {
+				if (entry.id > 0 && !mDbOutOfDateHintShown && entry.trackInfo == null
+						&& BansheeDatabase.isOpen() && App.isShowDbOutOfDateHint()) {
 					mDbOutOfDateHintShown = true;
 					Toast.makeText(PlaylistActivity.this, R.string.out_of_data_hint_db,
 							Toast.LENGTH_SHORT).show();
