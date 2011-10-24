@@ -642,42 +642,20 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		
 		public void updateShuffle(boolean force) {
 			if (force || mPreviousData.shuffle != mData.shuffle) {
-				if (mData.shuffle == Shuffle.UNKNOWN) {
-					mShuffle.setVisibility(View.INVISIBLE);
-					
-					if (mShuffle2 != null) {
-						mShuffle2.setVisibility(View.INVISIBLE);
-					}
+				if (mShuffle2 != null) {
+					mShuffle2.setText(mData.shuffle.toString().toLowerCase());
 				} else {
-					mShuffle.setVisibility(View.VISIBLE);
-					
-					if (mShuffle2 != null) {
-						mShuffle2.setVisibility(View.VISIBLE);
-						mShuffle2.setText(mData.shuffle.toString().toLowerCase());
-					} else {
-						mShuffle.setText("Shuffle " + mData.shuffle.toString().toLowerCase());
-					}
+					mShuffle.setText("Shuffle " + mData.shuffle.toString().toLowerCase());
 				}
 			}
 		}
 		
 		public void updateRepeat(boolean force) {
 			if (force || mPreviousData.repeat != mData.repeat) {
-				if (mData.repeat == Repeat.UNKNOWN) {
-					mRepeat.setVisibility(View.INVISIBLE);
-					
-					if (mRepeat2 != null) {
-						mRepeat2.setVisibility(View.INVISIBLE);
-					}
+				if (mRepeat2 != null) {
+					mRepeat2.setText(mData.repeat.toString().toLowerCase());
 				} else {
-					mRepeat.setVisibility(View.VISIBLE);
-					
-					if (mRepeat2 != null) {
-						mRepeat2.setVisibility(View.VISIBLE);
-						mRepeat2.setText(mData.repeat.toString().toLowerCase());
-					} else {
-						mRepeat.setText("Repeat " + mData.repeat.toString().toLowerCase());
-					}
+					mRepeat.setText("Repeat " + mData.repeat.toString().toLowerCase());
 				}
 			}
 		}
