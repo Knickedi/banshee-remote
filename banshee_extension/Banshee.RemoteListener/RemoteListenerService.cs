@@ -10,15 +10,11 @@ using Banshee.Base;
 using Banshee.Collection;
 using Banshee.Collection.Database;
 using Banshee.Sources;
-using Banshee.Metadata;
 using Banshee.MediaEngine;
-using Banshee.Library;
 using Banshee.PlaybackController;
 using Banshee.ServiceStack;
 using Banshee.Preferences;
 using Banshee.Configuration;
-using Banshee.Query;
-using Banshee.Streaming;
 
 using Hyena;
 using Hyena.Data;
