@@ -1053,48 +1053,62 @@ namespace Banshee.RemoteListener
 			TrackListModel model = ServiceManager.PlaybackController.Source.TrackModel;
 			
 			int maxReturn = 0;
-			int startPosition = 0;
+			uint startPosition = 0;
 			
 			if (readBytes > 3) {
 				maxReturn = (int) IntFromBuffer(0);
 			}
 			
 			if (readBytes > 7) {
-				startPosition = (int) IntFromBuffer(4);
+				startPosition = IntFromBuffer(4) & 0xffffffff;
 			}
 			
 			if (model != null) {
 				int count = model.Count;
 				int toCount = count;
-				int returned = count - startPosition;
+				
+				if ((startPosition & 0x80000000) != 0) {
+					int pos = model.IndexOf(ServiceManager.PlayerEngine.CurrentTrack);
+					startPosition = startPosition & 0x7fffffff;
+					
+					if (pos < 0 || startPosition > 100) {
+						startPosition = 0;
+					} else {
+						int newStart = (int) (pos - startPosition);
+						startPosition = newStart < 0 ? 0 : (uint) newStart;
+					}
+				}
+				
+				int returned = count - (int) startPosition;
 				
 				if (returned < 0) {
 					returned = 0;
 				} else if (maxReturn != 0 && returned > maxReturn) {
 					returned = maxReturn;
-					toCount = startPosition + maxReturn;
+					toCount = (int) startPosition + maxReturn;
 				}
 				
-				byte [] result = new byte [4 + 4 + 4 * returned];
+				byte [] result = new byte [12 + 4 * returned];
 				Array.Copy(IntToByte((uint) count), 0, result, 0, 4);
 				Array.Copy(IntToByte((uint) returned), 0, result, 4, 4);
+				Array.Copy(IntToByte((uint) startPosition), 0, result, 8, 4);
 				byte [] zeroId = new byte [] {0, 0, 0, 0};
 				
-				for (int i = startPosition; i < toCount; i++) {
+				for (int i = (int) startPosition; i < toCount; i++) {
 					TrackInfo track = (TrackInfo) model.GetItem(i);
 					
 					if (track is DatabaseTrackInfo) {
 						Array.Copy(IntToByte((uint) ((DatabaseTrackInfo) track).TrackId),
-						                     0, result, (i - startPosition) * 4 + 8, 4);
+						                     0, result, (i - startPosition) * 4 + 12, 4);
 					} else {
-						Array.Copy(zeroId, 0, result, (i - startPosition) * 4 + 8, 4);
+						Array.Copy(zeroId, 0, result, (i - startPosition) * 4 + 12, 4);
 					}
 					//int id = DatabaseTrackInfo.GetTrackIdForUri(((TrackInfo) ).Uri);
 				}
 				
 				return result;
 			} else {
-				return new byte [] {0, 0, 0, 0};
+				return new byte [] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 			}
 		}
 		

@@ -449,17 +449,24 @@ public class BansheeConnection {
 				return params;
 			}
 			
+			public static byte [] encodeOnCurrent(long startOffset, long maxReturns) {
+				byte [] params = new byte [8];
+				System.arraycopy(encodeInt(maxReturns), 0, params, 0, 4);
+				System.arraycopy(encodeInt(startOffset | 0x80000000), 0, params, 4, 4);
+				return params;
+			}
+			
 			public static long getStartPosition(byte [] params) {
-				return decodeInt(params, 0);
+				return decodeInt(params, 0) & 0x8fffffff;
 			}
 			
 			public static long [] decodeTrackIds(byte [] response) {
 				try {
-					int count = (int) decodeInt(response, 4);
-					long [] result = new long [count];
+					int returned = (int) decodeInt(response, 4);
+					long [] result = new long [returned];
 					
-					for (int i = 0; i < count; i++) {
-						result[i] = decodeInt(response, i * 4 + 8);
+					for (int i = 0; i < returned; i++) {
+						result[i] = decodeInt(response, i * 4 + 12);
 					}
 					
 					return result;
@@ -469,7 +476,11 @@ public class BansheeConnection {
 			}
 			
 			public static int decodeCount(byte [] response) {
-				return decodeShort(response, 0);
+				return (int) decodeInt(response, 0);
+			}
+			
+			public static int decodeStartPosition(byte [] response) {
+				return (int) decodeInt(response, 8);
 			}
 		}
 		
