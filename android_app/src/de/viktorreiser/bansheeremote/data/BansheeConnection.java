@@ -837,10 +837,10 @@ public class BansheeConnection {
 		public byte [] params;
 	}
 	
-	private void logFail(CommandQueue queue) {
-		if (L.isW()) {
+	private void logRequest(CommandQueue queue, boolean success, byte [] response) {
+		if (success && L.isV() || !success && L.isW()) {
 			StringBuilder s = new StringBuilder();
-			s.append("Fail ");
+			s.append(success ? "Success " : "Fail ");
 			s.append(queue.command.toString());
 			s.append(" (pass ");
 			s.append(mServer.getPasswordId());
@@ -852,7 +852,7 @@ public class BansheeConnection {
 				s.append(" [ ");
 				
 				for (int i = 0; i < Math.min(queue.params.length, 20); i++) {
-					s.append(Integer.toHexString(queue.params[i]));
+					s.append(Integer.toHexString(queue.params[i] & 0xff));
 					s.append(" ");
 				}
 				
@@ -863,7 +863,26 @@ public class BansheeConnection {
 				s.append("]");
 			}
 			
-			L.w(s.toString());
+			if (response != null) {
+				s.append(" [ ");
+				
+				for (int i = 0; i < Math.min(response.length, 20); i++) {
+					s.append(Integer.toHexString(response[i] & 0xff));
+					s.append(" ");
+				}
+				
+				if (response.length > 20) {
+					s.append("... ");
+				}
+				
+				s.append("]");
+			}
+			
+			if (success) {
+				L.v(s.toString());
+			} else {
+				L.w(s.toString());
+			}
 		}
 	}
 	
@@ -911,6 +930,8 @@ public class BansheeConnection {
 		}
 		
 		private void handleFail(final CommandQueue queue) {
+			logRequest(queue, false, null);
+			
 			if (queue.command == Command.SYNC_DATABASE || queue.command == Command.PLAYLIST) {
 				mCommandHandler.post(new Runnable() {
 					@Override
@@ -920,8 +941,6 @@ public class BansheeConnection {
 					}
 				});
 			}
-			
-			logFail(queue);
 			
 			mFailCount++;
 			
@@ -941,6 +960,8 @@ public class BansheeConnection {
 		}
 		
 		private void handleSuccess(final CommandQueue queue, final byte [] result) {
+			logRequest(queue, true, result);
+			
 			mFailCount = 0;
 			
 			mCommandHandler.post(new Runnable() {

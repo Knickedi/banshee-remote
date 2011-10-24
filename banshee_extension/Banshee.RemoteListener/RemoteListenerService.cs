@@ -252,7 +252,7 @@ namespace Banshee.RemoteListener
 					Array.Copy(_buffer, 3, _buffer, 0, _buffer.Length - 3);
 					result = (byte []) typeof(RemoteListenerService).InvokeMember(
 						requestName, BindingFlags.Default | BindingFlags.InvokeMethod,
-                    	null, this, new object [] {readBytes - 1});
+                    	null, this, new object [] {readBytes - 3});
 				} else if ((RequestCode) _buffer[0] == RequestCode.Test) {
 					result = new byte [] {0};
 				}
@@ -735,7 +735,7 @@ namespace Banshee.RemoteListener
 			
 			if (track != null) {
 				Array.Copy(ShortToByte((ushort) track.FileSize), 0, result, 6, 2);
-				Array.Copy(IntToByte((uint) DatabaseTrackInfo.GetTrackIdForUri(track.Uri)),
+				Array.Copy(IntToByte((uint) (track is DatabaseTrackInfo ? ((DatabaseTrackInfo) track).TrackId : 0)),
 				           0, result, 8, 4);
 			}
 			
@@ -939,7 +939,7 @@ namespace Banshee.RemoteListener
 				result[0] = (byte) ((result[0] & 0x7f) + ((bool) paused ? 0x80 : 0x0));
 			}
 			
-			if (playing != null || forcePlaying) {
+			if (playing != null && forcePlaying) {
 				if (forcePlaying) {
 					playing = true;
 				}
