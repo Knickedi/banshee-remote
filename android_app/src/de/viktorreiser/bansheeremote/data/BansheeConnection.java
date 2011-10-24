@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
 
+import de.viktorreiser.toolbox.content.NetworkStateBroadcast;
 import de.viktorreiser.toolbox.util.L;
 
 import android.os.Handler;
@@ -116,9 +117,9 @@ public class BansheeConnection {
 		 * You can control how much tracks you want to have returned and from which position the
 		 * return should start (see {@link Playlist} for more).
 		 */
-		PLAYLIST(5, 10000),
+		PLAYLIST(5, 2000),
 		
-		PLAYLIST_CONTROL(6, 2000);
+		PLAYLIST_CONTROL(6, 3000);
 		
 		private final int mCode;
 		private final int mTimeout;
@@ -929,7 +930,8 @@ public class BansheeConnection {
 					}
 				} else {
 					byte [] result = sendRequest(mServer, queue.command.mCode, queue.params,
-							queue.command.mTimeout);
+							queue.command.mTimeout
+								* (NetworkStateBroadcast.isMobileConnected() ? 2 : 1));
 					
 					if (result == null || result.length == 0) {
 						handleFail(queue);
