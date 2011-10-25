@@ -110,6 +110,8 @@ namespace Banshee.RemoteListener
 		public static void SetDbCompressTimeFromFile() {
 			if (File.Exists(DatabasePath(true))) {
 				DbCompressTime = Timestamp(new FileInfo(DatabasePath(true)).CreationTimeUtc);
+			} else {
+				DbCompressTime = 0;
 			}
 		}
 		
@@ -430,7 +432,7 @@ namespace Banshee.RemoteListener
 				db.Execute("VACUUM;");
 				db.Dispose();
 				
-				_dbCompressTime = Timestamp();
+				SetDbCompressTimeFromFile();
 			} catch (Exception e) {
 				Log.Error("remote listener failed to compress database: " + e.Message);
 				File.Delete(DatabasePath(true));
