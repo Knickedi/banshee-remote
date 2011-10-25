@@ -15,6 +15,11 @@ import de.viktorreiser.bansheeremote.R;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandle;
 
+/**
+ * This will load all available playlists on the server.
+ * 
+ * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+ */
 public class PlaylistOverviewActivity extends Activity implements OnBansheeCommandHandle {
 	
 	// PRIVATE ====================================================================================
@@ -121,22 +126,22 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 	}
 	
 	private class PlaylistsAdapter extends BaseAdapter {
-
+		
 		@Override
 		public int getCount() {
 			return mPlaylists.size();
 		}
-
+		
 		@Override
 		public Object getItem(int position) {
 			return null;
 		}
-
+		
 		@Override
 		public long getItemId(int position) {
 			return position;
 		}
-
+		
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 			if (convertView == null) {

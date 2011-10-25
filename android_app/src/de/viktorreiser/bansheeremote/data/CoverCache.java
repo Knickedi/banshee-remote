@@ -18,8 +18,11 @@ import de.viktorreiser.toolbox.os.SoftPool;
  */
 public class CoverCache {
 	
+	// PRIVATE ====================================================================================
+	
 	private static SoftPool<Bitmap> mCoverCache = new SoftPool<Bitmap>();
 	
+	// PUBLIC =====================================================================================
 	
 	/**
 	 * Does cover already exist?

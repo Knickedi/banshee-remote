@@ -149,6 +149,15 @@ public class App extends Application {
 				.getBoolean("dboutofdatehint", true);
 	}
 	
+	/**
+	 * Default and global setup for a quick action (to keep it similar everywhere).
+	 * 
+	 * @param context
+	 * @param add
+	 *            should add to playlist be included?
+	 * 
+	 * @return quick action setup
+	 */
 	public static HiddenQuickActionSetup getDefaultHiddenViewSetup(Context context, boolean add) {
 		HiddenQuickActionSetup setup = new HiddenQuickActionSetup(context);
 		

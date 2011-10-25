@@ -78,6 +78,9 @@ namespace Banshee.RemoteListener
 		/// </summary>
 		private static int _playTimeout = 0;
 		
+		/// <summary>
+		/// Unique ID of remote playlist.
+		/// </summary>
 		private static string _remotePlaylistId = null;
 		
 		#endregion
@@ -107,10 +110,22 @@ namespace Banshee.RemoteListener
 		
 		#region Service helpers
 		
+		/// <summary>
+		/// Modify the buffer so the request code and password ID are stripped from request buffer.
+		/// </summary>
+		/// <param name="length">
+		/// The length of read bytes of request
+		/// </param>
 		public static void StripGlobalInfoFromBuffer(int length) {
 			Array.Copy(_buffer, 3, _buffer, 0, length);
 		}
 		
+		/// <summary>
+		/// This will be called if a resource is removed (so we can react on remote playlist deletion).
+		/// </summary>
+		/// <param name="s">
+		/// Removed resource.
+		/// </param>
 		public static void HandleRemovedSource(Source s) {
 			if (s.UniqueId == _remotePlaylistId) {
 				string home = Environment.GetEnvironmentVariable("HOME");
@@ -126,6 +141,9 @@ namespace Banshee.RemoteListener
 			}
 		}
 		
+		/// <summary>
+		/// Read last modified value of compressed database file and set it as last compression.
+		/// </summary>
 		public static void SetDbCompressTimeFromFile() {
 			if (File.Exists(DatabasePath(true))) {
 				DbCompressTime = Timestamp(new FileInfo(DatabasePath(true)).CreationTimeUtc);
@@ -165,6 +183,15 @@ namespace Banshee.RemoteListener
 			return new byte [] {(byte) s, (byte) ((s >> 8) & 0xff)};
 		}
 		
+		/// <summary>
+		/// Create short hash code for given source (for simple source identification).
+		/// </summary>
+		/// <param name="s">
+		/// Source.
+		/// </param>
+		/// <returns>
+		/// The hash code for the source.
+		/// </returns>
 		public static ushort SourceHashCode(Source s) {
 			return (ushort) ((s.Name + s.UniqueId).GetHashCode() & 0xffff);
 		}
@@ -294,6 +321,12 @@ namespace Banshee.RemoteListener
 			return dbPath + (compressed ? "compressed.db" : ".db");
 		}
 		
+		/// <summary>
+		/// Get reference to the remote playlist or create it if it's not available.
+		/// </summary>
+		/// <returns>
+		/// Remote playlist.
+		/// </returns>
 		public static Source GetOrCreateRemotePlaylist() {
 			string home = Environment.GetEnvironmentVariable("HOME");
 			string path = home + "/.config/banshee-1/banshee_remote_playlist_id";
@@ -729,6 +762,21 @@ namespace Banshee.RemoteListener
 		
 		#region Playlist reques helpers
 		
+		/// <summary>
+		/// Write source to buffer (for playlist names request).
+		/// </summary>
+		/// <param name="index">
+		/// Current buffer position.
+		/// </param>
+		/// <param name="s">
+		/// The source which should be written to buffer.
+		/// </param>
+		/// <param name="isRemotePlaylist">
+		/// Is the given source the remote playlist?
+		/// </param>
+		/// <returns>
+		/// Buffer position after write.
+		/// </returns>
 		public static int SourceAsPlaylistToBuffer(int index, Source s, bool isRemotePlaylist) {
 			byte [] id = ShortToByte(isRemotePlaylist ? (ushort) 1 : SourceHashCode(s));
 						

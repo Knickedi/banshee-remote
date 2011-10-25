@@ -82,6 +82,8 @@ public class BansheeDatabase {
 	 *            banshee server for which will use the database
 	 * @param dbData
 	 *            database file as raw byte array
+	 * @param timestamp
+	 *            timestamp of database received from previous request
 	 * 
 	 * @return {@code true} if database was updated successfully ({@link #open(BansheeServer)} is
 	 *         called automatically) otherwise {@code false} and no database is bound anymore (e.g.
@@ -195,7 +197,7 @@ public class BansheeDatabase {
 	}
 	
 	/**
-	 * Force database close.
+	 * Force database close (if open).
 	 */
 	public static void close() {
 		if (isOpen()) {
@@ -264,14 +266,39 @@ public class BansheeDatabase {
 	
 	// PRIVATE ====================================================================================
 	
+	/**
+	 * Get string from cursor.
+	 * 
+	 * @param c
+	 *            cursor
+	 * @param index
+	 *            index from which the string should be get
+	 * 
+	 * @return if string is {@code null} you'll get an empty string otherwise the string itself
+	 */
 	private static String cleanString(Cursor c, int index) {
 		return c.isNull(index) ? "" : c.getString(index);
 	}
 	
+	/**
+	 * Get integer from cursor.
+	 * 
+	 * @param c
+	 *            cursor
+	 * @param index
+	 *            index from which the integer should be get
+	 * 
+	 * @return if integer is {@code null} you'll {@code -1} otherwise the value itself
+	 */
 	private static int cleanInt(Cursor c, int index) {
 		return c.isNull(index) ? -1 : c.getInt(index);
 	}
 	
+	/**
+	 * Database (column) constants for the synchronized database.
+	 * 
+	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+	 */
 	private static class DB {
 		public static final String TABLE_TRACKS = "tracks";
 		public static final String TABLE_ARTISTS = "artists";

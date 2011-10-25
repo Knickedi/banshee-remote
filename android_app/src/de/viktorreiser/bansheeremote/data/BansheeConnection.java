@@ -10,10 +10,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
 
+import android.os.Handler;
 import de.viktorreiser.toolbox.content.NetworkStateBroadcast;
 import de.viktorreiser.toolbox.util.L;
-
-import android.os.Handler;
 
 /**
  * Banshee server connector.<br>
@@ -29,13 +28,13 @@ import android.os.Handler;
  * connection don't forget to call {@link #close()}!<br>
  * <br>
  * You can send commands with {@link #sendCommand(Command, byte[])}. The parameters can be encoded
- * {@link Command} helper methods (if command has any parameters, otherwise it's just {@code null}).
+ * with the {@link Command} helper methods (if command has any parameters, otherwise it's just {@code null}).
  * The command callback given in the constructor will be called to report results. {@link Command}
  * methods can be used to decode the results. Default behavior is that pending commands of same type
  * will be just updated instead creating a new request. If you really want to create a new command
  * instead call {@link #sendCommand(Command, byte[], boolean)} with {@code false}. But the default
  * behavior should be fine because this prevents command flooding (multiple clicks of same button or
- * especially when you trigger a seek command based on a seek bar change event).
+ * especially when you trigger a seek command based on a seek bar change event). 
  * 
  * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
  */
@@ -62,7 +61,7 @@ public class BansheeConnection {
 	 * Number of failed requests until the connection decides on fail.<br>
 	 * <br>
 	 * <i>Why?</i> There might always a bad connection or something. It's annoying to lose
-	 * connection just because a single failed request so...
+	 * connection just because of a single failed request so...
 	 */
 	public static final int MAX_FAIL_COMMANDS = 4;
 	
@@ -71,54 +70,23 @@ public class BansheeConnection {
 	 * Command constants and helpers for request encoding and response decoding.<br>
 	 * <br>
 	 * Use a constant for {@link BansheeConnection#sendCommand(Command, byte[])}, encode the request
-	 * parameter with the corresponding {@code encode} helper and decode the response with the
-	 * corresponding {@code decode} helper.
+	 * parameter with the corresponding {@code encode} helpers and decode the response with the
+	 * corresponding {@code decode} helpers.<br>
+	 * <br>
+	 * You should check the
+	 * <a href="https://github.com/Knickedi/banshee-remote/wiki/Banshee-RemoteListener-Extension-API-Documentation"
+	 * >API documentation</a> if you're not sure about the returned values. But the encoding and
+	 * decoding is already wrapping the ugliest part of the communication.
 	 * 
 	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
 	 */
 	public static enum Command {
-		/**
-		 * (Set and) get player status.<br>
-		 * <br>
-		 * A {@code null} parameter just requests the current status (status will be returned after
-		 * any type of request).
-		 * 
-		 * You can bundle status request type in a single request. Just pass the previous encoded
-		 * request as parameter to the next one. Some request types are bundled and will override
-		 * the previous request parameter which was encoded. See {@link PlayerStatus} for more.
-		 */
+		
 		PLAYER_STATUS(1, 1000),
-		
-		/**
-		 * Get track data (see {@link SongInfo} how to interpret the results).
-		 */
 		SONG_INFO(2, 1000),
-		
-		/**
-		 * Get sync database (information).<br>
-		 * <br>
-		 * This request will return also {@code null} so your handler knows about failed requests
-		 * (see {@link SyncDatabase} for more).
-		 */
 		SYNC_DATABASE(3, 10000),
-		
-		/**
-		 * Get cover.<br>
-		 * <br>
-		 * {@code null} request will return (if available). You can request a specific cover (see
-		 * {@link Cover}). If no cover is available you get a {@code 0} byte.
-		 */
 		COVER(4, 5000),
-		
-		/**
-		 * Get current playlist.<br>
-		 * <br>
-		 * The list of track IDs relate to the local database.<br>
-		 * You can control how much tracks you want to have returned and from which position the
-		 * return should start (see {@link Playlist} for more).
-		 */
 		PLAYLIST(5, 2000),
-		
 		PLAYLIST_CONTROL(6, 3000);
 		
 		private final int mCode;
@@ -129,69 +97,14 @@ public class BansheeConnection {
 			mTimeout = timeout;
 		}
 		
-		/*@formatter:off*/
 		/**
-		 * Encode request and decode response.<br>
+		 * Helper to handle player status requests.<br>
 		 * <br>
-		 * <b>Request</b> groups can be combined to one request parameter (see
-		 * {@link Command#PLAYER_STATUS}).<br>
-		 * <br>
-		 * <table border="0" cellspacing="0" cellpadidng="0">
-		 * <tr><td>pause</td><td>&nbsp;{@link #encodePause(byte[])}</td></tr>
-		 * <tr><td>play</td><td>&nbsp;{@link #encodePlay(byte[])}</td></tr>
-		 * <tr><td>next track</td><td>&nbsp;{@link #encodePlayNext(byte[])}</td></tr>
-		 * <tr><td>previous track</td><td>&nbsp;{@link #encodePlayPrevious(byte[])}</td></tr>
-		 * <tr><td>toggle play / pause</td><td>&nbsp;{@link #encodePlayToggle(byte[])}</td></tr>
-		 * </table>
-		 * <br>
-		 * <table border="0" cellspacing="0" cellpadidng="0">
-		 * <tr><td>set repeat mode</td><td>&nbsp;{@link #encodeRepeat(byte[], Repeat)}</td></tr>
-		 * <tr><td>toggle repeat on / off</td><td>&nbsp;{@link #encodeRepeatOnOffToggle(byte[])}</td></tr>
-		 * <tr><td>toggle between all modes</td><td>&nbsp;{@link #encodeRepeatToggle(byte[])}</td></tr>
-		 * </table>
-		 * <br>
-		 * <table border="0" cellspacing="0" cellpadidng="0">
-		 * <tr><td>set shuffle mode</td><td>&nbsp;{@link #encodeShuffle(byte[], Shuffle)}</td></tr>
-		 * <tr><td>toggle shuffle on / off</td><td>&nbsp;{@link #encodeRepeatOnOffToggle(byte[])}</td></tr>
-		 * <tr><td>toggle shuffle all modes</td><td>&nbsp;{@link #encodeShuffleToggle(byte[])}</td></tr>
-		 * </table>
-		 * <br>
-		 * <table border="0" cellspacing="0" cellpadidng="0">
-		 * <tr><td>set volume {@code 1-100}</td><td>&nbsp;{@link #encodeVolume(byte[], int)}</td></tr>
-		 * <tr><td>set volume to {@code 0}</td><td>&nbsp;{@link #encodeVolumeMute(byte[])}</td></tr>
-		 * <tr><td>volume one step down</td><td>&nbsp;{@link #encodeVolumeDown(byte[])}</td></tr>
-		 * <tr><td>volume one step up</td><td>&nbsp;{@link #encodeVolumeUp(byte[])}</td></tr>
-		 * </table>
-		 * <br>
-		 * <table border="0" cellspacing="0" cellpadidng="0">
-		 * <tr><td>set seek position in milliseconds<br>{@code 0} is ignored</td>
-		 * <td>&nbsp;{@link #encodeSeekPosition(byte[], long)}</td></tr>
-		 * </table>
-		 * <br>
-		 * <b>Response</b> provides some player status information.<br>
-		 * <br>
-		 * <table border="0" cellspacing="0" cellpadidng="0">
-		 * <tr><td>is player playing</td><td>&nbsp;{@link #decodePause(byte[])}</td></tr>
-		 * <tr><td>is player paused</td><td>&nbsp;{@link #decodePause(byte[])}</td></tr>
-		 * <tr><td>(if both are {@code false} then the player is idle)</td><td></td></tr>
-		 * <tr><td>get current repeat mode</td>
-		 * <td>&nbsp;{@link #decodeShuffleMode(byte[])}</td></tr>
-		 * <tr><td>get current shuffle mode</td>
-		 * <td>&nbsp;{@link #decodeRepeatMode(byte[])}</td></tr>
-		 * <tr><td>get current volume {@code 0-100}</td>
-		 * <td>&nbsp;{@link #decodeVolume(byte[])}</td></tr>
-		 * <tr><td>get current track position<br>(in milliseconds)</td>
-		 * <td>&nbsp;{@link #decodeSeekPosition(byte[])}</td></tr>
-		 * <tr><td>get change flag - {@code 0} means no track is playing<br>
-		 * ({@code oldFlag != newFlag == newSong})</td>
-		 * <td>&nbsp;{@link #decodeChangeFlag(byte[])}</td></tr>
-		 * <tr><td>get track ID (relates to database)</td>
-		 * <td>&nbsp;{@link #decodeSongId(byte[])}</td></tr>
-		 * </table>
+		 * Request parameters can be chained. You will notice that some {@code encode} methods has
+		 * the same noun which is following. Chaining those will eliminate the previous call.
 		 * 
 		 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
 		 */
-		/*@formatter:on*/
 		public static class PlayerStatus {
 			
 			private static byte [] getRequest(byte [] request) {
@@ -199,141 +112,211 @@ public class BansheeConnection {
 						? new byte [] {0, 0, 0, 0, 0, 0, 0} : request;
 			}
 			
+			/**
+			 * Request a toggle of play / pause.
+			 */
 			public static byte [] encodePlayToggle(byte [] request) {
 				(request = getRequest(request))[0] = (byte) (0x10 | request[0] & 0xf);
 				return request;
 			}
 			
+			/**
+			 * Request to start playing.
+			 */
 			public static byte [] encodePlay(byte [] request) {
 				(request = getRequest(request))[0] = (byte) (0x20 | request[0] & 0xf);
 				return request;
 			}
 			
+			/**
+			 * Request to pause.
+			 */
 			public static byte [] encodePause(byte [] request) {
 				(request = getRequest(request))[0] = (byte) (0x30 | request[0] & 0xf);
 				return request;
 			}
 			
+			/**
+			 * Request to play next track.
+			 */
 			public static byte [] encodePlayNext(byte [] request) {
 				(request = getRequest(request))[0] = (byte) (0x40 | request[0] & 0xf);
 				return request;
 			}
 			
+			/**
+			 * Request to play previous track.
+			 */
 			public static byte [] encodePlayPrevious(byte [] request) {
 				(request = getRequest(request))[0] = (byte) (0x50 | request[0] & 0xf);
 				return request;
 			}
 			
+			/**
+			 * Request a certain repeat mode (unknown is ignored).
+			 */
 			public static byte [] encodeRepeat(byte [] request, Repeat repeat) {
 				(request = getRequest(request))[0] = (byte) (repeat.mCode | request[0] & 0xf0);
 				return request;
 			}
 			
+			/**
+			 * Request to toggle to next repeat mode.
+			 */
 			public static byte [] encodeRepeatToggle(byte [] request) {
 				(request = getRequest(request))[0] = (byte) (0x4 | request[0] & 0xf0);
 				return request;
 			}
 			
+			/**
+			 * Request to toggle repeat mode on / off.
+			 */
 			public static byte [] encodeRepeatOnOffToggle(byte [] request) {
 				(request = getRequest(request))[0] = (byte) (0x5 | request[0] & 0xf0);
 				return request;
 			}
 			
+			/**
+			 * Request a certain shuffle mode.
+			 */
 			public static byte [] encodeShuffle(byte [] request, Shuffle shuffle) {
 				(request = getRequest(request))[1] = (byte) shuffle.mCode;
 				return request;
 			}
 			
+			/**
+			 * Request to toggle to next shuffle mode.
+			 */
 			public static byte [] encodeShuffleToggle(byte [] request) {
 				(request = getRequest(request))[1] = (byte) 0x7;
 				return request;
 			}
 			
+			/**
+			 * Request to toggle shuffle on / off.
+			 */
 			public static byte [] encodeShuffleOnOffToggle(byte [] request) {
 				(request = getRequest(request))[1] = (byte) 0x8;
 				return request;
 			}
 			
+			/**
+			 * Request to set volume {@code 1 - 100}, {@code 0} is ignored.
+			 */
 			public static byte [] encodeVolume(byte [] request, int volume) {
 				(request = getRequest(request))[2] = (byte) Math.max(0, Math.min(1, volume));
 				return request;
 			}
 			
+			/**
+			 * Request to mute (volume {@code 0}).
+			 */
 			public static byte [] encodeVolumeMute(byte [] request) {
 				(request = getRequest(request))[2] = (byte) 101;
 				return request;
 			}
 			
+			/**
+			 * Request a volume step down.
+			 */
 			public static byte [] encodeVolumeDown(byte [] request) {
 				(request = getRequest(request))[2] = (byte) 102;
 				return request;
 			}
 			
+			/**
+			 * Request a volume step up.
+			 */
 			public static byte [] encodeVolumeUp(byte [] request) {
 				(request = getRequest(request))[2] = (byte) 103;
 				return request;
 			}
 			
+			/**
+			 * Request a to seek in track to a certain position (in milliseconds).
+			 */
 			public static byte [] encodeSeekPosition(byte [] request, long position) {
 				byte [] p = encodeInt(position);
 				System.arraycopy(p, 0, request = getRequest(request), 3, p.length);
 				return request;
 			}
 			
+			/**
+			 * Is player paused?
+			 */
 			public static boolean decodePause(byte [] response) {
 				return (response[0] & 0x80) != 0;
 			}
 			
+			/**
+			 * Is player playing?
+			 */
 			public static boolean decodePlaying(byte [] response) {
 				return (response[0] & 0x40) != 0;
 			}
 			
+			/**
+			 * Get current repeat mode.
+			 */
 			public static Repeat decodeRepeatMode(byte [] response) {
 				return Repeat.decode((response[0] >>> 4) & 0x3);
 			}
 			
+			/**
+			 * Get current shuffle mode.
+			 */
 			public static Shuffle decodeShuffleMode(byte [] response) {
 				return Shuffle.decode(response[0] & 0xf);
 			}
 			
+			/**
+			 * Get current volume {@code 0 - 100}.
+			 */
 			public static int decodeVolume(byte [] response) {
 				return response.length < 2 ? -1 : response[1] & 0xff;
 			}
 			
+			/**
+			 * Get current track seek position (in milliseconds).
+			 */
 			public static long decodeSeekPosition(byte [] response) {
 				return response.length < 6 ? -1 : decodeInt(response, 2);
 			}
 			
+			/**
+			 * Get change flag (will be different if another track is playing now).
+			 */
 			public static int decodeChangeFlag(byte [] response) {
 				return response.length < 8 ? -1 : decodeShort(response, 6);
 			}
 			
+			/**
+			 * Get Id of the track which is playing now (relates to the synchonized database).
+			 */
 			public static long decodeSongId(byte [] response) {
 				return response.length < 12 ? -1 : decodeInt(response, 8);
 			}
 		}
 		
 		/**
-		 * Get track info.<br>
-		 * <br>
-		 * This command has no parameter. It will return the current track data. Usually you call
-		 * this if the status reported a change in it's change flag. {@link SongInfo#decode(byte[])}
-		 * will return an {@code Object} array with following data:<br>
-		 * <br>
-		 * 0 - total length of track in seconds - {@code Integer}<br>
-		 * 1 - track title - {@code String}<br>
-		 * 2 - artist name - {@code String}<br>
-		 * 3 - album title - {@code String}<br>
-		 * 4 - genre - {@code String}<br>
-		 * 5 - album year - {@code Integer}<br>
-		 * 6 - cover ID (e.g. {@code "album-023AB83..."} or empty if there's no cover) -
-		 * {@code String}
+		 * Helper to handle current track information requests.
 		 * 
-		 * @author Viktor Reiser &lt;<a
-		 *         href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+		 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
 		 */
 		public static class SongInfo {
 			
+			/**
+			 * Get track info ({@code null} on fail).<br>
+			 * <br>
+			 * 0 - total length of track in seconds - {@code Integer}<br>
+			 * 1 - track title - {@code String}<br>
+			 * 2 - artist name - {@code String}<br>
+			 * 3 - album title - {@code String}<br>
+			 * 4 - genre - {@code String}<br>
+			 * 5 - album year - {@code Integer}<br>
+			 * 6 - cover ID - (e.g. {@code "album-823AB83..."} or empty if there's no cover) -
+			 * {@code String}
+			 */
 			public static Object [] decode(byte [] response) {
 				try {
 					Object [] decoded = new Object [7];
@@ -375,82 +358,108 @@ public class BansheeConnection {
 		}
 		
 		/**
-		 * Synchronize banshee database.<br>
-		 * <br>
-		 * {@code null} request will give you a {@code 0} byte response!<br>
-		 * <br>
-		 * Use {@link #encodeFileTimestamp()} and {@link #decodeFileTimestamp(byte[])} to request
-		 * the database size in bytes. You will get {@code 0} when there's no database available<br>
-		 * <br>
-		 * Use {@link #encodeFile()} to get the database as response encoded as byte array. You will
-		 * get a single byte wit the value {@code 0} when the database is not available.
-		 * 
-		 * @author Viktor Reiser &lt;<a
-		 *         href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+		 * Helper to handle database synchronization.
 		 */
 		public static class SyncDatabase {
 			
+			/**
+			 * Request current timestamp of database (to compare it with the local one).
+			 */
 			public static byte [] encodeFileTimestamp() {
 				return new byte [] {1};
 			}
 			
+			/**
+			 * Request the database file itself.
+			 */
 			public static byte [] encodeFile() {
 				return new byte [] {2};
 			}
 			
+			/**
+			 * Were we requesting the timestamp with these parameters?
+			 */
 			public static boolean isFileTimestamp(byte [] params) {
 				return params[0] == 1;
 			}
 			
+			/**
+			 * Were we requesting the database file with these parameters?
+			 */
 			public static boolean isFileRequest(byte [] params) {
 				return params[0] == 2;
 			}
 			
+			/**
+			 * Get the returned timestamp.
+			 */
 			public static int decodeFileTimestamp(byte [] response) {
 				return response.length < 4 ? 0 : (int) decodeInt(response, 0);
 			}
 		}
 		
 		/**
-		 * Get cover.<br>
-		 * <br>
-		 * Use {@link #encode(String)} to request a specific cover.
+		 * Helper for handling cover requests.
 		 * 
 		 * @author Viktor Reiser &lt;<a
 		 *         href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
 		 */
 		public static class Cover {
 			
+			/**
+			 * Request a certain cover.
+			 */
 			public static byte [] encode(String artId) {
 				return encodeString(artId);
 			}
 			
+			/**
+			 * Which cover ID were we requesting?
+			 */
 			public static String getId(byte [] params) {
 				return (String) decodeString(params, 0)[1];
 			}
 		}
 		
 		/**
-		 * Get current playlist track IDs.<br>
-		 * <br>
-		 * A {@code null} request will return all tracks but this could be slow so you can specify
-		 * how much and from which start position you want to have track IDs ({#encode(int, int)}).<br>
-		 * {@link #decodeCount(byte[])} will give you the size of the playlist.
-		 * {@link #decodeTrackIds(byte[])} will give you the returned IDs.
+		 * Helper for handling playlist requests.
 		 * 
-		 * @author Viktor Reiser &lt;<a
-		 *         href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+		 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
 		 */
 		public static class Playlist {
 			
+			/**
+			 * Request current playlist names.
+			 */
 			public static byte [] encodePlaylistNames() {
 				return new byte [] {1};
 			}
 			
+			/**
+			 * Were we requesting the playlist names.
+			 */
+			public static boolean isPlaylistNames(byte [] params) {
+				return params[0] == 1;
+			}
+			
+			/**
+			 * Get current active playlist ID from playlist name request.
+			 */
 			public static int decodeActivePlaylist(byte [] response) {
 				return decodeShort(response, 0);
 			}
 			
+			/**
+			 * Decode the playlist names.<br>
+			 * <br>
+			 * This array will contain all available playlists. One entry contains this data:
+			 * <ul>
+			 * <li>0 - count of tracks in playlist</li>
+			 * <li>1 - ID of playlist, the remote playlist is always {@code 1}, don't rely on other
+			 * IDs, their meant to be used in real time and can change easily</li>
+			 * <li>2 - name of playlist as given on the server</li>
+			 * </ul>
+			 */
 			public static Object [][] decodePlaylistNames(byte [] response) {
 				int count = decodeShort(response, 2);
 				Object [][] playlists = new Object [count][];
@@ -470,16 +479,14 @@ public class BansheeConnection {
 				return playlists;
 			}
 			
-			public static boolean isPlaylistNames(byte [] params) {
-				return params[0] == 1;
-			}
-			
 			public static byte [] encode(long startPosition, long maxReturns) {
 				byte [] params = new byte [8];
 				System.arraycopy(encodeInt(maxReturns), 0, params, 0, 4);
 				System.arraycopy(encodeInt(startPosition), 0, params, 4, 4);
 				return params;
 			}
+			
+			// FIXME this is out of date and should be corrected (also in extension)
 			
 			public static byte [] encodeOnCurrent(long startOffset, long maxReturns) {
 				byte [] params = new byte [8];
@@ -516,6 +523,7 @@ public class BansheeConnection {
 			}
 		}
 		
+		// TODO implement and improve that
 		public static class PlaylistControl {
 			
 			public static byte [] encodePlay(long trackId) {
@@ -524,11 +532,6 @@ public class BansheeConnection {
 				System.arraycopy(encodeInt(trackId), 0, result, 1, 4);
 				return result;
 			}
-			
-			// TODO enqueue tracks
-//			public static byte [] endcode(long [] tracksIds, long [] artistIds, long [] albumIds) {
-//				
-//			}
 		}
 		
 		private static byte [] encodeShort(int value) {
@@ -782,7 +785,8 @@ public class BansheeConnection {
 	 * @param server
 	 *            banshee server to test
 	 * 
-	 * @return {@code true} if the given banshee server was available
+	 * @return {@code -1 =} not reachable - {@code 0 = } reachable but wrong password ID -
+	 *         {@code 1 =} access granted
 	 */
 	public static int checkConnection(BansheeServer server) {
 		// request code 0 is a test request which does nothing
@@ -811,6 +815,8 @@ public class BansheeConnection {
 	 *            request code is taken from {@link Command} constant
 	 * @param params
 	 *            encoded parameters
+	 * @param timeout
+	 *            timeout for request in miliseconds
 	 * 
 	 * @return response as byte array
 	 */

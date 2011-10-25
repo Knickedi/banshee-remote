@@ -213,8 +213,6 @@ public class BansheeServer {
 	 *            before)
 	 */
 	public static void updateServer(BansheeServer server) {
-		
-		
 		BansheeServer sameServer = getServer(server.mSameHostId);
 		
 		if (server.mSameHostId > 0 && sameServer == null) {
@@ -232,7 +230,7 @@ public class BansheeServer {
 	}
 	
 	/**
-	 * Update server.
+	 * Update server (use that if you really can't use an already existing server only).
 	 * 
 	 * @param id
 	 *            ID of server
@@ -249,7 +247,7 @@ public class BansheeServer {
 	}
 	
 	/**
-	 * Remove banshee server from list.
+	 * Remove banshee server from list (an open databases will be closed after that!)
 	 * 
 	 * @param id
 	 *            ID of server to remove
@@ -360,10 +358,23 @@ public class BansheeServer {
 	
 	// PRIVATE ====================================================================================
 	
+	/**
+	 * For internal use.
+	 */
 	private BansheeServer() {
 		
 	}
 	
+	
+	/**
+	 * Get a banshee server from current cursor position (expects {@link DB#ALL_COLUMNS} as supplied
+	 * columns in database query).
+	 * 
+	 * @param cursor
+	 *            cursor pointing at a banshee server
+	 * 
+	 * @return banshee server
+	 */
 	private static BansheeServer fillFromCursor(Cursor cursor) {
 		BansheeServer s = new BansheeServer();
 		s.mId = cursor.getLong(0);
@@ -388,7 +399,11 @@ public class BansheeServer {
 		return s;
 	}
 	
-	
+	/**
+	 * Get database instance for banshee servers.
+	 * 
+	 * @return database instance
+	 */
 	private static SQLiteDatabase getDb() {
 		if (mDbinstance == null) {
 			return mDbinstance = new BansheeDbHelper(App.getContext()).getWritableDatabase();
