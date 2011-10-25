@@ -150,6 +150,10 @@ namespace Banshee.RemoteListener
 			return new byte [] {(byte) s, (byte) ((s >> 8) & 0xff)};
 		}
 		
+		public static ushort SourceHashCode(Source s) {
+			return (ushort) ((s.Name + s.UniqueId).GetHashCode() & 0xffff);
+		}
+		
 		/// <summary>
 		/// Read a big endian integer value from buffer.
 		/// </summary>

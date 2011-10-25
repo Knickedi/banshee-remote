@@ -211,22 +211,26 @@ namespace Banshee.RemoteListener
 				ushort count = 0;
 				int index = 4;
 				
+				Helper.Buffer[0] = Helper.Buffer[1] = 0;
+				
 				foreach (Source s in ServiceManager.SourceManager.Sources) {
 					if (s.Count != 0 || s == remotePlaylist) {
 						count++;
-						ushort key = (ushort) (s.UniqueId.GetHashCode() % 0x10000);
+						ushort key = Helper.SourceHashCode(s);
 						
 						if (s == active) {
 							Array.Copy(Helper.ShortToByte(key), 0, Helper.Buffer, 0, 2);
 						}
 						
+						Array.Copy(Helper.ShortToByte(key), 0, Helper.Buffer, index, 2);
+						index += 2;
 						byte [] str = Helper.StringToByte(s.Name);
 						Array.Copy(str, 0, Helper.Buffer, index, str.Length);
 						index += str.Length;
 					}
 				}
 				
-				Array.Copy(Helper.ShortToByte(count), 0, Helper.Buffer, 0, 2);
+				Array.Copy(Helper.ShortToByte(count), 0, Helper.Buffer, 2, 2);
 				byte [] result = new byte [index];
 				Array.Copy(Helper.Buffer, 0, result, 0, index);
 				

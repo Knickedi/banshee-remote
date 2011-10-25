@@ -443,6 +443,35 @@ public class BansheeConnection {
 		 */
 		public static class Playlist {
 			
+			public static byte [] encodePlaylistNames() {
+				return new byte [] {1};
+			}
+			
+			public static int decodeActivePlaylist(byte [] response) {
+				return decodeShort(response, 0);
+			}
+			
+			public static Object [][] decodePlaylistNames(byte [] response) {
+				int count = decodeShort(response, 2);
+				Object [][] playlists = new Object [count][];
+				int index = 4;
+				
+				for (int i = 0; i < playlists.length; i++) {
+					playlists[i] = new Object[2];
+					playlists[i][0] = decodeShort(response, index);
+					index += 2;
+					Object [] s = decodeString(response, index);
+					index += (Integer) s[0];
+					playlists[i][1] = s[1];
+				}
+				
+				return playlists;
+			}
+			
+			public static boolean isPlaylistNames(byte [] params) {
+				return params[0] == 1;
+			}
+			
 			public static byte [] encode(long startPosition, long maxReturns) {
 				byte [] params = new byte [8];
 				System.arraycopy(encodeInt(maxReturns), 0, params, 0, 4);
