@@ -98,6 +98,10 @@ namespace Banshee.RemoteListener
 			get { return Timestamp() - _playTimeout <= 1; }
 		}
 		
+		public static string RemotePlaylistId {
+			get { return _remotePlaylistId; }
+		}
+		
 		#endregion
 		
 		

@@ -1,10 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 using Banshee.Base;
 using Banshee.Collection;
 using Banshee.Collection.Database;
 using Banshee.ServiceStack;
+using Banshee.Sources;
 
 namespace Banshee.RemoteListener
 {
@@ -185,15 +188,50 @@ namespace Banshee.RemoteListener
 		public static byte [] Playlist(int readBytes) {
 			TrackListModel model = ServiceManager.PlaybackController.Source.TrackModel;
 			
+			byte request = 0;
 			int maxReturn = 0;
 			uint startPosition = 0;
 			
-			if (readBytes > 3) {
-				maxReturn = (int) Helper.IntFromBuffer(0);
+			if (readBytes > 0) {
+				request = Helper.Buffer[0];
 			}
 			
-			if (readBytes > 7) {
-				startPosition = Helper.IntFromBuffer(4) & 0xffffffff;
+			if (readBytes > 4) {
+				maxReturn = (int) Helper.IntFromBuffer(1);
+			}
+			
+			if (readBytes > 8) {
+				startPosition = Helper.IntFromBuffer(5) & 0xffffffff;
+			}
+			
+			switch (request) {
+			case 1: {
+				Source remotePlaylist = Helper.GetOrCreateRemotePlaylist();
+				Source active = ServiceManager.SourceManager.ActiveSource;
+				ushort count = 0;
+				int index = 4;
+				
+				foreach (Source s in ServiceManager.SourceManager.Sources) {
+					if (s.Count != 0 || s == remotePlaylist) {
+						count++;
+						ushort key = (ushort) (s.UniqueId.GetHashCode() % 0x10000);
+						
+						if (s == active) {
+							Array.Copy(Helper.ShortToByte(key), 0, Helper.Buffer, 0, 2);
+						}
+						
+						byte [] str = Helper.StringToByte(s.Name);
+						Array.Copy(str, 0, Helper.Buffer, index, str.Length);
+						index += str.Length;
+					}
+				}
+				
+				Array.Copy(Helper.ShortToByte(count), 0, Helper.Buffer, 0, 2);
+				byte [] result = new byte [index];
+				Array.Copy(Helper.Buffer, 0, result, 0, index);
+				
+				return result;
+			}
 			}
 			
 			if (model != null) {
