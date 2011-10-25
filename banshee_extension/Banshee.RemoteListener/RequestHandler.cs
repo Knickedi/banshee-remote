@@ -134,7 +134,7 @@ namespace Banshee.RemoteListener
 			if (readBytes > 0) {
 				if (Helper.Buffer[0] == 1) {
 					if (File.Exists(Helper.DatabasePath(true))) {
-						return Helper.IntToByte((uint) new FileInfo(Helper.DatabasePath(true)).Length);
+						return Helper.IntToByte((uint) Helper.DbCompressTime);
 					} else {
 						Helper.CompressDatabase();
 						return Helper.IntToByte(File.Exists(Helper.DatabasePath(true)) ? (uint) Helper.DbCompressTime : 0);
@@ -144,7 +144,7 @@ namespace Banshee.RemoteListener
 						return File.ReadAllBytes(Helper.DatabasePath(true));
 					}
 				} else if (Helper.Buffer[0] == 3) {
-					Helper.DbCompressTime = Helper.Timestamp();
+					Helper.DbCompressTime = 0;
 					Helper.CompressDatabase();
 					return new byte [] {1};
 				}

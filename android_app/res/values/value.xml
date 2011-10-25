@@ -29,6 +29,7 @@
 	<string name="need_sync_db">Synchronized database needed...</string>
 	<string name="out_of_data_hint_db">Unknown track detected. A database synchronization might fix it...</string>
 	<string name="playlist">Playlist</string>
+	<string name="playlists">Playlists</string>
 	<string name="no_playlist">No playlist available or loaded...</string>
 	<string name="loading_playlist">Loading %1$s to %2$s of %3$s tracks...</string>
 	<string name="quick_add">Add selection to playlist</string>

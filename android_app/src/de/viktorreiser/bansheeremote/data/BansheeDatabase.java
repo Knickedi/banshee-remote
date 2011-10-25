@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
+import de.viktorreiser.toolbox.util.L;
+
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
@@ -68,7 +70,8 @@ public class BansheeDatabase {
 		if (!new File(App.BANSHEE_PATH + id + App.DB_EXT).exists()) {
 			return false;
 		} else {
-			return timestamp == server.mDbTimestamp;
+			L.d(timestamp + " " + server.mDbTimestamp);
+			return timestamp <= server.mDbTimestamp;
 		}
 	}
 	
@@ -84,7 +87,7 @@ public class BansheeDatabase {
 	 *         called automatically) otherwise {@code false} and no database is bound anymore (e.g.
 	 *         when given data doesn't represent a valid database)
 	 */
-	public static boolean updateDatabase(BansheeServer server, byte [] dbData) {
+	public static boolean updateDatabase(BansheeServer server, byte [] dbData, int timestamp) {
 		if (server.getId() < 1) {
 			throw new IllegalArgumentException("server is not a valid added server");
 		}
@@ -99,6 +102,8 @@ public class BansheeDatabase {
 			id = server.getId();
 		} else if (id < 1) {
 			id = server.getId();
+		} else {
+			server = same;
 		}
 		
 		try {
@@ -117,10 +122,10 @@ public class BansheeDatabase {
 			}
 			
 			if (same == null) {
-				server.mDbTimestamp = dbData.length;
+				server.mDbTimestamp = timestamp;
 				BansheeServer.updateServer(server);
 			} else {
-				same.mDbTimestamp = dbData.length;
+				same.mDbTimestamp = timestamp;
 				BansheeServer.updateServer(same);
 			}
 			

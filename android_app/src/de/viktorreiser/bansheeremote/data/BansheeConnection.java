@@ -406,8 +406,8 @@ public class BansheeConnection {
 				return params[0] == 2;
 			}
 			
-			public static long decodeFileTimestamp(byte [] response) {
-				return response.length < 4 ? 0 : decodeInt(response, 0);
+			public static int decodeFileTimestamp(byte [] response) {
+				return response.length < 4 ? 0 : (int) decodeInt(response, 0);
 			}
 		}
 		
