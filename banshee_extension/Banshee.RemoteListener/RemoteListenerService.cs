@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
@@ -84,9 +83,7 @@ namespace Banshee.RemoteListener
 				StartRemoteListener();
 			};
 			
-			if (File.Exists(Helper.DatabasePath(true))) {
-				Helper.DbCompressTime = Helper.Timestamp(new FileInfo(Helper.DatabasePath(true)).CreationTimeUtc);
-			}
+			Helper.SetDbCompressTimeFromFile();
 			
 			_passId = (int) _prefs["RemoteControl"]["BansheeRemote"]["remote_control_passid"].BoxedValue;
 			

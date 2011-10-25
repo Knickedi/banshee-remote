@@ -99,10 +99,22 @@ namespace Banshee.RemoteListener
 		#endregion
 		
 		
+		#region Service helpers
+		
 		public static void StripGlobalInfoFromBuffer(int length) {
 			Array.Copy(_buffer, 3, _buffer, 0, length);
 		}
 		
+		public static void SetDbCompressTimeFromFile() {
+			if (File.Exists(DatabasePath(true))) {
+				DbCompressTime = Timestamp(new FileInfo(DatabasePath(true)).CreationTimeUtc);
+			}
+		}
+		
+		#endregion
+		
+		
+		#region Request helpers
 		
 		/// <summary>
 		/// Read a big endian short value from buffer.
@@ -693,6 +705,8 @@ namespace Banshee.RemoteListener
 			
 			return false;
 		}
+		
+		#endregion
 	}
 }
 

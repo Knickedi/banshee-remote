@@ -14,6 +14,8 @@ namespace Banshee.RemoteListener
 	/// </summary>
 	public static class RequestHandler
 	{
+		#region Request handling
+		
 		/// <summary>
 		/// Request code definition.
 		/// </summary>
@@ -265,6 +267,8 @@ namespace Banshee.RemoteListener
 			
 			return new byte [] {0};
 		}
+		
+		#endregion
 	}
 }
 
