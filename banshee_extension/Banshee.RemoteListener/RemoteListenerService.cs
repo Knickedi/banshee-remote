@@ -83,10 +83,11 @@ namespace Banshee.RemoteListener
 				StartRemoteListener();
 			};
 			
-			Helper.SetDbCompressTimeFromFile();
+			ServiceManager.SourceManager.SourceRemoved += OnSourceRemoved;
 			
 			_passId = (int) _prefs["RemoteControl"]["BansheeRemote"]["remote_control_passid"].BoxedValue;
 			
+			Helper.SetDbCompressTimeFromFile();
 			Helper.CompressDatabase();
 			StartRemoteListener();
 		}
@@ -94,8 +95,10 @@ namespace Banshee.RemoteListener
 		void IDisposable.Dispose()
 		{
 			_prefs["RemoteControl"]["BansheeRemote"].Remove(_portPref);
-			_prefs["RemoteControl"].Remove (_prefs["RemoteControl"].FindById("BansheeRemote"));
+			_prefs["RemoteControl"].Remove(_prefs["RemoteControl"].FindById("BansheeRemote"));
 			_prefs.Remove(_prefs.FindById("RemoteControl"));
+			
+			ServiceManager.SourceManager.SourceRemoved += OnSourceRemoved;
 			
 			if (_listener != null) {
 				try {
@@ -105,6 +108,11 @@ namespace Banshee.RemoteListener
 				}
 			}
 		}
+
+		void OnSourceRemoved (Sources.SourceEventArgs args) {
+			Helper.HandleRemovedSource(args.Source);
+		}
+
 
 		public static readonly SchemaEntry<int> RemotePortSchema = new SchemaEntry<int>(
 			"remote_control", "remote_control_port", 8484, 1024, 49151, "", ""

@@ -207,29 +207,28 @@ namespace Banshee.RemoteListener
 			switch (request) {
 			case 1: {
 				Source remotePlaylist = Helper.GetOrCreateRemotePlaylist();
-				Source active = ServiceManager.SourceManager.ActiveSource;
 				ushort count = 0;
+				bool remotePlaylistAdded = false;
 				int index = 4;
 				
 				Helper.Buffer[0] = Helper.Buffer[1] = 0;
 				
 				foreach (Source s in ServiceManager.SourceManager.Sources) {
-					if (s.Count != 0 || s == remotePlaylist) {
-						count++;
-						byte [] id = Helper.ShortToByte(Helper.SourceHashCode(s));
-						
-						if (s == active) {
-							Array.Copy(id, 0, Helper.Buffer, 0, 2);
+					if (s.Count != 0 && s != remotePlaylist) {
+						if (!remotePlaylistAdded && String.Compare(s.Name, remotePlaylist.Name, true) >= 0) {
+							count++;
+							index = Helper.SourceAsPlaylistToBuffer(index, remotePlaylist, true);
+							remotePlaylistAdded = true;
 						}
 						
-						Array.Copy(Helper.IntToByte((uint) s.Count), 0, Helper.Buffer, index, 4);
-						index += 4;
-						Array.Copy(id, 0, Helper.Buffer, index, 2);
-						index += 2;
-						byte [] str = Helper.StringToByte(s.Name);
-						Array.Copy(str, 0, Helper.Buffer, index, str.Length);
-						index += str.Length;
+						count++;
+						index = Helper.SourceAsPlaylistToBuffer(index, s, false);
 					}
+				}
+				
+				if (!remotePlaylistAdded) {
+					count++;
+					index = Helper.SourceAsPlaylistToBuffer(index, remotePlaylist, true);
 				}
 				
 				Array.Copy(Helper.ShortToByte(count), 0, Helper.Buffer, 2, 2);

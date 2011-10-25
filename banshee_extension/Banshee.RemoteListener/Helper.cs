@@ -111,6 +111,21 @@ namespace Banshee.RemoteListener
 			Array.Copy(_buffer, 3, _buffer, 0, length);
 		}
 		
+		public static void HandleRemovedSource(Source s) {
+			if (s.UniqueId == _remotePlaylistId) {
+				string home = Environment.GetEnvironmentVariable("HOME");
+				string path = home + "/.config/banshee-1/banshee_remote_playlist_id";
+				
+				try {
+					File.Delete(path);
+				} catch {
+					// you never know...
+				}
+				
+				_remotePlaylistId = null;
+			}
+		}
+		
 		public static void SetDbCompressTimeFromFile() {
 			if (File.Exists(DatabasePath(true))) {
 				DbCompressTime = Timestamp(new FileInfo(DatabasePath(true)).CreationTimeUtc);
@@ -450,7 +465,7 @@ namespace Banshee.RemoteListener
 		#endregion
 		
 		
-		#region Volume Request helpers
+		#region Volume request helpers
 		
 		/// <summary>
 		/// Set volume of player.
@@ -707,6 +722,29 @@ namespace Banshee.RemoteListener
 			}
 			
 			return result;
+		}
+		
+		#endregion
+		
+		
+		#region Playlist reques helpers
+		
+		public static int SourceAsPlaylistToBuffer(int index, Source s, bool isRemotePlaylist) {
+			byte [] id = ShortToByte(isRemotePlaylist ? (ushort) 1 : SourceHashCode(s));
+						
+			if (s == ServiceManager.SourceManager.ActiveSource) {
+				Array.Copy(id, 0, _buffer, 0, 2);
+			}
+						
+			Array.Copy(IntToByte((uint) s.Count), 0, _buffer, index, 4);
+			index += 4;
+			Array.Copy(id, 0, _buffer, index, 2);
+			index += 2;
+			byte [] str = StringToByte(s.Name);
+			Array.Copy(str, 0, _buffer, index, str.Length);
+			index += str.Length;
+			
+			return index;
 		}
 		
 		#endregion
