@@ -75,7 +75,7 @@ namespace Banshee.RemoteListener
 				result[0] = (byte) ((result[0] & 0x7f) + ((bool) paused ? 0x80 : 0x0));
 			}
 			
-			if (playing != null && forcePlaying) {
+			if (playing != null || forcePlaying) {
 				if (forcePlaying) {
 					playing = true;
 				}
@@ -216,13 +216,15 @@ namespace Banshee.RemoteListener
 				foreach (Source s in ServiceManager.SourceManager.Sources) {
 					if (s.Count != 0 || s == remotePlaylist) {
 						count++;
-						ushort key = Helper.SourceHashCode(s);
+						byte [] id = Helper.ShortToByte(Helper.SourceHashCode(s));
 						
 						if (s == active) {
-							Array.Copy(Helper.ShortToByte(key), 0, Helper.Buffer, 0, 2);
+							Array.Copy(id, 0, Helper.Buffer, 0, 2);
 						}
 						
-						Array.Copy(Helper.ShortToByte(key), 0, Helper.Buffer, index, 2);
+						Array.Copy(Helper.IntToByte((uint) s.Count), 0, Helper.Buffer, index, 4);
+						index += 4;
+						Array.Copy(id, 0, Helper.Buffer, index, 2);
 						index += 2;
 						byte [] str = Helper.StringToByte(s.Name);
 						Array.Copy(str, 0, Helper.Buffer, index, str.Length);

@@ -457,12 +457,14 @@ public class BansheeConnection {
 				int index = 4;
 				
 				for (int i = 0; i < playlists.length; i++) {
-					playlists[i] = new Object[2];
-					playlists[i][0] = decodeShort(response, index);
+					playlists[i] = new Object[3];
+					playlists[i][0] = (int) decodeInt(response, index);
+					index += 4;
+					playlists[i][1] = decodeShort(response, index);
 					index += 2;
 					Object [] s = decodeString(response, index);
 					index += (Integer) s[0];
-					playlists[i][1] = s[1];
+					playlists[i][2] = s[1];
 				}
 				
 				return playlists;
