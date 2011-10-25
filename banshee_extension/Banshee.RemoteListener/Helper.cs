@@ -78,6 +78,8 @@ namespace Banshee.RemoteListener
 		/// </summary>
 		private static int _playTimeout = 0;
 		
+		private static string _remotePlaylistId = null;
+		
 		#endregion
 		
 		
@@ -268,10 +270,30 @@ namespace Banshee.RemoteListener
 		}
 		
 		public static Source GetOrCreateRemotePlaylist() {
-			PlaylistSource source = new PlaylistSource("Banshee Remote", new MusicLibrarySource());
+			string home = Environment.GetEnvironmentVariable("HOME");
+			string path = home + "/.config/banshee-1/banshee_remote_playlist_id";
+			
+			if (_remotePlaylistId == null) {
+				if (File.Exists(path)) {
+					_remotePlaylistId = File.ReadAllText(path);
+				}
+			}
+			
+			if (_remotePlaylistId != null) {
+				foreach (Source s in ServiceManager.SourceManager.Sources) {
+					if (s.UniqueId == _remotePlaylistId) {
+						return s;
+					}
+				}
+			}
+			
+			PlaylistSource source = new PlaylistSource("Banshee Remote", ServiceManager.SourceManager.MusicLibrary);
 			source.Save();
 			source.PrimarySource.AddChildSource(source);
 			source.NotifyUser();
+			
+			File.WriteAllText(path, source.UniqueId);
+			_remotePlaylistId = source.UniqueId;
 			
 			return source;
 		}

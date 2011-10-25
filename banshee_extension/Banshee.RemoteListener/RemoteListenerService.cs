@@ -87,11 +87,8 @@ namespace Banshee.RemoteListener
 			
 			_passId = (int) _prefs["RemoteControl"]["BansheeRemote"]["remote_control_passid"].BoxedValue;
 			
-			ServiceManager.StartupFinished += delegate {
-				Helper.CompressDatabase();
-				Helper.GetOrCreateRemotePlaylist();
-				StartRemoteListener();
-			};
+			Helper.CompressDatabase();
+			StartRemoteListener();
 		}
 
 		void IDisposable.Dispose()
