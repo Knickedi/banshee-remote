@@ -45,16 +45,20 @@
     <Reference Include="Banshee.Core, Version=2.2.0.0, Culture=neutral, PublicKeyToken=null">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\usr\lib\banshee\Banshee.Core.dll</HintPath>
+      <Package>banshee-core</Package>
     </Reference>
     <Reference Include="Banshee.Services, Version=2.2.0.0, Culture=neutral, PublicKeyToken=null">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\usr\lib\banshee\Banshee.Services.dll</HintPath>
+      <Package>banshee-services</Package>
     </Reference>
     <Reference Include="Hyena, Version=2.2.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>..\..\..\usr\lib\banshee\Hyena.dll</HintPath>
+      <Package>banshee-hyena</Package>
     </Reference>
     <Reference Include="Hyena.Data.Sqlite, Version=2.2.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>..\..\..\usr\lib\banshee\Hyena.Data.Sqlite.dll</HintPath>
+      <Package>banshee-hyena-data-sqlite</Package>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -62,6 +66,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Banshee.RemoteListener\RemoteListenerService.cs" />
+    <Compile Include="Banshee.RemoteListener\Helper.cs" />
+    <Compile Include="Banshee.RemoteListener\RequestHandler.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
