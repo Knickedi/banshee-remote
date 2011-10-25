@@ -114,7 +114,7 @@ namespace Banshee.RemoteListener
 		#endregion
 		
 		
-		#region Request helpers
+		#region General helpers
 		
 		/// <summary>
 		/// Read a big endian short value from buffer.
@@ -319,6 +319,108 @@ namespace Banshee.RemoteListener
 		}
 		
 		/// <summary>
+		/// Compress banshee database if it is not already compressed.
+		/// </summary>
+		/// This won't do anything if last compression is not more than  _DB_CACHED_COMPRESSION
+		/// senconds ago. To avoid that you can reset _dbCompressTime to 0.
+		/// 
+		/// See https://github.com/Knickedi/banshee-remote for more.
+		public static void CompressDatabase() {
+			if (Timestamp() - _dbCompressTime < _DB_CACHED_COMPRESSION) {
+				return;
+			}
+			
+			try {
+				_dbCompressTime = Timestamp();
+				
+				File.Delete(DatabasePath(true));
+				File.Delete(DatabasePath(true) + "-journal");
+				File.Copy(DatabasePath(false), DatabasePath(true));
+				
+				// database was in use, unlock it or queries will just fail
+				HyenaSqliteConnection db = new HyenaSqliteConnection(DatabasePath(true));
+				db.BeginTransaction();
+				db.CommitTransaction();
+				db.Dispose();
+				
+				db = new HyenaSqliteConnection(DatabasePath(true));
+				db.BeginTransaction();
+				
+				IDataReader cursor = db.Query(
+						  "SELECT tbl_name FROM sqlite_master WHERE "
+						+ "type='table' AND tbl_name NOT IN "
+				        + "('CoreTracks', 'CoreArtists', 'CoreAlbums', 'sqlite_stat1', 'sqlite_stat2');");
+				
+				// drop unnecessary tables
+				while (cursor.Read()) {
+					db.Execute("DROP TABLE " + cursor.Get(0, typeof(string)) + ";");
+				}
+				
+				// clear analytic data (if available)
+				if (db.TableExists("sqlite_stat1")) {
+					db.Execute("DELETE FROM sqlite_stat1;");
+				}
+				if (db.TableExists("sqlite_stat2")) {
+					db.Execute("DELETE FROM sqlite_stat2;");
+				}
+				
+				cursor.Dispose();
+				
+				// remove unecessary columns from tracks table
+				db.Execute("CREATE TABLE tracks (\n"
+						+ "	_id INTEGER PRIMARY KEY,\n"
+						+ "	artistId  INTEGER,\n"
+						+ "	albumId  INTEGER,\n"
+				        + "	title TEXT,\n"
+				        + " trackNumber INTEGER,\n"
+				        + "	duration INTEGER,\n"
+				        + "	year INTEGER,\n"
+				        + "	genre TEXT\n"
+						+ ");");
+				db.Execute("INSERT INTO tracks(_id, artistId, albumId, "
+				        + "title, trackNumber, duration, year, genre) "
+				        + "SELECT TrackID, ArtistID, AlbumId, "
+				        + "Title, TrackNumber, Duration, Year, Genre "
+				        + "FROM CoreTracks;");
+				db.Execute("DROP TABLE CoreTracks;");
+				
+				// remove unecessary columns from artist table
+				db.Execute("CREATE TABLE artists (\n"
+						+ "	_id INTEGER PRIMARY KEY,\n"
+						+ "	name TEXT\n"
+						+ ");");
+				db.Execute("INSERT INTO artists(_id, name) "
+				        + "SELECT ArtistID, Name FROM CoreArtists;");
+				db.Execute("DROP TABLE CoreArtists;");
+				
+				// remove unecessary columns from album table
+				db.Execute("CREATE TABLE albums (\n"
+						+ "	_id INTEGER PRIMARY KEY,\n"
+						+ "	artistId INTEGER,\n"
+				        + " title TEXT,\n"
+				        + " artId TEXT\n"
+						+ ");");
+				db.Execute("INSERT INTO albums(_id, artistId, title, artId) "
+				        + "SELECT AlbumID, ArtistID, Title, ArtworkID FROM CoreAlbums;");
+				db.Execute("DROP TABLE CoreAlbums;");
+				
+				db.CommitTransaction();
+				db.Execute("VACUUM;");
+				db.Dispose();
+				
+				_dbCompressTime = Timestamp();
+			} catch (Exception e) {
+				Log.Error("remote listener failed to compress database: " + e.Message);
+				File.Delete(DatabasePath(true));
+			}
+		}
+		
+		#endregion
+		
+		
+		#region Volume Request helpers
+		
+		/// <summary>
 		/// Set volume of player.
 		/// </summary>
 		/// <param name="volume">
@@ -362,6 +464,11 @@ namespace Banshee.RemoteListener
 				
 			ServiceManager.PlayerEngine.Volume = (ushort) volume;
 		}
+		
+		#endregion
+		
+		
+		#region Player status request helpers
 		
 		/// <summary>
 		/// Set repeat mode of player.
@@ -570,102 +677,10 @@ namespace Banshee.RemoteListener
 			return result;
 		}
 		
-		/// <summary>
-		/// Compress banshee database if it is not already compressed.
-		/// </summary>
-		/// This won't do anything if last compression is not more than  _DB_CACHED_COMPRESSION
-		/// senconds ago. To avoid that you can reset _dbCompressTime to 0.
-		/// 
-		/// See https://github.com/Knickedi/banshee-remote for more.
-		public static void CompressDatabase() {
-			if (Timestamp() - _dbCompressTime < _DB_CACHED_COMPRESSION) {
-				return;
-			}
-			
-			try {
-				_dbCompressTime = Timestamp();
-				
-				File.Delete(DatabasePath(true));
-				File.Delete(DatabasePath(true) + "-journal");
-				File.Copy(DatabasePath(false), DatabasePath(true));
-				
-				// database was in use, unlock it or queries will just fail
-				HyenaSqliteConnection db = new HyenaSqliteConnection(DatabasePath(true));
-				db.BeginTransaction();
-				db.CommitTransaction();
-				db.Dispose();
-				
-				db = new HyenaSqliteConnection(DatabasePath(true));
-				db.BeginTransaction();
-				
-				IDataReader cursor = db.Query(
-						  "SELECT tbl_name FROM sqlite_master WHERE "
-						+ "type='table' AND tbl_name NOT IN "
-				        + "('CoreTracks', 'CoreArtists', 'CoreAlbums', 'sqlite_stat1', 'sqlite_stat2');");
-				
-				// drop unnecessary tables
-				while (cursor.Read()) {
-					db.Execute("DROP TABLE " + cursor.Get(0, typeof(string)) + ";");
-				}
-				
-				// clear analytic data (if available)
-				if (db.TableExists("sqlite_stat1")) {
-					db.Execute("DELETE FROM sqlite_stat1;");
-				}
-				if (db.TableExists("sqlite_stat2")) {
-					db.Execute("DELETE FROM sqlite_stat2;");
-				}
-				
-				cursor.Dispose();
-				
-				// remove unecessary columns from tracks table
-				db.Execute("CREATE TABLE tracks (\n"
-						+ "	_id INTEGER PRIMARY KEY,\n"
-						+ "	artistId  INTEGER,\n"
-						+ "	albumId  INTEGER,\n"
-				        + "	title TEXT,\n"
-				        + " trackNumber INTEGER,\n"
-				        + "	duration INTEGER,\n"
-				        + "	year INTEGER,\n"
-				        + "	genre TEXT\n"
-						+ ");");
-				db.Execute("INSERT INTO tracks(_id, artistId, albumId, "
-				        + "title, trackNumber, duration, year, genre) "
-				        + "SELECT TrackID, ArtistID, AlbumId, "
-				        + "Title, TrackNumber, Duration, Year, Genre "
-				        + "FROM CoreTracks;");
-				db.Execute("DROP TABLE CoreTracks;");
-				
-				// remove unecessary columns from artist table
-				db.Execute("CREATE TABLE artists (\n"
-						+ "	_id INTEGER PRIMARY KEY,\n"
-						+ "	name TEXT\n"
-						+ ");");
-				db.Execute("INSERT INTO artists(_id, name) "
-				        + "SELECT ArtistID, Name FROM CoreArtists;");
-				db.Execute("DROP TABLE CoreArtists;");
-				
-				// remove unecessary columns from album table
-				db.Execute("CREATE TABLE albums (\n"
-						+ "	_id INTEGER PRIMARY KEY,\n"
-						+ "	artistId INTEGER,\n"
-				        + " title TEXT,\n"
-				        + " artId TEXT\n"
-						+ ");");
-				db.Execute("INSERT INTO albums(_id, artistId, title, artId) "
-				        + "SELECT AlbumID, ArtistID, Title, ArtworkID FROM CoreAlbums;");
-				db.Execute("DROP TABLE CoreAlbums;");
-				
-				db.CommitTransaction();
-				db.Execute("VACUUM;");
-				db.Dispose();
-				
-				_dbCompressTime = Timestamp();
-			} catch (Exception e) {
-				Log.Error("remote listener failed to compress database: " + e.Message);
-				File.Delete(DatabasePath(true));
-			}
-		}
+		#endregion
+		
+		
+		#region Playlist control request helpers
 		
 		/// <summary>
 		/// Set track to play (immediately).
