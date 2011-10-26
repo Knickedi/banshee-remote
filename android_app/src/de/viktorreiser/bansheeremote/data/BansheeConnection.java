@@ -86,8 +86,7 @@ public class BansheeConnection {
 		SONG_INFO(2, 1000),
 		SYNC_DATABASE(3, 10000),
 		COVER(4, 5000),
-		PLAYLIST(5, 2000),
-		PLAYLIST_CONTROL(6, 3000);
+		PLAYLIST(5, 3000);
 		
 		private final int mCode;
 		private final int mTimeout;
@@ -479,6 +478,9 @@ public class BansheeConnection {
 				return playlists;
 			}
 			
+			/**
+			 * Request tracks from a playlist.
+			 */
 			public static byte [] encodePlaylistTracks(
 					int playlistId, long startPosition, long maxReturns) {
 				byte [] params = new byte [11];
@@ -489,15 +491,24 @@ public class BansheeConnection {
 				return params;
 			}
 			
+			/**
+			 * Request tracks from a playlist (try to get it from the current played track).
+			 */
 			public static byte [] encodePlaylistTracksOnStart(
 					int playlistId, long startOffset, long maxReturns) {
 				return encodePlaylistTracks(playlistId, startOffset | 0x80000000, maxReturns);
 			}
 			
+			/**
+			 * Get the start position we were requesting for.
+			 */
 			public static long getPlaylistTrackStartPosition(byte [] params) {
-				return decodeInt(params, 7) & 0x8fffffff;
+				return decodeInt(params, 7) & 0x7fffffff;
 			}
 			
+			/**
+			 * Get the returned tracks from playlist track request.
+			 */
 			public static long [] decodeTrackIds(byte [] response) {
 				try {
 					int returned = (int) decodeInt(response, 4);
@@ -513,23 +524,53 @@ public class BansheeConnection {
 				}
 			}
 			
-			public static int decodeCount(byte [] response) {
+			/**
+			 * Get amount of tracks in playlist from track playlist request.
+			 */
+			public static int decodeTrackCount(byte [] response) {
 				return (int) decodeInt(response, 0);
 			}
 			
+			/**
+			 * Get the start track position from which the track playlist request is returning IDs.
+			 */
 			public static int decodeStartPosition(byte [] response) {
 				return (int) decodeInt(response, 8);
 			}
-		}
-		
-		// TODO implement and improve that
-		public static class PlaylistControl {
 			
-			public static byte [] encodePlay(long trackId) {
-				byte [] result = new byte [5];
-				result[0] = 1;
-				System.arraycopy(encodeInt(trackId), 0, result, 1, 4);
+			/**
+			 * Request to play a certain track.
+			 */
+			public static byte [] encodePlayTrack(long trackId) {
+				return encodePlayTrack(0, trackId);
+			}
+			
+			/**
+			 * Request to play a certain track from a playlist
+			 * (will be played anyway if playlist is not valid).
+			 */
+			public static byte [] encodePlayTrack(int playlist, long trackId) {
+				byte [] result = new byte [7];
+				result[0] = 3;
+				System.arraycopy(encodeShort(playlist), 0, result, 1, 2);
+				System.arraycopy(encodeInt(trackId), 0, result, 3, 4);
 				return result;
+			}
+			
+			/**
+			 * Get play track request status.<br>
+			 * <br>
+			 * 0 track not found - 1 playing - 2 playing and is in correct playlist.
+			 */
+			public static int decodePlayTrackStatus(byte [] response) {
+				return response[0];
+			}
+			
+			/**
+			 * Was request type play track?
+			 */
+			public static boolean isPlayTrack(byte [] params) {
+				return params[0] == 3;
 			}
 		}
 		

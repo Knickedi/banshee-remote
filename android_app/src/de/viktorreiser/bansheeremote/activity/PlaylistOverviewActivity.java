@@ -17,6 +17,7 @@ import android.widget.TextView;
 import de.viktorreiser.bansheeremote.R;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandle;
+import de.viktorreiser.toolbox.util.L;
 
 /**
  * This will load all available playlists on the server.
@@ -24,6 +25,10 @@ import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHand
  * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
  */
 public class PlaylistOverviewActivity extends Activity implements OnBansheeCommandHandle {
+	
+	// PACKAGE ====================================================================================
+	
+	static int mActivePlaylistIdChange;
 	
 	// PRIVATE ====================================================================================
 	
@@ -33,6 +38,7 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 	private List<PlaylistEntry> mPlaylists = new ArrayList<PlaylistEntry>();
 	private int mActivePlaylistId;
 	private boolean mLoadingDismissed;
+	private PlaylistsAdapter mAdapter;
 	
 	// OVERRIDDEN =================================================================================
 	
@@ -89,8 +95,19 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 	public void onResume() {
 		super.onResume();
 		
-		if (CurrentSongActivity.mConnection == null) {
+		if (CurrentSongActivity.mConnection != null) {
+			CurrentSongActivity.mStatusPollHandler.start();
+		} else {
 			finish();
+		}
+	}
+	
+	@Override
+	public void onPause() {
+		super.onPause();
+		
+		if (CurrentSongActivity.mConnection != null) {
+			CurrentSongActivity.mStatusPollHandler.stop();
 		}
 	}
 	
@@ -115,6 +132,14 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 	@Override
 	public void onBansheeCommandHandled(Command command, byte [] params, byte [] result) {
 		switch (command) {
+		case PLAYER_STATUS:
+			if ((CurrentSongActivity.mData.playing != CurrentSongActivity.mPreviousData.playing
+					|| mActivePlaylistId != mActivePlaylistIdChange) && mAdapter != null) {
+				mActivePlaylistId = mActivePlaylistIdChange;
+				mAdapter.notifyDataSetChanged();
+			}
+			break;
+		
 		case PLAYLIST:
 			if (Command.Playlist.isPlaylistNames(params)) {
 				if (result == null) {
@@ -123,12 +148,15 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 				} else {
 					Object [][] playlists = Command.Playlist.decodePlaylistNames(result);
 					mActivePlaylistId = Command.Playlist.decodeActivePlaylist(result);
+					L.d("active " + mActivePlaylistId);
+					mActivePlaylistIdChange = mActivePlaylistId;
 					
 					for (int i = 0; i < playlists.length; i++) {
 						PlaylistEntry e = new PlaylistEntry();
 						e.count = (Integer) playlists[i][0];
 						e.id = (Integer) playlists[i][1];
 						e.name = (String) playlists[i][2];
+						L.d(e.name + " " + e.id);
 						mPlaylists.add(e);
 					}
 					
@@ -210,7 +238,8 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 			findViewById(R.id.loading_progress).setVisibility(View.GONE);
 			((TextView) findViewById(R.id.playlist_title)).setText(
 					getString(R.string.playlists) + " (" + mPlaylists.size() + ")");
-			((ListView) findViewById(R.id.list)).setAdapter(new PlaylistsAdapter());
+			mAdapter = new PlaylistsAdapter();
+			((ListView) findViewById(R.id.list)).setAdapter(mAdapter);
 		}
 	}
 }

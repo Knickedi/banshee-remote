@@ -762,6 +762,20 @@ namespace Banshee.RemoteListener
 		
 		#region Playlist reques helpers
 		
+		public static Source GetPlaylistSource(int id) {
+			if (id < 2) {
+				return Helper.GetOrCreateRemotePlaylist();
+			} else {
+				foreach (Source s in ServiceManager.SourceManager.Sources) {
+					if (s is ITrackModelSource && Helper.SourceHashCode(s) == id) {
+						return s;
+					}
+				}
+			}
+			
+			return null;
+		}
+		
 		/// <summary>
 		/// Write source to buffer (for playlist names request).
 		/// </summary>
@@ -780,7 +794,7 @@ namespace Banshee.RemoteListener
 		public static int SourceAsPlaylistToBuffer(int index, Source s, bool isRemotePlaylist) {
 			byte [] id = ShortToByte(isRemotePlaylist ? (ushort) 1 : SourceHashCode(s));
 						
-			if (s == ServiceManager.SourceManager.ActiveSource) {
+			if (s == ServiceManager.PlaybackController.Source) {
 				Array.Copy(id, 0, _buffer, 0, 2);
 			}
 						
@@ -795,27 +809,43 @@ namespace Banshee.RemoteListener
 			return index;
 		}
 		
-		#endregion
-		
-		
-		#region Playlist control request helpers
-		
 		/// <summary>
 		/// Set track to play (immediately).
 		/// </summary>
-		/// <param name="id">
+		/// <param name="playlistId">
+		/// ID of playlsit in which the requested track is located (0 for no playlist).
+		/// </param>
+		/// <param name="trackId">
 		/// ID of track in database.
 		/// </param>
 		/// <returns>
 		/// Returns true if track is available and is plaing now.
 		/// </returns>
-		public static bool PlayTrack(long id) {
+		public static byte PlayTrack(int playlistId, long trackId) {
+			Log.Information(playlistId + " " + trackId);
+			if (trackId < 1) {
+				return 0;
+			}
+			
 			DatabaseTrackInfo track = new DatabaseTrackModelProvider<DatabaseTrackInfo>(
-					ServiceManager.DbConnection).FetchSingle(id);
+					ServiceManager.DbConnection).FetchSingle(trackId);
 					
-			if (track != null) {
-				TrackListModel model = ServiceManager.PlaybackController.Source.TrackModel;
-				int i;
+			if (track == null) {
+				return 0;
+			}
+			
+			Source source = Helper.GetPlaylistSource(playlistId);
+			Source requestedSource = source;
+			TrackListModel model = null;
+			
+			if (source == null) {
+				source = ServiceManager.SourceManager.MusicLibrary;
+			}
+			
+			model = ((ITrackModelSource) source).TrackModel;
+			
+			if (model != null) {
+				int i = 0;
 				
 				for (i = 0; i < model.Count; i++) {
 					TrackInfo t = (TrackInfo) model.GetItem(i);
@@ -826,17 +856,16 @@ namespace Banshee.RemoteListener
 				}
 				
 				if (i != model.Count) {
+					ServiceManager.PlaybackController.Source = (ITrackModelSource) source;
 					ServiceManager.PlayerEngine.OpenPlay((TrackInfo) model.GetItem(i));
 					_playTimeout = Timestamp();
-				} else {
-					ServiceManager.PlayerEngine.OpenPlay(track);
-					_playTimeout = Timestamp();
+					return (byte) (source == requestedSource ? 2 : 1);
 				}
-				
-				return true;
 			}
 			
-			return false;
+			ServiceManager.PlayerEngine.OpenPlay(track);
+			_playTimeout = Timestamp();
+			return 1;
 		}
 		
 		#endregion

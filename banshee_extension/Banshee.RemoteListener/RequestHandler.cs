@@ -32,7 +32,6 @@ namespace Banshee.RemoteListener
 			SyncDatabase = 3,
 			Cover = 4,
 			Playlist = 5,
-			PlaylistControl = 6,
 		}
 		
 		#endregion
@@ -294,7 +293,6 @@ namespace Banshee.RemoteListener
 				ushort playlistId = 0;
 				int maxReturn = 0;
 				uint startPosition = 0;
-				TrackListModel model = null;
 				
 				// get parameters if given
 				if (readBytes > 2) {
@@ -308,16 +306,7 @@ namespace Banshee.RemoteListener
 				}
 				
 				// search for the playlist which was requested
-				if (playlistId == 1) {
-					model = ((ITrackModelSource) Helper.GetOrCreateRemotePlaylist()).TrackModel;
-				} else if (playlistId >= 0) {
-					foreach (Source s in ServiceManager.SourceManager.Sources) {
-						if (s is ITrackModelSource && Helper.SourceHashCode(s) == playlistId) {
-							model = ((ITrackModelSource) s).TrackModel;
-							break;
-						}
-					}
-				}
+				TrackListModel model = ((ITrackModelSource) Helper.GetPlaylistSource(playlistId)).TrackModel;
 				
 				if (model != null) {
 					// playlist exists, return the requested amount of track IDs
@@ -369,33 +358,20 @@ namespace Banshee.RemoteListener
 					return new byte [] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 				}
 			}
+				
+			case 3: {
+				// requested to play tracks
+				int playlistId = 0;
+				long trackId = 0;
+				
+				// get parameters if given
+				if (readBytes > 6) {
+					playlistId = Helper.ShortFromBuffer(1);
+					trackId = Helper.IntFromBuffer(3);
+				}
+				
+				return new byte [] {Helper.PlayTrack(playlistId, trackId)};
 			}
-			
-			return new byte [] {0};
-		}
-		
-		#endregion
-		
-		#region Playlist control
-		
-		public static byte [] PlaylistControl(int readBytes) {
-			if (readBytes > 0) {
-				switch (Helper.Buffer[0]) {
-				case 1: {
-					if (readBytes > 4) {
-						return new byte [] {(byte) (Helper.PlayTrack(Helper.IntFromBuffer(1)) ? 1 : 0)};
-					}
-					break;
-				}
-				case 2: {
-					int trackIdCount = Helper.ShortFromBuffer(2);
-					int artisIdCount = Helper.ShortFromBuffer(4);
-					int albumIdCount = Helper.ShortFromBuffer(6);
-					int failedCount = 0;
-					
-					break;
-				}
-				}
 			}
 			
 			return new byte [] {0};

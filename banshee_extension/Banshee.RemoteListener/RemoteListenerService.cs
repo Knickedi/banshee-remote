@@ -206,7 +206,7 @@ namespace Banshee.RemoteListener
 					                 OnSentResponse, client);
 				}
 			} catch (Exception e) {
-				Log.Error("remote listener request error", e.Message);
+				Log.Error("remote listener request error", e.StackTrace);
 				
 				if (!isListenerAccepting) {
 					try {

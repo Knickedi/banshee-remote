@@ -148,10 +148,6 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 	
 	@Override
 	public void onBansheeCommandHandled(Command command, byte [] params, byte [] result) {
-		if (command == null) {
-			return;
-		}
-		
 		switch (command) {
 		case PLAYER_STATUS:
 			if (CurrentSongActivity.mData.changeFlag != CurrentSongActivity.mPreviousData.changeFlag
@@ -179,8 +175,23 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 			break;
 		
 		case PLAYLIST:
+			if (Command.Playlist.isPlayTrack(params)) {
+				if (result != null) {
+					int status = Command.Playlist.decodePlayTrackStatus(result);
+					if (status > 0) {
+						if (status == 2) {
+							PlaylistOverviewActivity.mActivePlaylistIdChange = mPlaylistId;
+						}
+						
+						CurrentSongActivity.mConnection.sendCommand(Command.PLAYER_STATUS, null);
+					}
+				}
+				
+				break;
+			}
+			
 			if (result != null) {
-				int count = Command.Playlist.decodeCount(result);
+				int count = Command.Playlist.decodeTrackCount(result);
 				int startPosition = Command.Playlist.decodeStartPosition(result);
 				long [] ids = Command.Playlist.decodeTrackIds(result);
 				int previousListPosition = mList.getFirstVisiblePosition();
@@ -251,10 +262,6 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 				}
 			}
 			break;
-		
-		case PLAYLIST_CONTROL:
-			CurrentSongActivity.mConnection.sendCommand(Command.PLAYER_STATUS, null);
-			break;
 		}
 	}
 	
@@ -309,8 +316,8 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 				
 				PlaylistEntry entry = mPlaylist.get(p);
 				
-				CurrentSongActivity.mConnection.sendCommand(Command.PLAYLIST_CONTROL,
-						Command.PlaylistControl.encodePlay(entry.id));
+				CurrentSongActivity.mConnection.sendCommand(Command.PLAYLIST,
+						Command.Playlist.encodePlayTrack(mPlaylistId, entry.id));
 			}
 		});
 	}
