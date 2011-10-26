@@ -256,19 +256,21 @@ namespace Banshee.RemoteListener
 				// - the remote playlist won't be listed if it's fresh created, so we do that manually
 				//   we just fit it into position where the source enumaration would contain it 
 				foreach (Source s in ServiceManager.SourceManager.Sources) {
-					if (s.Count != 0 && s != remotePlaylist && s is ITrackModelSource) {
-						if (!remotePlaylistAdded && String.Compare(s.Name, remotePlaylist.Name, true) >= 0) {
-							count++;
-							index = Helper.SourceAsPlaylistToBuffer(index, remotePlaylist, true);
-							remotePlaylistAdded = true;
-						}
-						
+					if (s is ITrackModelSource && s != remotePlaylist) {
 						if (s is SmartPlaylistSource) {
 							((SmartPlaylistSource) s).Reload();
 						}
 						
-						count++;
-						index = Helper.SourceAsPlaylistToBuffer(index, s, false);
+						if (((ITrackModelSource) s).TrackModel.Count > 0) {
+							if (!remotePlaylistAdded && String.Compare(s.Name, remotePlaylist.Name, true) >= 0) {
+								count++;
+								index = Helper.SourceAsPlaylistToBuffer(index, remotePlaylist, true);
+								remotePlaylistAdded = true;
+							}
+							
+							count++;
+							index = Helper.SourceAsPlaylistToBuffer(index, s, false);
+						}
 					}
 				}
 				

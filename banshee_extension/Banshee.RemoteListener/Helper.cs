@@ -798,7 +798,7 @@ namespace Banshee.RemoteListener
 				Array.Copy(id, 0, _buffer, 0, 2);
 			}
 						
-			Array.Copy(IntToByte((uint) s.Count), 0, _buffer, index, 4);
+			Array.Copy(IntToByte((uint) ((ITrackModelSource) s).TrackModel.Count), 0, _buffer, index, 4);
 			index += 4;
 			Array.Copy(id, 0, _buffer, index, 2);
 			index += 2;
