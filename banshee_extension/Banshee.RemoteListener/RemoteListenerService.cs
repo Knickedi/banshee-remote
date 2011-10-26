@@ -32,6 +32,8 @@ namespace Banshee.RemoteListener
 		/// </summary>
 		private int _passId;
 		
+		private bool _disposed = true;
+		
 		/// <summary>
 		/// Banshee port preference.
 		/// </summary>
@@ -83,6 +85,8 @@ namespace Banshee.RemoteListener
 				StartRemoteListener();
 			};
 			
+			_disposed = false;
+			
 			ServiceManager.SourceManager.SourceRemoved += OnSourceRemoved;
 			
 			_passId = (int) _prefs["RemoteControl"]["BansheeRemote"]["remote_control_passid"].BoxedValue;
@@ -94,6 +98,8 @@ namespace Banshee.RemoteListener
 
 		void IDisposable.Dispose()
 		{
+			_disposed = true;
+			
 			_prefs["RemoteControl"]["BansheeRemote"].Remove(_portPref);
 			_prefs["RemoteControl"].Remove(_prefs["RemoteControl"].FindById("BansheeRemote"));
 			_prefs.Remove(_prefs.FindById("RemoteControl"));
@@ -110,12 +116,14 @@ namespace Banshee.RemoteListener
 		}
 
 		void OnSourceRemoved (Sources.SourceEventArgs args) {
-			Helper.HandleRemovedSource(args.Source);
+			if (!_disposed) {
+				Helper.HandleRemovedSource(args.Source);
+			}
 		}
 
 
 		public static readonly SchemaEntry<int> RemotePortSchema = new SchemaEntry<int>(
-			"remote_control", "remote_control_port", 8484, 1024, 49151, "", ""
+			"remServiceManager.SourceManager.SourceRemoved += OnSourceRemoved;ote_control", "remote_control_port", 8484, 1024, 49151, "", ""
 		);
 		
 		public static readonly SchemaEntry<int> RemotePassIdSchema = new SchemaEntry<int>(
