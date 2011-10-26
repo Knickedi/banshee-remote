@@ -479,24 +479,23 @@ public class BansheeConnection {
 				return playlists;
 			}
 			
-			public static byte [] encode(long startPosition, long maxReturns) {
-				byte [] params = new byte [8];
-				System.arraycopy(encodeInt(maxReturns), 0, params, 0, 4);
-				System.arraycopy(encodeInt(startPosition), 0, params, 4, 4);
+			public static byte [] encodePlaylistTracks(
+					int playlistId, long startPosition, long maxReturns) {
+				byte [] params = new byte [11];
+				params[0] = 2;
+				System.arraycopy(encodeShort(playlistId), 0, params, 1, 2);
+				System.arraycopy(encodeInt(maxReturns), 0, params, 3, 4);
+				System.arraycopy(encodeInt(startPosition), 0, params, 7, 4);
 				return params;
 			}
 			
-			// FIXME this is out of date and should be corrected (also in extension)
-			
-			public static byte [] encodeOnCurrent(long startOffset, long maxReturns) {
-				byte [] params = new byte [8];
-				System.arraycopy(encodeInt(maxReturns), 0, params, 0, 4);
-				System.arraycopy(encodeInt(startOffset | 0x80000000), 0, params, 4, 4);
-				return params;
+			public static byte [] encodePlaylistTracksOnStart(
+					int playlistId, long startOffset, long maxReturns) {
+				return encodePlaylistTracks(playlistId, startOffset | 0x80000000, maxReturns);
 			}
 			
-			public static long getStartPosition(byte [] params) {
-				return decodeInt(params, 0) & 0x8fffffff;
+			public static long getPlaylistTrackStartPosition(byte [] params) {
+				return decodeInt(params, 7) & 0x8fffffff;
 			}
 			
 			public static long [] decodeTrackIds(byte [] response) {

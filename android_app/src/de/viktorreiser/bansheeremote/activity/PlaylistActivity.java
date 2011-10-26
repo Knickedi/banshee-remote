@@ -54,10 +54,16 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 	private Set<String> mRequestedCovers = new HashSet<String>();
 	private boolean mDbOutOfDateHintShown = false;
 	private HiddenQuickActionSetup mQuickActionSetup;
+	private int mPlaylistId;
+	private String mPlaylistName;
+	
+	// PUBLIC =====================================================================================
+	
+	public static final String EXTRA_PLAYLIST_ID = "plid";
+	public static final String EXTRA_PLAYLIST_NAME = "plname";
 	
 	// OVERRIDDEN =================================================================================
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	public void onCreate(Bundle bundle) {
 		super.onCreate(bundle);
@@ -67,91 +73,40 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 			return;
 		}
 		
-		mOldCommandHandler = CurrentSongActivity.mConnection.getHandleCallback();
-		CurrentSongActivity.mConnection.updateHandleCallback(new OnBansheeCommandHandle() {
-			@Override
-			public void onBansheeCommandHandled(Command command, byte [] params, byte [] result) {
-				mOldCommandHandler.onBansheeCommandHandled(command, params, result);
-				PlaylistActivity.this.onBansheeCommandHandled(command, params, result);
-			}
-		});
+		Object [] data = (Object []) getLastNonConfigurationInstance();
 		
-		Object [] dataBefore = (Object []) getLastNonConfigurationInstance();
-		
-		if (dataBefore != null) {
-			mOldCommandHandler = (OnBansheeCommandHandle) dataBefore[0];
-			mPlaylist = (List<PlaylistEntry>) dataBefore[1];
-			mLoadingDismissed = (Boolean) dataBefore[2];
-			mPlaylistCount = (Integer) dataBefore[3];
-			mPlaylistRequested = (Boolean) dataBefore[4];
-			mRequestedCovers = (Set<String>) dataBefore[5];
-			mDbOutOfDateHintShown = (Boolean) dataBefore[6];
-			mPlaylistStart = (Integer) dataBefore[7];
-			mPlaylistEnd = (Integer) dataBefore[8];
+		if (data != null) {
+			setupDataAfterConfigurationChange(data);
 		} else {
+			mPlaylistId = getIntent().getIntExtra(EXTRA_PLAYLIST_ID, 0);
+			mPlaylistName = getIntent().getStringExtra(EXTRA_PLAYLIST_NAME);
+			
+			if (mPlaylistId < 1 || mPlaylistName == null) {
+				finish();
+				return;
+			}
+			
 			mLoadingDismissed = false;
 			mPlaylist = new ArrayList<PlaylistEntry>();
 			mPlaylistRequested = true;
-			CurrentSongActivity.mConnection.sendCommand(Command.PLAYLIST,
-					Command.Playlist.encodeOnCurrent(0, App.getPlaylistPreloadCount()));
 		}
 		
 		setContentView(R.layout.playlist);
 		
 		mList = (ListView) findViewById(R.id.list);
-		mList.setOnItemClickListener(new OnItemClickListener() {
-			@Override
-			public void onItemClick(AdapterView<?> a, View v, int p, long id) {
-				if (p >= mPlaylist.size()) {
-					return;
-				}
-				
-				if (mPlaylistStart != 0) {
-					p--;
-				}
-				
-				PlaylistEntry entry = mPlaylist.get(p);
-				
-				CurrentSongActivity.mConnection.sendCommand(Command.PLAYLIST_CONTROL,
-						Command.PlaylistControl.encodePlay(entry.id));
-			}
-		});
 		
 		mQuickActionSetup = App.getDefaultHiddenViewSetup(PlaylistActivity.this, false);
 		mQuickActionSetup.setOnQuickActionListener(PlaylistActivity.this);
 		
 		mAdapter = new PlaylistAdapter();
 		mList.setAdapter(mAdapter);
-		mList.setOnScrollListener(new OnScrollListener() {
-			@Override
-			public void onScrollStateChanged(AbsListView view, int scrollState) {
-				
-			}
-			
-			@Override
-			public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
-					int totalItemCount) {
-				if (!mPlaylistRequested && mPlaylistCount != mPlaylist.size()) {
-					if (mPlaylistEnd < mPlaylistCount
-							&& firstVisibleItem + visibleItemCount + 5 >= mPlaylist.size()) {
-						mPlaylistRequested = true;
-						CurrentSongActivity.mConnection.sendCommand(Command.PLAYLIST,
-								Command.Playlist.encode(mPlaylistEnd,
-										App.getPlaylistPreloadCount()));
-					} else if (mPlaylistStart > 0 && firstVisibleItem <= 4) {
-						mPlaylistRequested = true;
-						int start = Math.max(0, mPlaylistStart - App.getPlaylistPreloadCount());
-						CurrentSongActivity.mConnection.sendCommand(Command.PLAYLIST,
-								Command.Playlist.encode(start, mPlaylistStart - start));
-					}
-				}
-			}
-		});
 		
-		if (mLoadingDismissed) {
-			findViewById(R.id.loading_progress).setVisibility(View.GONE);
-			refreshTitle();
-		}
+		((TextView) findViewById(R.id.playlist_title)).setText(mPlaylistName);
+		
+		setupCommandHandler(data == null);
+		setupListClickListener();
+		setupListScrollListener();
+		refreshLoading();
 	}
 	
 	@Override
@@ -169,6 +124,18 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		
 		if (CurrentSongActivity.mConnection != null) {
 			CurrentSongActivity.mStatusPollHandler.start();
+		} else {
+			finish();
+			return;
+		}
+	}
+	
+	@Override
+	public void onPause() {
+		super.onPause();
+		
+		if (CurrentSongActivity.mConnection != null) {
+			CurrentSongActivity.mStatusPollHandler.stop();
 		}
 	}
 	
@@ -176,7 +143,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 	public Object onRetainNonConfigurationInstance() {
 		return new Object [] {mOldCommandHandler, mPlaylist, mLoadingDismissed, mPlaylistCount,
 				mPlaylistRequested, mRequestedCovers, mDbOutOfDateHintShown, mPlaylistStart,
-				mPlaylistEnd};
+				mPlaylistEnd, mPlaylistId, mPlaylistName};
 	}
 	
 	@Override
@@ -257,11 +224,10 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 					}
 				}
 				
-				findViewById(R.id.loading_progress).setVisibility(View.GONE);
-				refreshTitle();
-				
 				mPlaylistRequested = false;
 				mLoadingDismissed = true;
+				
+				refreshLoading();
 				
 				mAdapter.notifyDataSetChanged();
 				mList.setSelectionFromTop(previousListPosition, previousListOffset);
@@ -270,15 +236,16 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 				
 				if (mPlaylistCount == 0) {
 					CurrentSongActivity.mConnection.sendCommand(Command.PLAYLIST,
-							Command.Playlist.encodeOnCurrent(
-									0, App.getPlaylistPreloadCount()));
-				} else if (Command.Playlist.getStartPosition(params) == mPlaylistEnd){
+							Command.Playlist.encodePlaylistTracksOnStart(
+									mPlaylistId, 0, App.getPlaylistPreloadCount()));
+				} else if (Command.Playlist.getPlaylistTrackStartPosition(params) == mPlaylistEnd) {
 					CurrentSongActivity.mConnection.sendCommand(Command.PLAYLIST,
-							Command.Playlist.encode(mPlaylistEnd,
-									App.getPlaylistPreloadCount()));
-				} else if (Command.Playlist.getStartPosition(params) == start) {
+							Command.Playlist.encodePlaylistTracks(
+									mPlaylistId, mPlaylistEnd, App.getPlaylistPreloadCount()));
+				} else if (Command.Playlist.getPlaylistTrackStartPosition(params) == start) {
 					CurrentSongActivity.mConnection.sendCommand(Command.PLAYLIST,
-							Command.Playlist.encode(start, mPlaylistStart - start));
+							Command.Playlist.encodePlaylistTracks(
+									mPlaylistId, start, mPlaylistStart - start));
 				} else {
 					mPlaylistRequested = false;
 				}
@@ -293,9 +260,96 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 	
 	// PRIVATE ====================================================================================
 	
-	private void refreshTitle() {
-		((TextView) findViewById(R.id.playlist_title)).setText(
-				getString(R.string.playlist) + " (" + mPlaylistCount + ")");
+	@SuppressWarnings("unchecked")
+	private void setupDataAfterConfigurationChange(Object [] data) {
+		mOldCommandHandler = (OnBansheeCommandHandle) data[0];
+		mPlaylist = (List<PlaylistEntry>) data[1];
+		mLoadingDismissed = (Boolean) data[2];
+		mPlaylistCount = (Integer) data[3];
+		mPlaylistRequested = (Boolean) data[4];
+		mRequestedCovers = (Set<String>) data[5];
+		mDbOutOfDateHintShown = (Boolean) data[6];
+		mPlaylistStart = (Integer) data[7];
+		mPlaylistEnd = (Integer) data[8];
+		mPlaylistId = (Integer) data[9];
+		mPlaylistName = (String) data[10];
+	}
+	
+	private void setupCommandHandler(boolean intialRequest) {
+		mOldCommandHandler = CurrentSongActivity.mConnection.getHandleCallback();
+		CurrentSongActivity.mConnection.updateHandleCallback(new OnBansheeCommandHandle() {
+			@Override
+			public void onBansheeCommandHandled(Command command, byte [] params, byte [] result) {
+				mOldCommandHandler.onBansheeCommandHandled(command, params, result);
+
+				if (command != null) {
+					PlaylistActivity.this.onBansheeCommandHandled(command, params, result);
+				}
+			}
+		});
+		
+		if (intialRequest) {
+			CurrentSongActivity.mConnection.sendCommand(Command.PLAYLIST,
+					Command.Playlist.encodePlaylistTracksOnStart(
+							mPlaylistId, 0, App.getPlaylistPreloadCount()));
+		}
+	}
+	
+	private void setupListClickListener() {
+		mList.setOnItemClickListener(new OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> a, View v, int p, long id) {
+				if (p >= mPlaylist.size()) {
+					return;
+				}
+				
+				if (mPlaylistStart != 0) {
+					p--;
+				}
+				
+				PlaylistEntry entry = mPlaylist.get(p);
+				
+				CurrentSongActivity.mConnection.sendCommand(Command.PLAYLIST_CONTROL,
+						Command.PlaylistControl.encodePlay(entry.id));
+			}
+		});
+	}
+	
+	private void setupListScrollListener() {
+		mList.setOnScrollListener(new OnScrollListener() {
+			@Override
+			public void onScrollStateChanged(AbsListView view, int scrollState) {
+				
+			}
+			
+			@Override
+			public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
+					int totalItemCount) {
+				if (!mPlaylistRequested && mPlaylistCount != mPlaylist.size()) {
+					if (mPlaylistEnd < mPlaylistCount
+							&& firstVisibleItem + visibleItemCount + 5 >= mPlaylist.size()) {
+						mPlaylistRequested = true;
+						CurrentSongActivity.mConnection.sendCommand(Command.PLAYLIST,
+								Command.Playlist.encodePlaylistTracks(
+										mPlaylistId, mPlaylistEnd, App.getPlaylistPreloadCount()));
+					} else if (mPlaylistStart > 0 && firstVisibleItem <= 4) {
+						mPlaylistRequested = true;
+						int start = Math.max(0, mPlaylistStart - App.getPlaylistPreloadCount());
+						CurrentSongActivity.mConnection.sendCommand(Command.PLAYLIST,
+								Command.Playlist.encodePlaylistTracks(
+										mPlaylistId, start, mPlaylistStart - start));
+					}
+				}
+			}
+		});
+	}
+	
+	private void refreshLoading() {
+		if (mLoadingDismissed) {
+			findViewById(R.id.loading_progress).setVisibility(View.GONE);
+			((TextView) findViewById(R.id.playlist_title)).setText(
+					mPlaylistName +  " (" + mPlaylistCount + ")");
+		}
 	}
 	
 	private static class PlaylistEntry {

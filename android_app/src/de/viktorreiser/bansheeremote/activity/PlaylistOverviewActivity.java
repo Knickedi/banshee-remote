@@ -4,9 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -23,6 +26,8 @@ import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHand
 public class PlaylistOverviewActivity extends Activity implements OnBansheeCommandHandle {
 	
 	// PRIVATE ====================================================================================
+	
+	private static final int REQUEST_PLAYLIST = 1;
 	
 	private OnBansheeCommandHandle mOldCommandHandler;
 	private List<PlaylistEntry> mPlaylists = new ArrayList<PlaylistEntry>();
@@ -57,13 +62,36 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 			@Override
 			public void onBansheeCommandHandled(Command command, byte [] params, byte [] result) {
 				mOldCommandHandler.onBansheeCommandHandled(command, params, result);
-				PlaylistOverviewActivity.this.onBansheeCommandHandled(command, params, result);
+				
+				if (command != null) {
+					PlaylistOverviewActivity.this.onBansheeCommandHandled(command, params, result);
+				}
 			}
 		});
 		
 		setContentView(R.layout.playlist_overview);
 		
+		((ListView) findViewById(R.id.list)).setOnItemClickListener(new OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> a, View v, int p, long id) {
+				Intent intent = new Intent(
+						PlaylistOverviewActivity.this, PlaylistActivity.class);
+				intent.putExtra(PlaylistActivity.EXTRA_PLAYLIST_ID, mPlaylists.get(p).id);
+				intent.putExtra(PlaylistActivity.EXTRA_PLAYLIST_NAME, mPlaylists.get(p).name);
+				startActivityForResult(intent, REQUEST_PLAYLIST);
+			}
+		});
+		
 		refreshLoading();
+	}
+	
+	@Override
+	public void onResume() {
+		super.onResume();
+		
+		if (CurrentSongActivity.mConnection == null) {
+			finish();
+		}
 	}
 	
 	@Override
@@ -72,6 +100,10 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 		
 		if (CurrentSongActivity.mConnection != null) {
 			CurrentSongActivity.mConnection.updateHandleCallback(mOldCommandHandler);
+		}
+		
+		if (isFinishing()) {
+			finishActivity(REQUEST_PLAYLIST);
 		}
 	}
 	
@@ -170,7 +202,6 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 			
 			return convertView;
 		}
-		
 	}
 	
 	
