@@ -173,6 +173,17 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 	
 	// PRIVATE ====================================================================================
 	
+	private void refreshLoading() {
+		if (mLoadingDismissed) {
+			findViewById(R.id.loading_progress).setVisibility(View.GONE);
+			((TextView) findViewById(R.id.playlist_title)).setText(
+					getString(R.string.playlists) + " (" + mPlaylists.size() + ")");
+			mAdapter = new PlaylistsAdapter();
+			((ListView) findViewById(R.id.list)).setAdapter(mAdapter);
+		}
+	}
+	
+	
 	private static class PlaylistEntry {
 		public int id;
 		public String name;
@@ -229,17 +240,6 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 			}
 			
 			return convertView;
-		}
-	}
-	
-	
-	private void refreshLoading() {
-		if (mLoadingDismissed) {
-			findViewById(R.id.loading_progress).setVisibility(View.GONE);
-			((TextView) findViewById(R.id.playlist_title)).setText(
-					getString(R.string.playlists) + " (" + mPlaylists.size() + ")");
-			mAdapter = new PlaylistsAdapter();
-			((ListView) findViewById(R.id.list)).setAdapter(mAdapter);
 		}
 	}
 }

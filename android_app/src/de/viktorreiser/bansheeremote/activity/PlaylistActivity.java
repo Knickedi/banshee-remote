@@ -288,7 +288,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 			@Override
 			public void onBansheeCommandHandled(Command command, byte [] params, byte [] result) {
 				mOldCommandHandler.onBansheeCommandHandled(command, params, result);
-
+				
 				if (command != null) {
 					PlaylistActivity.this.onBansheeCommandHandled(command, params, result);
 				}
@@ -355,9 +355,10 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		if (mLoadingDismissed) {
 			findViewById(R.id.loading_progress).setVisibility(View.GONE);
 			((TextView) findViewById(R.id.playlist_title)).setText(
-					mPlaylistName +  " (" + mPlaylistCount + ")");
+					mPlaylistName + " (" + mPlaylistCount + ")");
 		}
 	}
+	
 	
 	private static class PlaylistEntry {
 		
@@ -376,6 +377,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		public TextView artist;
 		public TextView album;
 		public ImageView playing;
+		public TextView loading;
 	}
 	
 	@Override
@@ -477,6 +479,10 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 				} else {
 					convertView = getLayoutInflater()
 							.inflate(R.layout.playlist_loading_item, null);
+					
+					ViewHolder holder = new ViewHolder();
+					holder.loading = (TextView) convertView.findViewById(R.id.loading_playlist);
+					convertView.setTag(holder);
 				}
 			}
 			
@@ -543,7 +549,8 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 						holder.track.setText(entry.trackInfo.title);
 					}
 					
-					if (entry.trackInfo.id == CurrentSongActivity.mData.currentSongId) {
+					if (entry.trackInfo.id == CurrentSongActivity.mData.currentSongId
+							&& PlaylistOverviewActivity.mActivePlaylistIdChange == mPlaylistId) {
 						holder.playing.setVisibility(View.VISIBLE);
 						holder.playing.setImageResource(CurrentSongActivity.mData.playing
 								? R.drawable.ic_media_play : R.drawable.ic_media_pause);
@@ -564,9 +571,8 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 					start = 1;
 				}
 				
-				((TextView) convertView.findViewById(R.id.loading_playlist))
-						.setText(getString(R.string.loading_playlist,
-								start, mPlaylistStart, mPlaylistCount));
+				holder.loading.setText(getString(R.string.loading_playlist,
+						start, mPlaylistStart, mPlaylistCount));
 			} else if (type == 2) {
 				// load indicator at list end
 				int requested = mPlaylistEnd + App.getPlaylistPreloadCount();
@@ -575,9 +581,8 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 					requested = mPlaylistCount;
 				}
 				
-				((TextView) convertView.findViewById(R.id.loading_playlist))
-						.setText(getString(R.string.loading_playlist,
-								mPlaylistEnd + 1, requested, mPlaylistCount));
+				holder.loading.setText(getString(R.string.loading_playlist,
+						mPlaylistEnd + 1, requested, mPlaylistCount));
 			}
 			
 			return convertView;

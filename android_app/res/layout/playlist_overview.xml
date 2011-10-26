@@ -4,33 +4,35 @@
     android:layout_height="fill_parent"
     android:orientation="vertical" >
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/title_gradient"
-        android:gravity="center" >
+        android:background="@drawable/title_gradient" >
 
         <ImageView
+            android:id="@+id/l_icon"
             android:layout_width="wrap_content"
-            android:layout_height="fill_parent"
-            android:src="@drawable/playlist" />
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:src="@drawable/playlist"
+            android:layout_margin="3dip" />
 
         <TextView
             android:id="@+id/playlist_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:padding="10dip"
+            android:layout_centerVertical="true"
+            android:layout_toRightOf="@+id/l_icon"
+            android:ellipsize="middle"
+            android:paddingTop="10dip"
+            android:paddingBottom="10dip"
+            android:paddingRight="10dip"
+            android:scrollHorizontally="false"
+            android:singleLine="true"
             android:text="@string/playlists"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/playlist_count"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:textStyle="bold" />
-    </LinearLayout>
+    </RelativeLayout>
 
     <View
         android:layout_width="fill_parent"
