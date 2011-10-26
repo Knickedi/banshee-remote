@@ -86,6 +86,10 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 				return;
 			}
 			
+			mQuickActionSetup = App.getDefaultHiddenViewSetup(
+					PlaylistActivity.this, false, mPlaylistId == 1);
+			mQuickActionSetup.setOnQuickActionListener(PlaylistActivity.this);
+			
 			mLoadingDismissed = false;
 			mPlaylist = new ArrayList<PlaylistEntry>();
 			mPlaylistRequested = true;
@@ -94,9 +98,6 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		setContentView(R.layout.playlist);
 		
 		mList = (ListView) findViewById(R.id.list);
-		
-		mQuickActionSetup = App.getDefaultHiddenViewSetup(PlaylistActivity.this, false);
-		mQuickActionSetup.setOnQuickActionListener(PlaylistActivity.this);
 		
 		mAdapter = new PlaylistAdapter();
 		mList.setAdapter(mAdapter);

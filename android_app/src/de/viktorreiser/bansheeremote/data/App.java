@@ -158,7 +158,8 @@ public class App extends Application {
 	 * 
 	 * @return quick action setup
 	 */
-	public static HiddenQuickActionSetup getDefaultHiddenViewSetup(Context context, boolean add) {
+	public static HiddenQuickActionSetup getDefaultHiddenViewSetup(
+			Context context, boolean add, boolean remove) {
 		HiddenQuickActionSetup setup = new HiddenQuickActionSetup(context);
 		
 		setup.setOpenAnimation(new Interpolator() {
@@ -193,7 +194,9 @@ public class App extends Application {
 			setup.addAction(QUICK_ACTION_ADD, R.string.quick_add, R.drawable.add);
 		}
 		
-		setup.addAction(QUICK_ACTION_REMOVE, R.string.quick_remove, R.drawable.remove);
+		if (remove) {
+			setup.addAction(QUICK_ACTION_REMOVE, R.string.quick_remove, R.drawable.remove);
+		}
 		
 		return setup;
 	}
