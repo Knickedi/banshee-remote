@@ -613,6 +613,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		mCommandHandler.updateComplete(true);
 		mConnection = new BansheeConnection(server, mCommandHandler);
 		BansheeDatabase.open(server);
+		mCoverAnimator.setDefaultCover();
 		
 		if (!mActivityPaused) {
 			mStatusPollHandler.start();
