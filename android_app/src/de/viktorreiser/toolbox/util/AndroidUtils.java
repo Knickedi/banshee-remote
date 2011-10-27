@@ -1,22 +1,15 @@
 package de.viktorreiser.toolbox.util;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-
 import android.content.Context;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.net.ConnectivityManager;
-import android.os.Environment;
-import android.os.StatFs;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.AbsListView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,20 +24,6 @@ public class AndroidUtils {
 	
 	private static Rect mStatusBarRect = new Rect();
 	private static int [] mLocation = new int [2];
-	private static Field mFlingEndField = null;
-	private static Method mFlingEndMethod = null;
-	
-	static {
-		try {
-			mFlingEndField = AbsListView.class.getDeclaredField("mFlingRunnable");
-			mFlingEndField.setAccessible(true);
-			mFlingEndMethod = mFlingEndField.getType().getDeclaredMethod("endFling");
-			mFlingEndMethod.setAccessible(true);
-		} catch (Exception e) {
-			// implementation changed - can't do anything here
-			mFlingEndMethod = null;
-		}
-	}
 	
 	// PUBLIC =====================================================================================
 	
@@ -155,50 +134,6 @@ public class AndroidUtils {
 		linearLayout.addView(imageView, 0);
 		
 		return toast;
-	}
-	
-	
-	/**
-	 * Get free (unused) space on external storage.<br>
-	 * <br>
-	 * See {@link Environment#getExternalStorageDirectory()}.
-	 * 
-	 * @return free space in kilobytes
-	 */
-	public static int getFreeExteranlStorageSize() {
-		StatFs stats = new StatFs(Environment.getExternalStorageDirectory().getAbsolutePath());
-		int availableBlocks = stats.getAvailableBlocks();
-		int blockSizeInBytes = stats.getBlockSize();
-		
-		return availableBlocks * (blockSizeInBytes / 1024);
-	}
-	
-	/**
-	 * Is device connected to network (WiFi or mobile).<br>
-	 * <br>
-	 * <b>Hint</b>: A connection to WiFi does not guarantee Internet access.
-	 * 
-	 * @param context
-	 * 
-	 * @return {@code true} if device is connected to mobile network or WiFi
-	 */
-	public static boolean isConnected(Context context) {
-		return isWiFiConnected(context) || isMobileNetworkConnected(context);
-	}
-	
-	/**
-	 * Is device connected to WiFi?<br>
-	 * <br>
-	 * <b>Hint</b>: A connection to WiFi does not guarantee Internet access.
-	 * 
-	 * @param context
-	 * 
-	 * @return {@code true} if device is connected to an access point
-	 */
-	public static boolean isWiFiConnected(Context context) {
-		ConnectivityManager cm = (ConnectivityManager) context
-				.getSystemService(Context.CONNECTIVITY_SERVICE);
-		return cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI).isConnected();
 	}
 	
 	/**
@@ -316,22 +251,6 @@ public class AndroidUtils {
 		Point point = getScreenLocation(view);
 		point.y -= getContentOffsetFromTop(view);
 		return point;
-	}
-	
-	/**
-	 * Stop fling of list (using reflection).
-	 * 
-	 * @param list
-	 *            list on which fling should be stopped
-	 */
-	public static void stopListFling(ListView list) {
-		if (mFlingEndMethod != null) {
-			try {
-				mFlingEndMethod.invoke(mFlingEndField.get(list));
-			} catch (Exception e) {
-				// implementation changed - can't do anything here - we tried
-			}
-		}
 	}
 	
 	// PRIVATE ====================================================================================

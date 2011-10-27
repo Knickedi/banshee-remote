@@ -86,18 +86,17 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 				return;
 			}
 			
-			mQuickActionSetup = App.getDefaultHiddenViewSetup(
-					PlaylistActivity.this, false, mPlaylistId == 1);
-			mQuickActionSetup.setOnQuickActionListener(PlaylistActivity.this);
-			
 			mLoadingDismissed = false;
 			mPlaylist = new ArrayList<PlaylistEntry>();
 			mPlaylistRequested = true;
 		}
 		
 		setContentView(R.layout.playlist);
-		
 		mList = (ListView) findViewById(R.id.list);
+		
+		mQuickActionSetup = App.getDefaultHiddenViewSetup(
+				PlaylistActivity.this, false, mPlaylistId == 1);
+		mQuickActionSetup.setOnQuickActionListener(PlaylistActivity.this);
 		
 		mAdapter = new PlaylistAdapter();
 		mList.setAdapter(mAdapter);
@@ -297,6 +296,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		});
 		
 		if (intialRequest) {
+			mPlaylistRequested = true;
 			CurrentSongActivity.mConnection.sendCommand(Command.PLAYLIST,
 					Command.Playlist.encodePlaylistTracksOnStart(
 							mPlaylistId, 0, App.getPlaylistPreloadCount()));
