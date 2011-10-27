@@ -8,6 +8,8 @@ import java.util.Set;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.text.TextUtils.TruncateAt;
 import android.view.View;
 import android.view.ViewGroup;
@@ -45,6 +47,8 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 	private OnBansheeCommandHandle mOldCommandHandler;
 	private boolean mLoadingDismissed;
 	private List<PlaylistEntry> mPlaylist;
+	private TextView mPlaylistPositionText;
+	private PositionPopup mPositionPopup;
 	private ListView mList;
 	private PlaylistAdapter mAdapter;
 	private int mPlaylistCount = -1;
@@ -93,6 +97,8 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		
 		setContentView(R.layout.playlist);
 		mList = (ListView) findViewById(R.id.list);
+		mPlaylistPositionText = (TextView) findViewById(R.id.playlist_position);
+		mPositionPopup = new PositionPopup();
 		
 		mQuickActionSetup = App.getDefaultHiddenViewSetup(
 				PlaylistActivity.this, false, mPlaylistId == 1);
@@ -333,6 +339,8 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 			@Override
 			public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
 					int totalItemCount) {
+				mPositionPopup.showPosition(firstVisibleItem + mPlaylistStart + 1);
+				
 				if (!mPlaylistRequested && mPlaylistCount != mPlaylist.size()) {
 					if (mPlaylistEnd < mPlaylistCount
 							&& firstVisibleItem + visibleItemCount + 5 >= mPlaylist.size()) {
@@ -383,7 +391,88 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 	
 	@Override
 	public void onQuickAction(AdapterView<?> parent, View view, int position, int quickActionId) {
+		// TODO implement quick action on playlist
+	}
+	
+	
+	private class PositionPopup extends Handler {
 		
+		private static final long DISMISS_TIMEOUT = 500;
+		private static final long FADE_DURATION = 500;
+		
+		private static final int MSG_ANIMATE = 1;
+		private static final int MSG_DISMISS = 2;
+		
+		private int mmTextColor;
+		private boolean mmAnimateForward;
+		private long mmLastAnimationStep;
+		private float mmAlpha = 0f;
+		private boolean mmAnimating = false;
+		private int mmLastPosition = 0;
+		
+		
+		public PositionPopup() {
+			mmTextColor = mPlaylistPositionText.getTextColors().getDefaultColor() & 0xffffff;
+			mPlaylistPositionText.setBackgroundDrawable(
+					Toast.makeText(PlaylistActivity.this, "", 0).getView().getBackground());
+			mPlaylistPositionText.getBackground().setAlpha(0);
+			mPlaylistPositionText.setTextColor(0);
+		}
+		
+		public void showPosition(int position) {
+			if (position == mmLastPosition) {
+				return;
+			}
+			
+			mmLastPosition = position;
+			mPlaylistPositionText.setText(String.valueOf(position));
+			mmAnimateForward = true;
+			removeMessages(MSG_DISMISS);
+					
+			if (!mmAnimating) {
+				mmLastAnimationStep = System.currentTimeMillis();
+				mmAnimating = true;
+				sendEmptyMessageDelayed(MSG_ANIMATE, 40);
+			}
+		}
+		
+		@Override
+		public void handleMessage(Message msg) {
+			if (msg.what == MSG_ANIMATE) {
+				float step = 1f * (System.currentTimeMillis() - mmLastAnimationStep)
+						/ FADE_DURATION;
+				mmLastAnimationStep = System.currentTimeMillis();
+				
+				if (mmAnimateForward) {
+					mmAlpha += step;
+					
+					if (mmAlpha >= 1) {
+						mmAlpha = 1;
+						mmAnimating = false;
+						sendEmptyMessageDelayed(MSG_DISMISS, DISMISS_TIMEOUT);
+					}
+				} else {
+					mmAlpha -= step;
+					
+					if (mmAlpha <= 0) {
+						mmAlpha = 0;
+						mmAnimating = false;
+					}
+				}
+				
+				int alpha = Math.round(mmAlpha * 255);
+				mPlaylistPositionText.getBackground().setAlpha(alpha);
+				mPlaylistPositionText.setTextColor(mmTextColor | (alpha << 24));
+			} else {
+				mmAnimateForward = false;
+				mmAnimating = true;
+				mmLastAnimationStep = System.currentTimeMillis();
+			}
+			
+			if (mmAnimating) {
+				sendEmptyMessageDelayed(MSG_ANIMATE, 40);
+			}
+		}
 	}
 	
 	private class PlaylistAdapter extends BaseAdapter {
