@@ -308,7 +308,12 @@ namespace Banshee.RemoteListener
 				}
 				
 				// search for the playlist which was requested
-				TrackListModel model = ((ITrackModelSource) Helper.GetPlaylistSource(playlistId)).TrackModel;
+				Source source = Helper.GetPlaylistSource(playlistId);
+				TrackListModel model = null;
+				
+				if (source != null) {
+					model = ((ITrackModelSource) source).TrackModel;
+				}
 				
 				if (model != null) {
 					// playlist exists, return the requested amount of track IDs
@@ -357,7 +362,10 @@ namespace Banshee.RemoteListener
 					return result;
 				} else {
 					// count = returned = startPosition = 0
-					return new byte [] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+					return new byte [] {
+						0, 0, 0, 0,
+						0, 0, 0, 0,
+						0, 0, 0, 0};
 				}
 			}
 				
