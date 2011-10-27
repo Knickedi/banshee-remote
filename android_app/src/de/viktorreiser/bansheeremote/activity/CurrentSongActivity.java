@@ -178,6 +178,10 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		return mInstance == null ? null : mInstance.mStatusPollHandler;
 	}
 	
+	static boolean handleKeyEvent(KeyEvent event) {
+		return mInstance == null ? false : mInstance.dispatchKeyEvent(event);
+	}
+	
 	// PIRVATE ====================================================================================
 	
 	private static CurrentSongActivity mInstance = null;

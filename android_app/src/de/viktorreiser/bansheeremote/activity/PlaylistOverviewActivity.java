@@ -6,6 +6,7 @@ import java.util.List;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -127,6 +128,11 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 	@Override
 	public Object onRetainNonConfigurationInstance() {
 		return new Object [] {mPlaylists, mActivePlaylistId, mLoadingDismissed};
+	}
+	
+	@Override
+	public boolean dispatchKeyEvent(KeyEvent e) {
+		return CurrentSongActivity.handleKeyEvent(e);
 	}
 	
 	@Override

@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils.TruncateAt;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
@@ -150,6 +151,11 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		return new Object [] {mOldCommandHandler, mPlaylist, mLoadingDismissed, mPlaylistCount,
 				mPlaylistRequested, mRequestedCovers, mDbOutOfDateHintShown, mPlaylistStart,
 				mPlaylistEnd, mPlaylistId, mPlaylistName};
+	}
+	
+	@Override
+	public boolean dispatchKeyEvent(KeyEvent e) {
+		return CurrentSongActivity.handleKeyEvent(e);
 	}
 	
 	@Override
