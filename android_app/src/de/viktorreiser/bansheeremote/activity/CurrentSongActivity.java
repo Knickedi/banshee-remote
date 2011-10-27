@@ -725,6 +725,10 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		
 		@Override
 		public void onBansheeCommandHandled(Command command, byte [] params, byte [] response) {
+			if (mStatusPollHandler == null) {
+				return;
+			}
+			
 			if (command == null) {
 				handleFail();
 				return;
