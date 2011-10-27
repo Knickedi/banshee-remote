@@ -154,13 +154,33 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		}
 	}
 	
-	// accessed by other activities
-	static BansheeConnection mConnection = null;
-	static BansheeData mData;
-	static BansheeData mPreviousData;
-	static StatusPollHandler mStatusPollHandler;
+	
+	static BansheeData getData() {
+		return mInstance == null ? null : mInstance.mData;
+	}
+	
+	static BansheeData getPreviousData() {
+		return mInstance == null ? null : mInstance.mPreviousData;
+	}
+	
+	static BansheeConnection getConnection() {
+		return mInstance == null ? null : mInstance.mConnection;
+	}
+	
+	static void resetConnection() {
+		if (mInstance != null) {
+			mInstance.mConnection.close();
+			mInstance.mConnection = null;
+		}
+	}
+	
+	static StatusPollHandler getPollHandler() {
+		return mInstance == null ? null : mInstance.mStatusPollHandler;
+	}
 	
 	// PIRVATE ====================================================================================
+	
+	private static CurrentSongActivity mInstance = null;
 	
 	private static final int REQUEST_SERVER_LIST = 1;
 	private static final int REQUEST_SEETINGS = 2;
@@ -192,6 +212,11 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	private CoverAnimator mCoverAnimator;
 	private CommandHandler mCommandHandler = new CommandHandler();
 	
+	private BansheeConnection mConnection = null;
+	private BansheeData mData;
+	private BansheeData mPreviousData;
+	private StatusPollHandler mStatusPollHandler;
+	
 	// OVERRIDDEN =================================================================================
 	
 	/**
@@ -199,6 +224,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	 */
 	@Override
 	protected void onCreate(Bundle bundle) {
+		mInstance = this;
 		super.onCreate(bundle);
 		setContentView(R.layout.current_song);
 		
@@ -253,6 +279,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	 */
 	@Override
 	public void onDestroy() {
+		mInstance = null;
 		super.onDestroy();
 		
 		mStatusPollHandler = null;

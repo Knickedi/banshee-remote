@@ -175,11 +175,7 @@ public class ServerListActivity extends Activity implements OnItemClickListener,
 	
 	private void resetServerSettings() {
 		BansheeDatabase.close();
-		
-		if (CurrentSongActivity.mConnection != null) {
-			CurrentSongActivity.mConnection.close();
-			CurrentSongActivity.mConnection = null;
-		}
+		CurrentSongActivity.resetConnection();
 	}
 	
 	private class ServerAdapter extends BaseAdapter {

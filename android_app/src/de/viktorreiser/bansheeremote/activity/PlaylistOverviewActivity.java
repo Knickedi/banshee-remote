@@ -47,7 +47,7 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 	public void onCreate(Bundle bundle) {
 		super.onCreate(bundle);
 		
-		if (CurrentSongActivity.mConnection == null) {
+		if (CurrentSongActivity.getConnection() == null) {
 			finish();
 			return;
 		}
@@ -55,7 +55,7 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 		Object [] dataBefore = (Object []) getLastNonConfigurationInstance();
 		
 		if (dataBefore == null) {
-			CurrentSongActivity.mConnection.sendCommand(Command.PLAYLIST,
+			CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
 					Command.Playlist.encodePlaylistNames());
 		} else {
 			mPlaylists = (List<PlaylistEntry>) dataBefore[0];
@@ -63,8 +63,8 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 			mLoadingDismissed = (Boolean) dataBefore[2];
 		}
 		
-		mOldCommandHandler = CurrentSongActivity.mConnection.getHandleCallback();
-		CurrentSongActivity.mConnection.updateHandleCallback(new OnBansheeCommandHandle() {
+		mOldCommandHandler = CurrentSongActivity.getConnection().getHandleCallback();
+		CurrentSongActivity.getConnection().updateHandleCallback(new OnBansheeCommandHandle() {
 			@Override
 			public void onBansheeCommandHandled(Command command, byte [] params, byte [] result) {
 				mOldCommandHandler.onBansheeCommandHandled(command, params, result);
@@ -95,8 +95,8 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 	public void onResume() {
 		super.onResume();
 		
-		if (CurrentSongActivity.mConnection != null) {
-			CurrentSongActivity.mStatusPollHandler.start();
+		if (CurrentSongActivity.getConnection() != null) {
+			CurrentSongActivity.getPollHandler().start();
 		} else {
 			finish();
 		}
@@ -106,8 +106,8 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 	public void onPause() {
 		super.onPause();
 		
-		if (CurrentSongActivity.mConnection != null) {
-			CurrentSongActivity.mStatusPollHandler.stop();
+		if (CurrentSongActivity.getConnection() != null) {
+			CurrentSongActivity.getPollHandler().stop();
 		}
 	}
 	
@@ -115,8 +115,8 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 	public void onDestroy() {
 		super.onDestroy();
 		
-		if (CurrentSongActivity.mConnection != null) {
-			CurrentSongActivity.mConnection.updateHandleCallback(mOldCommandHandler);
+		if (CurrentSongActivity.getConnection() != null) {
+			CurrentSongActivity.getConnection().updateHandleCallback(mOldCommandHandler);
 		}
 		
 		if (isFinishing()) {
@@ -133,7 +133,8 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 	public void onBansheeCommandHandled(Command command, byte [] params, byte [] result) {
 		switch (command) {
 		case PLAYER_STATUS:
-			if ((CurrentSongActivity.mData.playing != CurrentSongActivity.mPreviousData.playing
+			if ((CurrentSongActivity.getData().playing
+						!= CurrentSongActivity.getPreviousData().playing
 					|| mActivePlaylistId != mActivePlaylistIdChange) && mAdapter != null) {
 				mActivePlaylistId = mActivePlaylistIdChange;
 				mAdapter.notifyDataSetChanged();
@@ -143,7 +144,7 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 		case PLAYLIST:
 			if (Command.Playlist.isPlaylistNames(params)) {
 				if (result == null) {
-					CurrentSongActivity.mConnection.sendCommand(Command.PLAYLIST,
+					CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
 							Command.Playlist.encodePlaylistNames());
 				} else {
 					Object [][] playlists = Command.Playlist.decodePlaylistNames(result);
@@ -233,7 +234,7 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 			
 			if (mActivePlaylistId == e.id) {
 				holder.playing.setVisibility(View.VISIBLE);
-				holder.playing.setImageResource(CurrentSongActivity.mData.playing
+				holder.playing.setImageResource(CurrentSongActivity.getData().playing
 						? R.drawable.ic_media_play : R.drawable.ic_media_pause);
 			} else {
 				holder.playing.setVisibility(View.INVISIBLE);
