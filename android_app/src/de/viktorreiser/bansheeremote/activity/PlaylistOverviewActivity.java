@@ -132,7 +132,7 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 	
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent e) {
-		return CurrentSongActivity.handleKeyEvent(e);
+		return CurrentSongActivity.handleKeyEvent(e) ? true : super.dispatchKeyEvent(e);
 	}
 	
 	@Override

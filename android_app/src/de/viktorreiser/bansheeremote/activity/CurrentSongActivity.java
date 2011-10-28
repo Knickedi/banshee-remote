@@ -179,7 +179,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	}
 	
 	static boolean handleKeyEvent(KeyEvent event) {
-		return mInstance == null ? false : mInstance.dispatchKeyEvent(event);
+		return mInstance == null ? false : mInstance.handleVolumeKey(event);
 	}
 	
 	// PIRVATE ====================================================================================
@@ -188,7 +188,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	
 	private static final int REQUEST_SERVER_LIST = 1;
 	private static final int REQUEST_SEETINGS = 2;
-	private static final int REQUEST_PLAYLIST = 3;
+	private static final int REQUEST_OTHER_ACTIVITY = 3;
 	
 	
 	private boolean mActivityPaused = true;
@@ -419,24 +419,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	 */
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent event) {
-		if (App.isVolumeKeyControl()) {
-			switch (event.getKeyCode()) {
-			case KeyEvent.KEYCODE_VOLUME_UP:
-				if (event.getAction() == KeyEvent.ACTION_DOWN) {
-					mConnection.sendCommand(Command.PLAYER_STATUS,
-							Command.PlayerStatus.encodeVolumeUp(null));
-				}
-				return true;
-			case KeyEvent.KEYCODE_VOLUME_DOWN:
-				if (event.getAction() == KeyEvent.ACTION_DOWN) {
-					mConnection.sendCommand(Command.PLAYER_STATUS,
-							Command.PlayerStatus.encodeVolumeDown(null));
-				}
-				return true;
-			}
-		}
-		
-		return super.dispatchKeyEvent(event);
+		return handleVolumeKey(event) ? true : super.dispatchKeyEvent(event);
 	}
 	
 	/**
@@ -598,7 +581,8 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			@Override
 			public void onClick(View v) {
 				if (BansheeDatabase.isOpen()) {
-					// TODO react on button click
+					startActivityForResult(new Intent(CurrentSongActivity.this,
+							ArtistActivity.class), REQUEST_OTHER_ACTIVITY);
 				} else {
 					Toast.makeText(CurrentSongActivity.this, R.string.need_sync_db,
 							Toast.LENGTH_SHORT).show();
@@ -612,7 +596,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				if (BansheeDatabase.isOpen()) {
 					startActivityForResult(
 							new Intent(CurrentSongActivity.this, PlaylistOverviewActivity.class),
-							REQUEST_PLAYLIST);
+							REQUEST_OTHER_ACTIVITY);
 				} else {
 					Toast.makeText(CurrentSongActivity.this, R.string.need_sync_db,
 							Toast.LENGTH_SHORT).show();
@@ -649,6 +633,27 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		if (!mActivityPaused) {
 			mStatusPollHandler.start();
 		}
+	}
+	
+	private boolean handleVolumeKey(KeyEvent e) {
+		if (App.isVolumeKeyControl()) {
+			switch (e.getKeyCode()) {
+			case KeyEvent.KEYCODE_VOLUME_UP:
+				if (e.getAction() == KeyEvent.ACTION_DOWN) {
+					mConnection.sendCommand(Command.PLAYER_STATUS,
+							Command.PlayerStatus.encodeVolumeUp(null));
+				}
+				return true;
+			case KeyEvent.KEYCODE_VOLUME_DOWN:
+				if (e.getAction() == KeyEvent.ACTION_DOWN) {
+					mConnection.sendCommand(Command.PLAYER_STATUS,
+							Command.PlayerStatus.encodeVolumeDown(null));
+				}
+				return true;
+			}
+		}
+		
+		return false;
 	}
 	
 	/**
@@ -797,7 +802,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			Toast.makeText(CurrentSongActivity.this, R.string.host_offline_or_banshee_closed,
 					Toast.LENGTH_LONG).show();
 			
-			finishActivity(REQUEST_PLAYLIST);
+			finishActivity(REQUEST_OTHER_ACTIVITY);
 			Intent intent = new Intent(CurrentSongActivity.this, ServerListActivity.class);
 			intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 			startActivityForResult(intent, REQUEST_SERVER_LIST);
