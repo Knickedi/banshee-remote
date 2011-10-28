@@ -64,10 +64,13 @@
 		android:layout_height="1dip"
 		android:background="#ff888888" />
 
-	<de.viktorreiser.toolbox.widget.MarqueeTextView
+	<TextView
 		android:id="@+id/song_title"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
+		android:ellipsize="end"
+		android:singleLine="true"
+		android:scrollHorizontally="false"
 		android:text="@string/unknown_track"
 		android:textStyle="bold"
 		android:layout_marginTop="11dip"
@@ -76,20 +79,26 @@
 		android:layout_below="@id/header_background"
 		android:textAppearance="?android:attr/textAppearanceMedium" />
 
-	<de.viktorreiser.toolbox.widget.MarqueeTextView
+	<TextView
 		android:id="@+id/song_artist"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
+		android:ellipsize="end"
+		android:singleLine="true"
+		android:scrollHorizontally="false"
 		android:text="@string/unknown_artist"
 		android:layout_marginLeft="10dip"
 		android:layout_marginRight="10dip"
 		android:layout_below="@id/song_title"
 		android:textAppearance="?android:attr/textAppearanceMedium" />
 
-	<de.viktorreiser.toolbox.widget.MarqueeTextView
+	<TextView
 		android:id="@+id/song_album"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
+		android:ellipsize="end"
+		android:singleLine="true"
+		android:scrollHorizontally="false"
 		android:text="@string/unknown_album"
 		android:layout_marginLeft="10dip"
 		android:layout_marginRight="10dip"
@@ -257,20 +266,22 @@
 	<ImageView
 		android:id="@+id/cover1"
 		android:src="@drawable/no_cover"
+		android:layout_centerHorizontal="true"
 		android:layout_margin="10dip"
 		android:layout_below="@id/song_album"
 		android:layout_above="@id/seek_position"
-		android:layout_width="fill_parent"
-		android:layout_height="fill_parent"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
 		android:scaleType="fitCenter" />
 
 	<ImageView
 		android:id="@+id/cover2"
+		android:layout_centerHorizontal="true"
 		android:layout_margin="10dip"
 		android:layout_below="@id/song_album"
 		android:layout_above="@id/seek_position"
-		android:layout_width="fill_parent"
-		android:layout_height="fill_parent"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
 		android:scaleType="fitCenter" />
 
 </RelativeLayout>

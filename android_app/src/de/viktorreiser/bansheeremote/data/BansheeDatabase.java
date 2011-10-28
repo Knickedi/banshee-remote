@@ -4,10 +4,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
-import de.viktorreiser.toolbox.util.L;
-
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import de.viktorreiser.toolbox.util.L;
 
 /**
  * This class handles the synchronized banshee database(s).
@@ -262,6 +261,42 @@ public class BansheeDatabase {
 			cursor.close();
 			return null;
 		}
+	}
+	
+	public static int getArtistCount() {
+		if (!isOpen()) {
+			return 0;
+		}
+		
+		Cursor cursor = mBansheeDatabase.rawQuery(
+				"SELECT COUNT(*) FROM " + DB.TABLE_ARTISTS, null);
+		
+		int count = 0;
+		
+		if (cursor.moveToFirst()) {
+			count = cursor.getInt(0);
+		}
+		
+		cursor.close();
+		return count;
+	}
+	
+	public static int getAlbumCount() {
+		if (!isOpen()) {
+			return 0;
+		}
+		
+		Cursor cursor = mBansheeDatabase.rawQuery(
+				"SELECT COUNT(*) FROM " + DB.TABLE_ALBUM, null);
+		
+		int count = 0;
+		
+		if (cursor.moveToFirst()) {
+			count = cursor.getInt(0);
+		}
+		
+		cursor.close();
+		return count;
 	}
 	
 	// PRIVATE ====================================================================================

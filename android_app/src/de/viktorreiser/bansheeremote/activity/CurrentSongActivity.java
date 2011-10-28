@@ -10,6 +10,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils.TruncateAt;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -168,7 +169,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	}
 	
 	static void resetConnection() {
-		if (mInstance != null) {
+		if (mInstance != null && mInstance.mConnection != null) {
 			mInstance.mConnection.close();
 			mInstance.mConnection = null;
 		}
@@ -581,8 +582,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			@Override
 			public void onClick(View v) {
 				if (BansheeDatabase.isOpen()) {
-					startActivityForResult(new Intent(CurrentSongActivity.this,
-							ArtistActivity.class), REQUEST_OTHER_ACTIVITY);
+					// FIXME uncommented for commit
+//					startActivityForResult(new Intent(CurrentSongActivity.this,
+//							ArtistActivity.class), REQUEST_OTHER_ACTIVITY);
 				} else {
 					Toast.makeText(CurrentSongActivity.this, R.string.need_sync_db,
 							Toast.LENGTH_SHORT).show();
@@ -709,6 +711,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				
 				if (App.isDisplaySongGenre() && !mData.genre.equals("")) {
 					song += " [" + mData.genre + "]";
+					mAlbum.setEllipsize(TruncateAt.MIDDLE);
+				} else {
+					mAlbum.setEllipsize(TruncateAt.END);
 				}
 				
 				mSong.setText(song);
@@ -734,6 +739,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				
 				if (App.isDisplayAlbumYear() && mData.year >= 1000) {
 					album += " [" + mData.year + "]";
+					mAlbum.setEllipsize(TruncateAt.MIDDLE);
+				} else {
+					mAlbum.setEllipsize(TruncateAt.END);
 				}
 				
 				mAlbum.setText(album);

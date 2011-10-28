@@ -461,28 +461,34 @@ public class BansheeServer {
 							+ " ADD COLUMN " + DB.PASSWORD_ID + " INTEGER NOT NULL DEFAULT 0;");
 					
 					break;
-					
+				
 				case 3:
 					// nothing to do - a fresh creation was just lacking the password ID!
 					break;
 				}
 				
 				db.setTransactionSuccessful();
-			} finally {
+			} catch (Exception e) {
 				// failed with upgrade - just create a fresh one and remove everything else
 				db.endTransaction();
 				
+				
 				try {
 					db.execSQL("DROP TABLE " + DB.TABLE_NAME + ";");
-				} catch (Exception e) {
+				} catch (Exception e2) {
 				}
 				
 				try {
 					db.execSQL("DROP TABLE tmp" + DB.TABLE_NAME + ";");
-				} catch (Exception e) {
+				} catch (Exception e2) {
 				}
 				
 				onCreate(db);
+				
+			} finally {
+				if (db.inTransaction()) {
+					db.endTransaction();
+				}
 			}
 		}
 	}

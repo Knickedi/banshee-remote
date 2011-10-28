@@ -34,6 +34,7 @@
 	<string name="quick_add">Add selection to playlist</string>
 	<string name="quick_remove">Remove selection from playlist</string>
 	<string name="quick_enqueue">Add selection to playing queue</string>
+	<string name="all_artists">All artists</string>
 	
 	<!-- settings -->
 	
