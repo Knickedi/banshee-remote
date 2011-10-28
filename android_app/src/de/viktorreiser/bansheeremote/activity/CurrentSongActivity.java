@@ -582,9 +582,8 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			@Override
 			public void onClick(View v) {
 				if (BansheeDatabase.isOpen()) {
-					// FIXME uncommented for commit
-//					startActivityForResult(new Intent(CurrentSongActivity.this,
-//							ArtistActivity.class), REQUEST_OTHER_ACTIVITY);
+					startActivityForResult(new Intent(CurrentSongActivity.this,
+							ArtistActivity.class), REQUEST_OTHER_ACTIVITY);
 				} else {
 					Toast.makeText(CurrentSongActivity.this, R.string.need_sync_db,
 							Toast.LENGTH_SHORT).show();
@@ -725,8 +724,6 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				} else {
 					mArtist.setText(mData.artist);
 				}
-				
-				mArtist.setSelected(true);
 			}
 			
 			if (force || !mData.album.equals(mPreviousData.album)

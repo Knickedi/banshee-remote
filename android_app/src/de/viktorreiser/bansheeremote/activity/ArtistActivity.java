@@ -1,5 +1,6 @@
 package de.viktorreiser.bansheeremote.activity;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import android.app.Activity;
@@ -12,6 +13,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import de.viktorreiser.bansheeremote.R;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase;
+import de.viktorreiser.bansheeremote.data.BansheeDatabase.ArtistInfo;
 
 /**
  * Browse artists from synchronized database.
@@ -39,20 +41,41 @@ public class ArtistActivity extends Activity {
 		
 		Object [] data = (Object []) getLastNonConfigurationInstance();
 		
-		if (data == null) {
+		if (data != null) {
 			mArtistCount = (Integer) data[0];
+			mArtistEntries = (List<ArtistEntry>) data[1];
 		} else {
-			mArtistCount = BansheeDatabase.getArtistCount();
+			List<ArtistInfo> artistInfo = BansheeDatabase.getArtistInfo();
+			mArtistEntries = new ArrayList<ArtistEntry>();
+			mArtistCount = artistInfo.size();
 			
+			for (int i = 0; i < mArtistCount; i++) {
+				ArtistInfo info = artistInfo.get(i);
+				
+				ArtistEntry artist = new ArtistEntry();
+				artist.info = info;
+				artist.isAlbum = false;
+				mArtistEntries.add(artist);
+				
+				for (int j = 0; j < info.albumCount; j++) {
+					ArtistEntry album = new ArtistEntry();
+					album.info = info;
+					album.isAlbum = true;
+					mArtistEntries.add(album);
+				}
+			}
 		}
 		
 		setContentView(R.layout.artist);
+		
+		((TextView) findViewById(R.id.artist_title)).setText(
+				getString(R.string.all_artists) + " (" + mArtistCount + ")");
 		((ListView) findViewById(R.id.list)).setAdapter(new ArtistAdapter());
 	}
 	
 	@Override
 	public Object onRetainNonConfigurationInstance() {
-		return new Object [] {mArtistCount};
+		return new Object [] {mArtistCount, mArtistEntries};
 	}
 
 	@Override
@@ -63,7 +86,8 @@ public class ArtistActivity extends Activity {
 	// PRIVATE ====================================================================================
 	
 	private class ArtistEntry {
-		
+		public ArtistInfo info;
+		public boolean isAlbum = false;
 	}
 	
 	private static class ViewHolder {
@@ -75,7 +99,7 @@ public class ArtistActivity extends Activity {
 
 		@Override
 		public int getItemViewType(int position) {
-			return 0;//mArtists.get(position) instanceof ExtendedArtistInfo ? 1 : 0;
+			return mArtistEntries.get(position).isAlbum ? 1 : 0;
 		}
 		
 		@Override
@@ -85,7 +109,7 @@ public class ArtistActivity extends Activity {
 		
 		@Override
 		public int getCount() {
-			return 0;//mArtists.size();
+			return mArtistEntries.size();
 		}
 
 		@Override
@@ -111,15 +135,17 @@ public class ArtistActivity extends Activity {
 			}
 			
 			ViewHolder holder = (ViewHolder) convertView.getTag();
-//			ArtistInfo info = mArtists.get(position);
-//			
-//			if (info != null) {
-//				holder.title.setText(info.artistName);
-//				holder.count.setText("(" + info.trackCount + ")");
-//			} else {
-//				holder.title.setText("bla");
-//				holder.count.setText("(F)");
-//			}
+			
+			
+			ArtistEntry entry = mArtistEntries.get(position);
+			
+			if (entry.isAlbum) {
+				holder.title.setText("Album name");
+				holder.count.setText("(-)");
+			} else {
+				holder.title.setText(entry.info.name);
+				holder.count.setText("(" + entry.info.trackCount + ")");
+			}
 			
 			return convertView;
 		}

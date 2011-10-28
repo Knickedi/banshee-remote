@@ -3,6 +3,8 @@ package de.viktorreiser.bansheeremote.data;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -38,6 +40,29 @@ public class BansheeDatabase {
 		public int year;
 		public long totalTime;
 		public int trackNumber;
+		public String artId;
+	}
+	
+	/**
+	 * Artist data returned by a database request.
+	 * 
+	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+	 */
+	public static class ArtistInfo {
+		public long id;
+		public String name;
+		public int trackCount;
+		public int albumCount;
+	}
+	
+	/**
+	 * Album data returned by a database request.
+	 * 
+	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+	 */
+	public static class AlbumInfo {
+		public long id;
+		public String title;
 		public String artId;
 	}
 	
@@ -236,8 +261,8 @@ public class BansheeDatabase {
 				+ ", t." + DB.TRACK_NUMBER
 				+ " FROM " + DB.TABLE_TRACKS + " AS t"
 				+ " JOIN " + DB.TABLE_ARTISTS + " AS r, " + DB.TABLE_ALBUM + " AS l"
-				+ " ON t." + DB.ARTIST_ID + "=r." + DB.ID
-				+ " AND t." + DB.ALBUM_ID + "=l." + DB.ID
+				+ " ON r." + DB.ID + "=t." + DB.ARTIST_ID
+				+ " AND l." + DB.ID + "=t." + DB.ALBUM_ID
 				+ " WHERE t." + DB.ID + "=" + id, null);
 		
 		if (cursor.moveToFirst()) {
@@ -263,40 +288,35 @@ public class BansheeDatabase {
 		}
 	}
 	
-	public static int getArtistCount() {
+	public static List<ArtistInfo> getArtistInfo() {
 		if (!isOpen()) {
-			return 0;
+			return null;
 		}
 		
-		Cursor cursor = mBansheeDatabase.rawQuery(
-				"SELECT COUNT(*) FROM " + DB.TABLE_ARTISTS, null);
+		List<ArtistInfo> artistInfo = new ArrayList<ArtistInfo>();
 		
-		int count = 0;
+		Cursor cursor = mBansheeDatabase.rawQuery(""
+				+ "SELECT a." + DB.ID + ",a." + DB.NAME
+				+ ", COUNT(*), COUNT(DISTINCT " + DB.ALBUM_ID + ")"
+				+ " FROM " + DB.TABLE_TRACKS + " AS t"
+				+ " JOIN " + DB.TABLE_ARTISTS + " AS a"
+				+ " ON a." + DB.ID + "=t."+ DB.ARTIST_ID
+				+ " GROUP BY t." + DB.ARTIST_ID
+				+ " ORDER BY a." + DB.NAME,
+				null);
 		
-		if (cursor.moveToFirst()) {
-			count = cursor.getInt(0);
+		while (cursor.moveToNext()) {
+			ArtistInfo i = new ArtistInfo();
+			i.id = cursor.getLong(0);
+			i.name = cleanString(cursor, 1);
+			i.trackCount = cursor.getInt(2);
+			i.albumCount = cursor.getInt(3);
+			artistInfo.add(i);
 		}
 		
 		cursor.close();
-		return count;
-	}
-	
-	public static int getAlbumCount() {
-		if (!isOpen()) {
-			return 0;
-		}
 		
-		Cursor cursor = mBansheeDatabase.rawQuery(
-				"SELECT COUNT(*) FROM " + DB.TABLE_ALBUM, null);
-		
-		int count = 0;
-		
-		if (cursor.moveToFirst()) {
-			count = cursor.getInt(0);
-		}
-		
-		cursor.close();
-		return count;
+		return artistInfo;
 	}
 	
 	// PRIVATE ====================================================================================
