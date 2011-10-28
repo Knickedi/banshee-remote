@@ -420,7 +420,7 @@ public class BansheeServer {
 	private static class BansheeDbHelper extends SQLiteOpenHelper {
 		
 		public BansheeDbHelper(Context context) {
-			super(context, "bansheeserver.db", null, 3);
+			super(context, "bansheeserver.db", null, 4);
 		}
 		
 		@Override
@@ -431,7 +431,8 @@ public class BansheeServer {
 					+ DB.PORT + " INTEGER NOT NULL,\n"
 					+ DB.SAME_ID + " INTEGER NOT NULL,\n"
 					+ DB.DB_TIMESTAMP + " INTEGER NOT NULL DEFAULT 0,\n"
-					+ DB.DEFAULT + " INTEGER NOT NULL DEFAULT 0\n"
+					+ DB.DEFAULT + " INTEGER NOT NULL DEFAULT 0,\n"
+					+ DB.PASSWORD_ID + " INTEGER NOT NULL DEFAULT 0"
 					+ ");");
 		}
 		
@@ -460,11 +461,28 @@ public class BansheeServer {
 							+ " ADD COLUMN " + DB.PASSWORD_ID + " INTEGER NOT NULL DEFAULT 0;");
 					
 					break;
+					
+				case 3:
+					// nothing to do - a fresh creation was just lacking the password ID!
+					break;
 				}
 				
 				db.setTransactionSuccessful();
 			} finally {
+				// failed with upgrade - just create a fresh one and remove everything else
 				db.endTransaction();
+				
+				try {
+					db.execSQL("DROP TABLE " + DB.TABLE_NAME + ";");
+				} catch (Exception e) {
+				}
+				
+				try {
+					db.execSQL("DROP TABLE tmp" + DB.TABLE_NAME + ";");
+				} catch (Exception e) {
+				}
+				
+				onCreate(db);
 			}
 		}
 	}
