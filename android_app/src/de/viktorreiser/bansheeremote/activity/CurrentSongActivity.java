@@ -595,9 +595,10 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			@Override
 			public void onClick(View v) {
 				if (BansheeDatabase.isOpen()) {
-					startActivityForResult(
-							new Intent(CurrentSongActivity.this, PlaylistOverviewActivity.class),
-							REQUEST_OTHER_ACTIVITY);
+					// FIXME commented for test build
+//					startActivityForResult(
+//							new Intent(CurrentSongActivity.this, PlaylistOverviewActivity.class),
+//							REQUEST_OTHER_ACTIVITY);
 				} else {
 					Toast.makeText(CurrentSongActivity.this, R.string.need_sync_db,
 							Toast.LENGTH_SHORT).show();
