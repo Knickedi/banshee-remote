@@ -1,9 +1,7 @@
 package de.viktorreiser.bansheeremote.activity;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
@@ -56,7 +54,6 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 	private int mPlaylistStart = -1;
 	private int mPlaylistEnd = -1;
 	private boolean mPlaylistRequested;
-	private Set<String> mRequestedCovers = new HashSet<String>();
 	private boolean mDbOutOfDateHintShown = false;
 	private HiddenQuickActionSetup mQuickActionSetup;
 	private int mPlaylistId;
@@ -149,7 +146,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 	@Override
 	public Object onRetainNonConfigurationInstance() {
 		return new Object [] {mOldCommandHandler, mPlaylist, mLoadingDismissed, mPlaylistCount,
-				mPlaylistRequested, mRequestedCovers, mDbOutOfDateHintShown, mPlaylistStart,
+				mPlaylistRequested, mDbOutOfDateHintShown, mPlaylistStart,
 				mPlaylistEnd, mPlaylistId, mPlaylistName};
 	}
 	
@@ -289,12 +286,11 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		mLoadingDismissed = (Boolean) data[2];
 		mPlaylistCount = (Integer) data[3];
 		mPlaylistRequested = (Boolean) data[4];
-		mRequestedCovers = (Set<String>) data[5];
-		mDbOutOfDateHintShown = (Boolean) data[6];
-		mPlaylistStart = (Integer) data[7];
-		mPlaylistEnd = (Integer) data[8];
-		mPlaylistId = (Integer) data[9];
-		mPlaylistName = (String) data[10];
+		mDbOutOfDateHintShown = (Boolean) data[5];
+		mPlaylistStart = (Integer) data[6];
+		mPlaylistEnd = (Integer) data[7];
+		mPlaylistId = (Integer) data[8];
+		mPlaylistName = (String) data[9];
 	}
 	
 	private void setupCommandHandler(boolean intialRequest) {
@@ -599,10 +595,8 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 					} else {
 						holder.cover.setImageResource(R.drawable.no_cover);
 						
-						if ((NetworkStateBroadcast.isWifiConnected()
-								|| App.isMobileNetworkCoverFetch())
-								&& !mRequestedCovers.contains(entry.trackInfo.artId)) {
-							mRequestedCovers.add(entry.trackInfo.artId);
+						if (NetworkStateBroadcast.isWifiConnected()
+								|| App.isMobileNetworkCoverFetch()) {
 							CurrentSongActivity.getConnection().sendCommand(Command.COVER,
 									Command.Cover.encode(entry.trackInfo.artId));
 						}

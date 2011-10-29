@@ -4,6 +4,7 @@
 	<string name="unknown_track">Unknown track</string>
 	<string name="unknown_artist">Unknown artist</string>
 	<string name="unknown_album">Unknown album</string>
+	<string name="no_album">No album</string>
 	<string name="settings">Settings</string>
 	<string name="choose_server">Choose server</string>
 	<string name="new_server">Add new server</string>
