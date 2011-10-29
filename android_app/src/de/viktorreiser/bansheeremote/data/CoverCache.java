@@ -84,6 +84,7 @@ public class CoverCache {
 			
 			try {
 				File file = new File(App.BANSHEE_PATH + id + ".jpg");
+				file.getParentFile().mkdir();
 				file.delete();
 				cover.compress(CompressFormat.JPEG, 80, new FileOutputStream(file));
 			} catch (FileNotFoundException e) {
