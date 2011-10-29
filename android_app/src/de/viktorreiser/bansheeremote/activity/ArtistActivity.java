@@ -132,7 +132,7 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle {
 		switch (command) {
 		case COVER:
 			String artId = Command.Cover.getId(params);
-			Bitmap cover = CoverCache.getCover(artId);
+			Bitmap cover = CoverCache.getThumbnailedCover(artId);
 			
 			if (cover != null) {
 				int childCount = mList.getChildCount();
@@ -240,7 +240,7 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle {
 				holder.count.setText("(" + entry.album.trackCount + ")");
 				
 				if (CoverCache.coverExists(entry.album.artId)) {
-					holder.cover.setImageBitmap(CoverCache.getCover(entry.album.artId));
+					holder.cover.setImageBitmap(CoverCache.getThumbnailedCover(entry.album.artId));
 					holder.cover.setTag(null);
 				} else {
 					holder.cover.setImageResource(R.drawable.no_cover);

@@ -45,7 +45,17 @@ public class CoverCache {
 	 * 
 	 * @return cover as bitmap or {@code null} when there is no cover for given ID
 	 */
-	public static Bitmap getCover(String id) {
+	public static Bitmap getUnscaledCover(String id) {
+		File file = new File(App.BANSHEE_PATH + id + ".jpg");
+		
+		if (file.exists()) {
+			return BitmapFactory.decodeFile(file.getAbsolutePath());
+		} else {
+			return null;
+		}
+	}
+	
+	public static Bitmap getThumbnailedCover(String id) {
 		int hash = id.hashCode();
 		Bitmap cover = mCoverCache.get(hash);
 		
@@ -56,7 +66,24 @@ public class CoverCache {
 		File file = new File(App.BANSHEE_PATH + id + ".jpg");
 		
 		if (file.exists()) {
-			cover = BitmapFactory.decodeFile(file.getAbsolutePath());
+			BitmapFactory.Options o = new BitmapFactory.Options();
+            o.inJustDecodeBounds = true;
+            BitmapFactory.decodeFile(file.getAbsolutePath(), o);
+            
+            int width = o.outWidth;
+            int height = o.outHeight;
+            int required = App.getCacheSize();
+            int scale = 1;
+            
+            while(width / 2 > required || height / 2 > required){
+                width /= 2;
+                height /= 2;
+                scale *= 2;
+            }
+            
+            BitmapFactory.Options o2 = new BitmapFactory.Options();
+            o2.inSampleSize = scale;
+			cover = BitmapFactory.decodeFile(file.getAbsolutePath(), o2);
 			
 			if (cover != null) {
 				mCoverCache.put(hash, cover);
@@ -76,7 +103,7 @@ public class CoverCache {
 	 * 
 	 * @return cover as bitmap or {@code null} if failed to persist or the given data was invalid
 	 */
-	public static Bitmap addCover(String id, byte [] bitmapData) {
+	public static boolean addCover(String id, byte [] bitmapData) {
 		Bitmap cover = BitmapFactory.decodeByteArray(bitmapData, 0, bitmapData.length);
 		
 		if (cover != null) {
@@ -87,13 +114,13 @@ public class CoverCache {
 				file.getParentFile().mkdir();
 				file.delete();
 				cover.compress(CompressFormat.JPEG, 80, new FileOutputStream(file));
+				
+				return true;
 			} catch (FileNotFoundException e) {
 				// too bad, we have a valid cover but failed to persist
-				// return null, the fail is NOT a acceptable behavior
-				cover = null;
 			}
 		}
 		
-		return cover;
+		return false;
 	}
 }

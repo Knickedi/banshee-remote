@@ -169,7 +169,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		
 		case COVER:
 			String artId = Command.Cover.getId(params);
-			Bitmap cover = CoverCache.getCover(artId);
+			Bitmap cover = CoverCache.getThumbnailedCover(artId);
 			
 			if (cover != null) {
 				int childCount = mList.getChildCount();
@@ -590,7 +590,8 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 				
 				if (entry.trackInfo != null) {
 					if (CoverCache.coverExists(entry.trackInfo.artId)) {
-						holder.cover.setImageBitmap(CoverCache.getCover(entry.trackInfo.artId));
+						holder.cover.setImageBitmap(CoverCache.getThumbnailedCover(
+								entry.trackInfo.artId));
 						holder.cover.setTag(null);
 					} else {
 						holder.cover.setImageResource(R.drawable.no_cover);

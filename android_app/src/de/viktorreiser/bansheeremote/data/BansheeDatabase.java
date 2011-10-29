@@ -8,7 +8,6 @@ import java.util.List;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import de.viktorreiser.toolbox.util.L;
 
 /**
  * This class handles the synchronized banshee database(s).
@@ -95,7 +94,6 @@ public class BansheeDatabase {
 		if (!new File(App.BANSHEE_PATH + id + App.DB_EXT).exists()) {
 			return false;
 		} else {
-			L.d(timestamp + " " + server.mDbTimestamp);
 			return timestamp <= server.mDbTimestamp;
 		}
 	}
@@ -301,7 +299,7 @@ public class BansheeDatabase {
 				+ ", COUNT(*), COUNT(DISTINCT " + DB.ALBUM_ID + ")"
 				+ " FROM " + DB.TABLE_TRACKS + " AS t"
 				+ " JOIN " + DB.TABLE_ARTISTS + " AS a"
-				+ " ON a." + DB.ID + "=t."+ DB.ARTIST_ID
+				+ " ON a." + DB.ID + "=t." + DB.ARTIST_ID
 				+ " GROUP BY t." + DB.ARTIST_ID
 				+ " ORDER BY a." + DB.NAME,
 				null);

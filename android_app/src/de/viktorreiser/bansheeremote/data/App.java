@@ -20,7 +20,10 @@ public class App extends Application {
 	
 	// PRIVATE ====================================================================================
 	
+	private static final int CACHE_DIP_SIZE = 40;
+	
 	private static Context mContext;
+	private static int mCacheSize;
 	
 	// PUBLIC =====================================================================================
 	
@@ -201,6 +204,10 @@ public class App extends Application {
 		return setup;
 	}
 	
+	public static int getCacheSize() {
+		return mCacheSize;
+	}
+	
 	// OVERRIDDEN =================================================================================
 	
 	/**
@@ -215,5 +222,7 @@ public class App extends Application {
 		L.setLogLevel(L.LVL_VERBOSE);
 		L.setLogTraceLevel(L.LVL_VERBOSE);
 		L.setLogTraceFormat(true, false, true);
+		
+		mCacheSize = AndroidUtils.dipToPixel(mContext, CACHE_DIP_SIZE);
 	}
 }
