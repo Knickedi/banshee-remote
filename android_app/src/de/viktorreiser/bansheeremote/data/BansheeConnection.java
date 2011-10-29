@@ -1071,6 +1071,10 @@ public class BansheeConnection {
 		private void handleSuccess(final CommandQueue queue, final byte [] result) {
 			logRequest(queue, true, result);
 			
+			if (queue.command == Command.COVER && result != null && result.length > 2) {
+				CoverCache.addCover(Command.Cover.getId(queue.params), result);
+			}
+			
 			mFailCount = 0;
 			
 			mCommandHandler.post(new Runnable() {

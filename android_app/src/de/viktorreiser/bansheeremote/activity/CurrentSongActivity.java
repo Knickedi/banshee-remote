@@ -923,14 +923,11 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		}
 		
 		private void handleCover(byte [] response, byte [] params) {
-			if (response.length < 2) {
+			if (response == null || response.length < 2) {
 				mCoverAnimator.setDefaultCover();
 			} else {
-				String id = Command.Cover.getId(params);
-				CoverCache.addCover(id, response);
-				
 				if (!mActivityPaused) {
-					Bitmap cover = CoverCache.getUnscaledCover(id);
+					Bitmap cover = CoverCache.getUnscaledCover(Command.Cover.getId(params));
 					
 					if (cover == null) {
 						mCoverAnimator.setDefaultCover();
