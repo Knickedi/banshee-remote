@@ -260,8 +260,6 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			if (mCheckTask != null) {
 				// we are still checking a server, keep going
 				mCheckTask.showDialog(this);
-			} else {
-				mCommandHandler.handleCoverStatus();
 			}
 		} else {
 			BansheeServer server = BansheeServer.getDefaultServer();
@@ -307,6 +305,11 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	public void onResume() {
 		super.onResume();
 		mActivityPaused = false;
+		
+		if (mCheckTask == null) {
+			mCoverAnimator.hideImmediately();
+			mCommandHandler.handleCoverStatus();
+		}
 		
 		if (mConnection != null) {
 			mStatusPollHandler.start();
@@ -972,6 +975,13 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		
 		
 		public CoverAnimator() {
+			hideImmediately();
+		}
+		
+		public void hideImmediately() {
+			mmDiscard = true;
+			mmHasCover = false;
+			mmAlpha1 = mmAlpha2 = 0;
 			mCover1.setAlpha(0);
 			mCover2.setAlpha(0);
 		}

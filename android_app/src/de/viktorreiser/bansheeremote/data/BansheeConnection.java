@@ -759,6 +759,11 @@ public class BansheeConnection {
 			throw new NullPointerException();
 		}
 		
+		if (command == Command.COVER && params.length < 2) {
+			L.d("dismissed empty cover request");
+			return;
+		}
+		
 		synchronized (mCommandQueue) {
 			if (!mCommandThread.run) {
 				return;

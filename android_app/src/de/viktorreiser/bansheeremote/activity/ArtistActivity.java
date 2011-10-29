@@ -248,7 +248,7 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle {
 					if (NetworkStateBroadcast.isWifiConnected()
 							|| App.isMobileNetworkCoverFetch()) {
 						CurrentSongActivity.getConnection().sendCommand(Command.COVER,
-								Command.Cover.encode(entry.album.artId));
+								Command.Cover.encode(entry.album.artId), false);
 					}
 					
 					holder.cover.setTag(entry.album.artId);
