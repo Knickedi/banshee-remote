@@ -6,9 +6,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 import android.os.Handler;
 import de.viktorreiser.toolbox.content.NetworkStateBroadcast;
@@ -53,6 +54,7 @@ public class BansheeConnection {
 	private LinkedList<CommandQueue> mCommandQueue = new LinkedList<CommandQueue>();
 	private CommandThread mCommandThread = new CommandThread();
 	private Handler mCommandHandler = new Handler();
+	private Set<String> mPendingCoverRequests = new HashSet<String>();
 	private OnBansheeCommandHandle mHandleCallback;
 	
 	// PUBLIC =====================================================================================
@@ -779,12 +781,20 @@ public class BansheeConnection {
 				
 				// cover commands has less priority
 				if (command != Command.COVER) {
-					for (Iterator<CommandQueue> it = mCommandQueue.iterator(); it.hasNext();) {
-						if (it.next().command != Command.COVER) {
+					for (CommandQueue q : mCommandQueue) {
+						if (q.command != Command.COVER) {
 							break;
 						}
 						
 						i++;
+					}
+				} else {
+					String coverId = Command.Cover.getId(params);
+					
+					if (mPendingCoverRequests.contains(coverId)) {
+						return;
+					} else {
+						mPendingCoverRequests.add(coverId);
 					}
 				}
 				
@@ -1006,6 +1016,10 @@ public class BansheeConnection {
 					} catch (InterruptedException e) {
 					}
 				} else {
+					if (queue.command == Command.COVER) {
+						mPendingCoverRequests.remove(Command.Cover.getId(queue.params));
+					}
+					
 					byte [] result = sendRequest(mServer, queue.command.mCode, queue.params,
 							queue.command.mTimeout
 								* (NetworkStateBroadcast.isMobileConnected() ? 2 : 1));
