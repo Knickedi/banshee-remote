@@ -1021,10 +1021,6 @@ public class BansheeConnection {
 					} catch (InterruptedException e) {
 					}
 				} else {
-					if (queue.command == Command.COVER) {
-						mPendingCoverRequests.remove(Command.Cover.getId(queue.params));
-					}
-					
 					byte [] result = sendRequest(mServer, queue.command.mCode, queue.params,
 							queue.command.mTimeout
 								* (NetworkStateBroadcast.isMobileConnected() ? 2 : 1));
@@ -1033,6 +1029,10 @@ public class BansheeConnection {
 						handleFail(queue);
 					} else {
 						handleSuccess(queue, result);
+					}
+					
+					if (queue.command == Command.COVER && result == null) {
+						mPendingCoverRequests.remove(Command.Cover.getId(queue.params));
 					}
 				}
 			}
