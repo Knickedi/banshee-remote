@@ -40,6 +40,10 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle {
 	private Object [] mAdapterSections;
 	private ListView mList;
 	
+	// PUBLIC =====================================================================================
+	
+	public static final String EXTRA_ARITST_ID = "aid";
+	
 	// OVERRIDDEN =================================================================================
 	
 	@SuppressWarnings("unchecked")
@@ -59,30 +63,24 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle {
 			mArtistEntries = (List<ArtistEntry>) data[1];
 			mAdapterSections = (Object []) data[2];
 		} else {
-			List<ArtistInfo> artistInfo = BansheeDatabase.getArtistInfo();
-			List<String> sections = new LinkedList<String>();
-			mArtistEntries = new ArrayList<ArtistEntry>();
-			mArtistCount = artistInfo.size();
-			
-			for (int i = 0; i < mArtistCount; i++) {
-				ArtistInfo info = artistInfo.get(i);
-				String c = info.name.substring(0, 1).toUpperCase();
+			if (getIntent().hasExtra(EXTRA_ARITST_ID)) {
+				ArtistInfo info = BansheeDatabase.getArtistInfo(
+						getIntent().getLongExtra(EXTRA_ARITST_ID, -1));
+				mArtistCount = 1;
+				mArtistEntries = new ArrayList<ArtistEntry>(info.albumCount + 1);
 				
-				ArtistEntry artist = new ArtistEntry();
-				artist.artist = info;
-				artist.isAlbum = false;
-				mArtistEntries.add(artist);
-				sections.add(c);
+				ArtistEntry e = new ArtistEntry();
+				e.artist = info;
+				mArtistEntries.add(e);
 				
-				for (int j = 0; j < info.albumCount; j++) {
-					ArtistEntry album = new ArtistEntry();
-					album.artist = info;
-					album.isAlbum = true;
-					mArtistEntries.add(album);
-					sections.add(c);
+				for (int i = 0; i < info.albumCount; i++) {
+					e = new ArtistEntry();
+					e.artist = info;
+					e.isAlbum = true;
+					mArtistEntries.add(e);
 				}
-				
-				mAdapterSections = sections.toArray();
+			} else {
+				setupAllArtistsInfo();
 			}
 		}
 		
@@ -101,11 +99,15 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle {
 		setContentView(R.layout.artist);
 		
 		mList = (ListView) findViewById(R.id.list);
-		
-		((TextView) findViewById(R.id.artist_title)).setText(
-				getString(R.string.all_artists) + " (" + mArtistCount + ")");
 		mList.setAdapter(new ArtistAdapter());
-		mList.setFastScrollEnabled(true);
+		
+		if (mArtistCount == 1) {
+			((TextView) findViewById(R.id.artist_title)).setText(R.string.artist);
+		} else {
+			((TextView) findViewById(R.id.artist_title)).setText(
+					getString(R.string.all_artists) + " (" + mArtistCount + ")");
+			mList.setFastScrollEnabled(true);
+		}
 	}
 	
 	@Override
@@ -151,6 +153,35 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle {
 	}
 	
 	// PRIVATE ====================================================================================
+	
+	private void setupAllArtistsInfo() {
+		List<ArtistInfo> artistInfo = BansheeDatabase.getArtistInfo();
+		List<String> sections = new LinkedList<String>();
+		mArtistEntries = new ArrayList<ArtistEntry>();
+		mArtistCount = artistInfo.size();
+		
+		for (int i = 0; i < mArtistCount; i++) {
+			ArtistInfo info = artistInfo.get(i);
+			String c = info.name.substring(0, 1).toUpperCase();
+			
+			ArtistEntry artist = new ArtistEntry();
+			artist.artist = info;
+			artist.isAlbum = false;
+			mArtistEntries.add(artist);
+			sections.add(c);
+			
+			for (int j = 0; j < info.albumCount; j++) {
+				ArtistEntry album = new ArtistEntry();
+				album.artist = info;
+				album.isAlbum = true;
+				mArtistEntries.add(album);
+				sections.add(c);
+			}
+			
+			mAdapterSections = sections.toArray();
+		}
+	}
+	
 	
 	private class ArtistEntry {
 		public ArtistInfo artist;
@@ -221,6 +252,11 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle {
 					
 					while (tmpEntry.isAlbum) {
 						i--;
+						
+						if (i < 0) {
+							break;
+						}
+						
 						tmpEntry = mArtistEntries.get(i);
 					}
 					

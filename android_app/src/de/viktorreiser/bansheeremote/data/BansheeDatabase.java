@@ -318,6 +318,36 @@ public class BansheeDatabase {
 		return artistInfo;
 	}
 	
+	public static ArtistInfo getArtistInfo(long id) {
+		if (!isOpen()) {
+			return null;
+		}
+		
+		Cursor cursor = mBansheeDatabase.rawQuery(""
+				+ "SELECT a." + DB.ID + ",a." + DB.NAME
+				+ ", COUNT(*), COUNT(DISTINCT " + DB.ALBUM_ID + ")"
+				+ " FROM " + DB.TABLE_TRACKS + " AS t"
+				+ " JOIN " + DB.TABLE_ARTISTS + " AS a"
+				+ " ON a." + DB.ID + "=t." + DB.ARTIST_ID
+				+ " WHERE t." + DB.ARTIST_ID + "=" + id
+				+ " GROUP BY t." + DB.ARTIST_ID
+				+ " ORDER BY a." + DB.NAME,
+				null);
+		
+		ArtistInfo aritstInfo = new ArtistInfo();
+		
+		if (cursor.moveToFirst()) {
+			aritstInfo.id = cursor.getLong(0);
+			aritstInfo.name = cleanString(cursor, 1);
+			aritstInfo.trackCount = cursor.getInt(2);
+			aritstInfo.albumCount = cursor.getInt(3);
+		}
+		
+		cursor.close();
+		
+		return aritstInfo;
+	}
+	
 	public static List<AlbumInfo> getAlbumInfoOfArtist(long id) {
 		if (!isOpen()) {
 			return null;

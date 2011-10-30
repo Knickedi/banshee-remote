@@ -30,6 +30,7 @@ public class App extends Application {
 	public static final int QUICK_ACTION_ADD = 1;
 	public static final int QUICK_ACTION_REMOVE = 2;
 	public static final int QUICK_ACTION_ENQUEUE = 3;
+	public static final int QUICK_ACTION_ARTIST = 4;
 	
 	
 	public static final String BANSHEE_PATH = Environment.getExternalStorageDirectory()
@@ -161,8 +162,7 @@ public class App extends Application {
 	 * 
 	 * @return quick action setup
 	 */
-	public static HiddenQuickActionSetup getDefaultHiddenViewSetup(
-			Context context, boolean add, boolean remove) {
+	public static HiddenQuickActionSetup getDefaultHiddenViewSetup(Context context) {
 		HiddenQuickActionSetup setup = new HiddenQuickActionSetup(context);
 		
 		setup.setOpenAnimation(new Interpolator() {
@@ -190,16 +190,6 @@ public class App extends Application {
 		setup.setStopOffset(AndroidUtils.dipToPixel(context, 50));
 		setup.setStickyStart(true);
 		setup.setSwipeOnLongClick(true);
-		
-		setup.addAction(QUICK_ACTION_ENQUEUE, R.string.quick_enqueue, R.drawable.enqueue);
-		
-		if (add) {
-			setup.addAction(QUICK_ACTION_ADD, R.string.quick_add, R.drawable.add);
-		}
-		
-		if (remove) {
-			setup.addAction(QUICK_ACTION_REMOVE, R.string.quick_remove, R.drawable.remove);
-		}
 		
 		return setup;
 	}

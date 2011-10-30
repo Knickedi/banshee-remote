@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
@@ -42,6 +43,8 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		OnQuickActionListener {
 	
 	// PRIVATE ====================================================================================
+	
+	private static final int REQUEST_ACTIVITY = 1;
 	
 	private OnBansheeCommandHandle mOldCommandHandler;
 	private boolean mLoadingDismissed;
@@ -98,9 +101,19 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		mPlaylistPositionText = (TextView) findViewById(R.id.playlist_position);
 		mPositionPopup = new PositionPopup();
 		
-		mQuickActionSetup = App.getDefaultHiddenViewSetup(
-				PlaylistActivity.this, false, mPlaylistId == 1);
+		mQuickActionSetup = App.getDefaultHiddenViewSetup(this);
 		mQuickActionSetup.setOnQuickActionListener(PlaylistActivity.this);
+		
+		mQuickActionSetup.addAction(
+				App.QUICK_ACTION_ENQUEUE, R.string.quick_enqueue, R.drawable.enqueue);
+		
+		if (mPlaylistId == 1) {
+			mQuickActionSetup.addAction(
+					App.QUICK_ACTION_REMOVE, R.string.quick_remove, R.drawable.remove);
+		}
+		
+		mQuickActionSetup.addAction(
+				App.QUICK_ACTION_ARTIST, R.string.quick_artist, R.drawable.artist);
 		
 		mAdapter = new PlaylistAdapter();
 		mList.setAdapter(mAdapter);
@@ -116,6 +129,10 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
+		
+		if (isFinishing()) {
+			finishActivity(REQUEST_ACTIVITY);
+		}
 		
 		if (CurrentSongActivity.getConnection() != null) {
 			CurrentSongActivity.getConnection().updateHandleCallback(mOldCommandHandler);
@@ -277,6 +294,20 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		}
 	}
 	
+	@Override
+	public void onQuickAction(AdapterView<?> parent, View view, int position, int quickActionId) {
+		// TODO implement quick action on playlist
+		switch (quickActionId) {
+		case App.QUICK_ACTION_ARTIST: {
+			Intent intent = new Intent(this, ArtistActivity.class);
+			intent.putExtra(ArtistActivity.EXTRA_ARITST_ID,
+					mPlaylist.get(position).trackInfo.aritstId);
+			startActivityForResult(intent, REQUEST_ACTIVITY);
+			break;
+		}
+		}
+	}
+	
 	// PRIVATE ====================================================================================
 	
 	@SuppressWarnings("unchecked")
@@ -392,11 +423,6 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		public TextView album;
 		public ImageView playing;
 		public TextView loading;
-	}
-	
-	@Override
-	public void onQuickAction(AdapterView<?> parent, View view, int position, int quickActionId) {
-		// TODO implement quick action on playlist
 	}
 	
 	
