@@ -113,7 +113,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		}
 		
 		mQuickActionSetup.addAction(
-				App.QUICK_ACTION_ARTIST, R.string.quick_artist, R.drawable.artist);
+				App.QUICK_ACTION_ARTIST, R.string.quick_artist, R.drawable.quick_artist);
 		
 		mAdapter = new PlaylistAdapter();
 		mList.setAdapter(mAdapter);
