@@ -404,6 +404,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			
 		case 2:
 			if (!mDatabaseSyncRunning) {
+				mDatabaseSyncRunning = true;
 				mConnection.sendCommand(Command.SYNC_DATABASE,
 						Command.SyncDatabase.encodeFileTimestamp());
 			}
@@ -423,6 +424,10 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	 */
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent event) {
+		if (event.getKeyCode() == KeyEvent.KEYCODE_BACK && mDatabaseSyncRunning) {
+			return true;
+		}
+		
 		return handleVolumeKey(event) ? true : super.dispatchKeyEvent(event);
 	}
 	
@@ -572,7 +577,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		findViewById(R.id.browse_songs).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				if (BansheeDatabase.isOpen()) {
+				if (BansheeDatabase.isOpen() && !mDatabaseSyncRunning) {
 					// TODO react on button click
 				} else {
 					Toast.makeText(CurrentSongActivity.this, R.string.need_sync_db,
@@ -584,7 +589,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		findViewById(R.id.browse_artists).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				if (BansheeDatabase.isOpen()) {
+				if (BansheeDatabase.isOpen() && !mDatabaseSyncRunning) {
 					startActivityForResult(new Intent(CurrentSongActivity.this,
 							ArtistActivity.class), REQUEST_OTHER_ACTIVITY);
 				} else {
@@ -597,7 +602,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		findViewById(R.id.playlist).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				if (BansheeDatabase.isOpen()) {
+				if (BansheeDatabase.isOpen() && !mDatabaseSyncRunning) {
 					startActivityForResult(
 							new Intent(CurrentSongActivity.this, PlaylistOverviewActivity.class),
 							REQUEST_OTHER_ACTIVITY);
@@ -611,7 +616,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		findViewById(R.id.browse_albums).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				if (BansheeDatabase.isOpen()) {
+				if (BansheeDatabase.isOpen() && !mDatabaseSyncRunning) {
 					// TODO react on button click
 				} else {
 					Toast.makeText(CurrentSongActivity.this, R.string.need_sync_db,
@@ -886,6 +891,8 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		}
 		
 		private void handleSyncDatabaseFileSize(byte [] response) {
+			mDatabaseSyncRunning = false;
+			
 			if (response == null) {
 				return;
 			}
@@ -901,12 +908,15 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			} else {
 				Toast.makeText(CurrentSongActivity.this, R.string.fetching_sync_db,
 						Toast.LENGTH_SHORT).show();
+				mDatabaseSyncRunning = true;
 				mConnection.sendCommand(Command.SYNC_DATABASE,
 						Command.SyncDatabase.encodeFile());
 			}
 		}
 		
 		private void handleSyncDatabaseFile(byte [] response) {
+			mDatabaseSyncRunning = false;
+			
 			if (response == null || response.length < 2) {
 				Toast.makeText(CurrentSongActivity.this, R.string.error_fetching_sync_db,
 						Toast.LENGTH_LONG).show();
