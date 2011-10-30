@@ -760,7 +760,7 @@ namespace Banshee.RemoteListener
 		#endregion
 		
 		
-		#region Playlist reques helpers
+		#region Playlist request helpers
 		
 		public static Source GetPlaylistSource(int id) {
 			if (id < 2) {

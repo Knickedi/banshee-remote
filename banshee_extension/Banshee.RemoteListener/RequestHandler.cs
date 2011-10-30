@@ -245,6 +245,8 @@ namespace Banshee.RemoteListener
 			case 1: {
 				// requested playlist names
 				Source remotePlaylist = Helper.GetOrCreateRemotePlaylist();
+				((DatabaseSource) remotePlaylist).Reload();
+				
 				ushort count = 0;
 				bool remotePlaylistAdded = false;
 				int index = 4;
@@ -257,8 +259,8 @@ namespace Banshee.RemoteListener
 				//   we just fit it into position where the source enumaration would contain it 
 				foreach (Source s in ServiceManager.SourceManager.Sources) {
 					if (s is ITrackModelSource && s != remotePlaylist) {
-						if (s is SmartPlaylistSource) {
-							((SmartPlaylistSource) s).Reload();
+						if (s is DatabaseSource) {
+							((DatabaseSource) s).Reload();
 						}
 						
 						if (((ITrackModelSource) s).TrackModel.Count > 0) {
