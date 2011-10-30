@@ -1,15 +1,24 @@
 package de.viktorreiser.toolbox.util;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+
 import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.net.ConnectivityManager;
+import android.os.Environment;
+import android.os.StatFs;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.AbsListView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -22,8 +31,26 @@ public class AndroidUtils {
 	
 	// PRIVATE ====================================================================================
 	
+	private static String mSQLiteVersion = null;
+	private static Boolean mSQLiteSupportsFTS3 = null;
+	private static Boolean mSQLiteSupportsFTS4 = null;
+	private static Boolean mSQLiteSupportsForeignKeys = null;
 	private static Rect mStatusBarRect = new Rect();
 	private static int [] mLocation = new int [2];
+	private static Field mFlingEndField = null;
+	private static Method mFlingEndMethod = null;
+	
+	static {
+		try {
+			mFlingEndField = AbsListView.class.getDeclaredField("mFlingRunnable");
+			mFlingEndField.setAccessible(true);
+			mFlingEndMethod = mFlingEndField.getType().getDeclaredMethod("endFling");
+			mFlingEndMethod.setAccessible(true);
+		} catch (Exception e) {
+			// implementation changed - can't do anything here
+			mFlingEndMethod = null;
+		}
+	}
 	
 	// PUBLIC =====================================================================================
 	
@@ -136,6 +163,50 @@ public class AndroidUtils {
 		return toast;
 	}
 	
+	
+	/**
+	 * Get free (unused) space on external storage.<br>
+	 * <br>
+	 * See {@link Environment#getExternalStorageDirectory()}.
+	 * 
+	 * @return free space in kilobytes
+	 */
+	public static int getFreeExteranlStorageSize() {
+		StatFs stats = new StatFs(Environment.getExternalStorageDirectory().getAbsolutePath());
+		int availableBlocks = stats.getAvailableBlocks();
+		int blockSizeInBytes = stats.getBlockSize();
+		
+		return availableBlocks * (blockSizeInBytes / 1024);
+	}
+	
+	/**
+	 * Is device connected to network (WiFi or mobile).<br>
+	 * <br>
+	 * <b>Hint</b>: A connection to WiFi does not guarantee Internet access.
+	 * 
+	 * @param context
+	 * 
+	 * @return {@code true} if device is connected to mobile network or WiFi
+	 */
+	public static boolean isConnected(Context context) {
+		return isWiFiConnected(context) || isMobileNetworkConnected(context);
+	}
+	
+	/**
+	 * Is device connected to WiFi?<br>
+	 * <br>
+	 * <b>Hint</b>: A connection to WiFi does not guarantee Internet access.
+	 * 
+	 * @param context
+	 * 
+	 * @return {@code true} if device is connected to an access point
+	 */
+	public static boolean isWiFiConnected(Context context) {
+		ConnectivityManager cm = (ConnectivityManager) context
+				.getSystemService(Context.CONNECTIVITY_SERVICE);
+		return cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI).isConnected();
+	}
+	
 	/**
 	 * Is device connected to mobile network?
 	 * 
@@ -147,6 +218,76 @@ public class AndroidUtils {
 		ConnectivityManager cm = (ConnectivityManager) context
 				.getSystemService(Context.CONNECTIVITY_SERVICE);
 		return cm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).isConnected();
+	}
+	
+	
+	/**
+	 * Get installed SQLite version as string.
+	 * 
+	 * @return installed SQLite version as string (e.g. {@code "3.5.9"})
+	 */
+	public static String getSQLiteVersion() {
+		if (mSQLiteVersion == null) {
+			SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(":memory:", null);
+			Cursor cursor = db.rawQuery("select sqlite_version() AS sqlite_version", null);
+			
+			mSQLiteVersion = "";
+			
+			while (cursor.moveToNext()) {
+				mSQLiteVersion += "." + cursor.getString(0);
+			}
+			
+			if (mSQLiteVersion.startsWith(".")) {
+				mSQLiteVersion = mSQLiteVersion.substring(1);
+			}
+			
+			cursor.close();
+			db.close();
+		}
+		
+		return mSQLiteVersion;
+	}
+	
+	/**
+	 * Does SQLite support FTS3 (full text search)?
+	 * 
+	 * @return {@code true} if SQLite supports FTS3
+	 */
+	public static boolean doesSQLiteSupportFTS3() {
+		if (mSQLiteSupportsFTS3 == null) {
+			mSQLiteSupportsFTS3 = StringUtils.compareVersion(
+					".", "3.4.0", getSQLiteVersion()) <= 0;
+		}
+		
+		return mSQLiteSupportsFTS3;
+	}
+	
+	/**
+	 * Does SQLite support FTS4 (full text search)?
+	 * 
+	 * @return {@code true} if SQLite supports FTS4
+	 */
+	public static boolean doesSQLiteSupportFTS4() {
+		if (mSQLiteSupportsFTS4 == null) {
+			mSQLiteSupportsFTS4 = StringUtils.compareVersion(
+					".", "3.7.4", getSQLiteVersion()) <= 0;
+		}
+		
+		return mSQLiteSupportsFTS4;
+	}
+	
+	/**
+	 * Does SQLite support foreign keys?
+	 * 
+	 * @return {@code true} if SQLite supports foreign keys
+	 */
+	public static boolean doesSQLiteSupportsForeignKeys() {
+		if (mSQLiteSupportsForeignKeys == null) {
+			mSQLiteSupportsForeignKeys = StringUtils.compareVersion(
+					".", "3.6.19", getSQLiteVersion()) <= 0;
+		}
+		
+		return mSQLiteSupportsForeignKeys;
 	}
 	
 	
@@ -193,9 +334,6 @@ public class AndroidUtils {
 	public static int getTitleBarHeight(View view) {
 		view.getWindowVisibleDisplayFrame(mStatusBarRect);
 		return mStatusBarRect.top;
-		
-//		return getStatusBarHeight(window) - window
-//				.findViewById(Window.ID_ANDROID_CONTENT).getMeasuredHeight();
 	}
 	
 	/**
@@ -251,6 +389,22 @@ public class AndroidUtils {
 		Point point = getScreenLocation(view);
 		point.y -= getContentOffsetFromTop(view);
 		return point;
+	}
+	
+	/**
+	 * Stop fling of list (using reflection).
+	 * 
+	 * @param list
+	 *            list on which fling should be stopped
+	 */
+	public static void stopListFling(ListView list) {
+		if (mFlingEndMethod != null) {
+			try {
+				mFlingEndMethod.invoke(mFlingEndField.get(list));
+			} catch (Exception e) {
+				// implementation changed - can't do anything here - we tried
+			}
+		}
 	}
 	
 	// PRIVATE ====================================================================================

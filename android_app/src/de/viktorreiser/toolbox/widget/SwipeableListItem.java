@@ -90,7 +90,6 @@ public interface SwipeableListItem {
 		/** Flag which locks setup for changes so {@link #checkChangesLock()} will throw. */
 		protected boolean lockChanges = false;
 		
-		
 		/** {@link #setStartOffset(int)} as absolute value (default {@code 50}). */
 		protected int startOffset = 50;
 		
