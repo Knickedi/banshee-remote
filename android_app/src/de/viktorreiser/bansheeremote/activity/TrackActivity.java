@@ -74,7 +74,7 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle {
 		mList.setAdapter(new TrackAdapter());
 		
 		((TextView) findViewById(R.id.track_title)).setText(
-				getString(R.string.all_albums) + " (" + mTrackEntries.size() + ")");
+				getString(R.string.all_tracks) + " (" + mTrackEntries.size() + ")");
 		mList.setFastScrollEnabled(true);
 	}
 	
