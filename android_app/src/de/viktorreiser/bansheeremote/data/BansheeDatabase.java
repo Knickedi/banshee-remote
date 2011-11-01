@@ -28,17 +28,25 @@ public class BansheeDatabase {
 	 * 
 	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
 	 */
-	public static class TrackInfo {
+	public static class SimpleTrackInfo {
 		public long id;
+		public String title;
+	}
+	
+	/**
+	 * Track data returned by a database request.
+	 * 
+	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+	 */
+	public static class FullTrackInfo extends SimpleTrackInfo {
 		public long aritstId;
 		public long albumId;
-		public String title;
+		public int trackNumber;
+		public int year;
+		public String genre;
 		public String artist;
 		public String album;
-		public String genre;
-		public int year;
 		public long totalTime;
-		public int trackNumber;
 		public String artId;
 	}
 	
@@ -258,7 +266,7 @@ public class BansheeDatabase {
 	 * @return track info or {@code null} if no database is open or the given track ID is not found
 	 *         in the database
 	 */
-	public static TrackInfo getTrackInfo(long id) {
+	public static FullTrackInfo getTrackInfo(long id) {
 		if (!isOpen()) {
 			return null;
 		}
@@ -275,7 +283,7 @@ public class BansheeDatabase {
 				+ " WHERE t." + DB.ID + "=" + id, null);
 		
 		if (cursor.moveToFirst()) {
-			TrackInfo info = new TrackInfo();
+			FullTrackInfo info = new FullTrackInfo();
 			
 			info.id = cursor.getLong(0);
 			info.title = cleanString(cursor, 1);
@@ -419,6 +427,32 @@ public class BansheeDatabase {
 			i.trackCount = cursor.getInt(3);
 			i.artistId = cursor.getLong(4);
 			i.artistName = cleanString(cursor, 5);
+			info.add(i);
+		}
+		
+		cursor.close();
+		
+		return info;
+	}
+	
+	public static List<SimpleTrackInfo> getAllTracks() {
+		if (!isOpen()) {
+			return null;
+		}
+		
+		List<SimpleTrackInfo> info = new ArrayList<SimpleTrackInfo>();
+		
+		Cursor cursor = mBansheeDatabase.rawQuery(""
+				+ " SELECT " + DB.ID + "," + DB.TITLE
+				+ " FROM " + DB.TABLE_TRACKS
+				+ " ORDER BY " + DB.TITLE,
+				null);
+		
+		while (cursor.moveToNext()) {
+			SimpleTrackInfo i = new SimpleTrackInfo();
+			i.id = cursor.getLong(0);
+			i.title = cleanString(cursor, 1);
+			
 			info.add(i);
 		}
 		

@@ -29,7 +29,7 @@ import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHand
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Repeat;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Shuffle;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase;
-import de.viktorreiser.bansheeremote.data.BansheeDatabase.TrackInfo;
+import de.viktorreiser.bansheeremote.data.BansheeDatabase.FullTrackInfo;
 import de.viktorreiser.bansheeremote.data.BansheeServer;
 import de.viktorreiser.bansheeremote.data.BansheeServerCheckTask;
 import de.viktorreiser.bansheeremote.data.BansheeServerCheckTask.OnBansheeServerCheck;
@@ -578,7 +578,8 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			@Override
 			public void onClick(View v) {
 				if (BansheeDatabase.isOpen() && !mDatabaseSyncRunning) {
-					// TODO react on button click
+					startActivityForResult(new Intent(CurrentSongActivity.this,
+							TrackActivity.class), REQUEST_OTHER_ACTIVITY);
 				} else {
 					Toast.makeText(CurrentSongActivity.this, R.string.need_sync_db,
 							Toast.LENGTH_SHORT).show();
@@ -836,7 +837,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			updateComplete(false);
 			
 			if (mData.changeFlag != mPreviousData.changeFlag) {
-				TrackInfo info = BansheeDatabase.getTrackInfo(mData.currentSongId);
+				FullTrackInfo info = BansheeDatabase.getTrackInfo(mData.currentSongId);
 				
 				if (info != null) {
 					mData.totalTime = info.totalTime;

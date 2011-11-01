@@ -44,6 +44,11 @@
 			android:theme="@android:style/Theme.NoTitleBar" />
 
 		<activity
+			android:name=".activity.TrackActivity"
+			android:windowSoftInputMode="adjustResize"
+			android:theme="@android:style/Theme.NoTitleBar" />
+		
+		<activity
 			android:name=".activity.PlaylistActivity"
 			android:windowSoftInputMode="adjustResize"
 			android:theme="@android:style/Theme.NoTitleBar" />

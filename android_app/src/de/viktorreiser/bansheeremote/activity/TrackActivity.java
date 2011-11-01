@@ -17,15 +17,16 @@ import de.viktorreiser.bansheeremote.R;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandle;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase;
-import de.viktorreiser.bansheeremote.data.BansheeDatabase.FullAlbumInfo;
+import de.viktorreiser.bansheeremote.data.BansheeDatabase.FullTrackInfo;
+import de.viktorreiser.bansheeremote.data.BansheeDatabase.SimpleTrackInfo;
 import de.viktorreiser.bansheeremote.data.CoverCache;
 
-public class AlbumActivity extends Activity implements OnBansheeCommandHandle {
+public class TrackActivity extends Activity implements OnBansheeCommandHandle {
 	
 	// PRIVATE ====================================================================================
 	
 	private OnBansheeCommandHandle mOldCommandHandler;
-	private List<FullAlbumInfo> mAlbumEntries;
+	private List<SimpleTrackInfo> mTrackEntries;
 	private Object [] mAdapterSections;
 	private ListView mList;
 	
@@ -44,14 +45,14 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle {
 		Object [] data = (Object []) getLastNonConfigurationInstance();
 		
 		if (data != null) {
-			mAlbumEntries = (List<FullAlbumInfo>) data[0];
+			mTrackEntries = (List<SimpleTrackInfo>) data[0];
 			mAdapterSections = (Object []) data[1];
 		} else {
-			mAlbumEntries = BansheeDatabase.getAllAlbums();
-			mAdapterSections = new Object [mAlbumEntries.size()];
+			mTrackEntries = BansheeDatabase.getAllTracks();
+			mAdapterSections = new Object [mTrackEntries.size()];
 			
-			for (int i = 0; i < mAlbumEntries.size(); i++) {
-				mAdapterSections[i] = mAlbumEntries.get(i).title.substring(0, 1).toUpperCase();
+			for (int i = 0; i < mTrackEntries.size(); i++) {
+				mAdapterSections[i] = mTrackEntries.get(i).title.substring(0, 1).toUpperCase();
 			}
 		}
 		
@@ -62,18 +63,18 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle {
 				mOldCommandHandler.onBansheeCommandHandled(command, params, result);
 				
 				if (command != null) {
-					AlbumActivity.this.onBansheeCommandHandled(command, params, result);
+					TrackActivity.this.onBansheeCommandHandled(command, params, result);
 				}
 			}
 		});
 		
-		setContentView(R.layout.album);
+		setContentView(R.layout.track);
 		
 		mList = (ListView) findViewById(R.id.list);
-		mList.setAdapter(new AlbumAdapter());
+		mList.setAdapter(new TrackAdapter());
 		
-		((TextView) findViewById(R.id.album_title)).setText(
-				getString(R.string.all_albums) + " (" + mAlbumEntries.size() + ")");
+		((TextView) findViewById(R.id.track_title)).setText(
+				getString(R.string.all_albums) + " (" + mTrackEntries.size() + ")");
 		mList.setFastScrollEnabled(true);
 	}
 	
@@ -88,14 +89,14 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle {
 	
 	@Override
 	public Object onRetainNonConfigurationInstance() {
-		return new Object [] {mAlbumEntries, mAdapterSections};
+		return new Object [] {mTrackEntries, mAdapterSections};
 	}
 	
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent e) {
 		return CurrentSongActivity.handleKeyEvent(e) ? true : super.dispatchKeyEvent(e);
 	}
-
+	
 	@Override
 	public void onBansheeCommandHandled(Command command, byte [] params, byte [] result) {
 		switch (command) {
@@ -121,49 +122,54 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle {
 	// PRIVATE ====================================================================================
 	
 	private static class ViewHolder {
-		public TextView album;
+		public TextView track;
 		public TextView artist;
-		public TextView count;
 		public ImageView cover;
 	}
 	
-	private class AlbumAdapter extends BaseAdapter implements SectionIndexer {
-
+	private class TrackAdapter extends BaseAdapter implements SectionIndexer {
+		
 		@Override
 		public int getCount() {
-			return mAlbumEntries.size();
+			return mTrackEntries.size();
 		}
-
+		
 		@Override
 		public Object getItem(int position) {
 			return null;
 		}
-
+		
 		@Override
 		public long getItemId(int position) {
 			return 0;
 		}
-
+		
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 			if (convertView == null) {
-				convertView = getLayoutInflater().inflate(R.layout.album_item, null);
+				convertView = getLayoutInflater().inflate(R.layout.track_item, null);
 				
 				ViewHolder holder = new ViewHolder();
-				holder.album = (TextView) convertView.findViewById(R.id.album_title);
+				holder.track = (TextView) convertView.findViewById(R.id.track_title);
 				holder.artist = (TextView) convertView.findViewById(R.id.artist_name);
 				holder.cover = (ImageView) convertView.findViewById(R.id.cover1);
-				holder.count = (TextView) convertView.findViewById(R.id.count);
 				
 				convertView.setTag(holder);
 			}
 			
 			ViewHolder holder = (ViewHolder) convertView.getTag();
-			FullAlbumInfo info = mAlbumEntries.get(position);
+			SimpleTrackInfo si = mTrackEntries.get(position);
+			FullTrackInfo info = null;
 			
-			holder.album.setText(info.title);
-			holder.artist.setText(info.artistName);
-			holder.count.setText("(" + info.trackCount + ")");
+			if (si instanceof FullTrackInfo) {
+				info = (FullTrackInfo) si;
+			} else {
+				info = BansheeDatabase.getTrackInfo(si.id);
+				mTrackEntries.set(position, info);
+			}
+			
+			holder.track.setText(info.title);
+			holder.artist.setText(info.artist);
 			
 			if (CoverCache.coverExists(info.artId)) {
 				holder.cover.setImageBitmap(CoverCache.getThumbnailedCover(info.artId));

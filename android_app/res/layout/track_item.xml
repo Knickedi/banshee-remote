@@ -11,26 +11,16 @@
         android:layout_width="40dip"
         android:src="@drawable/no_cover"
         android:layout_marginRight="10dip"/>
-    
-    <TextView
-        android:id="@+id/count"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_alignParentRight="true"
-        android:text="(12)"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
 
     <TextView
-        android:id="@+id/album_title"
+        android:id="@+id/track_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_toRightOf="@+id/cover1"
-        android:layout_toLeftOf="@+id/count"
         android:ellipsize="end"
         android:singleLine="true"
         android:scrollHorizontally="false"
-        android:text="Album title"
+        android:text="Track title"
         android:textAppearance="?android:attr/textAppearanceMedium" />
     
     <TextView
@@ -38,8 +28,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_toRightOf="@+id/cover1"
-        android:layout_toLeftOf="@+id/count"
-        android:layout_below="@+id/album_title"
+        android:layout_below="@+id/track_title"
         android:ellipsize="end"
         android:singleLine="true"
         android:scrollHorizontally="false"

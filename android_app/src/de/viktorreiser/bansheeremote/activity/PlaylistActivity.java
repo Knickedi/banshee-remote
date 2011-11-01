@@ -27,7 +27,7 @@ import de.viktorreiser.bansheeremote.data.App;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandle;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase;
-import de.viktorreiser.bansheeremote.data.BansheeDatabase.TrackInfo;
+import de.viktorreiser.bansheeremote.data.BansheeDatabase.FullTrackInfo;
 import de.viktorreiser.bansheeremote.data.CoverCache;
 import de.viktorreiser.toolbox.content.NetworkStateBroadcast;
 import de.viktorreiser.toolbox.widget.HiddenQuickActionSetup;
@@ -413,7 +413,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		
 		public long id;
 		public boolean requestedTrackInfo = false;
-		public TrackInfo trackInfo;
+		public FullTrackInfo trackInfo;
 	}
 	
 	private static class ViewHolder {
