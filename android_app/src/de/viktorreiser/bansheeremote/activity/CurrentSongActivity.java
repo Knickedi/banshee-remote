@@ -617,7 +617,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			@Override
 			public void onClick(View v) {
 				if (BansheeDatabase.isOpen() && !mDatabaseSyncRunning) {
-					// TODO react on button click
+					startActivityForResult(
+							new Intent(CurrentSongActivity.this, AlbumActivity.class),
+							REQUEST_OTHER_ACTIVITY);
 				} else {
 					Toast.makeText(CurrentSongActivity.this, R.string.need_sync_db,
 							Toast.LENGTH_SHORT).show();

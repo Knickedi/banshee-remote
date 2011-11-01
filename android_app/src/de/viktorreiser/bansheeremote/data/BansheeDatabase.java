@@ -67,6 +67,16 @@ public class BansheeDatabase {
 	}
 	
 	/**
+	 * Album data returned by a database request.
+	 * 
+	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+	 */
+	public static class FullAlbumInfo extends AlbumInfo {
+		public long artistId;
+		public String artistName;
+	}
+	
+	/**
 	 * Is database up to date?
 	 * 
 	 * @param server
@@ -372,6 +382,43 @@ public class BansheeDatabase {
 			i.title = cleanString(cursor, 1);
 			i.artId = cleanString(cursor, 2);
 			i.trackCount = cursor.getInt(3);
+			info.add(i);
+		}
+		
+		cursor.close();
+		
+		return info;
+	}
+	
+	public static List<FullAlbumInfo> getAllAlbums() {
+		if (!isOpen()) {
+			return null;
+		}
+		
+		List<FullAlbumInfo> info = new ArrayList<FullAlbumInfo>();
+		
+		Cursor cursor = mBansheeDatabase.rawQuery(""
+				+ "SELECT a." + DB.ID + ", a." + DB.TITLE + ", a." + DB.ART_ID
+				+ ", COUNT(a." + DB.ID + "), r." + DB.ID + ", r." + DB.NAME
+				+ " FROM " + DB.TABLE_TRACKS + " AS t"
+				+ " JOIN " + DB.TABLE_ALBUM + " AS a"
+				+ ", " + DB.TABLE_ARTISTS + " AS r"
+				+ " ON a." + DB.ID + "=t." + DB.ALBUM_ID
+				+ " AND a." + DB.TITLE + "!=''"
+				+ " AND r." + DB.ID + "=t." + DB.ARTIST_ID
+				+ " GROUP BY a." + DB.ID + ", a." + DB.TITLE + ", a." + DB.ART_ID
+				+ ", r." + DB.ID + ", r." + DB.NAME
+				+ " ORDER BY a." + DB.TITLE + " ASC;",
+				null);
+		
+		while (cursor.moveToNext()) {
+			FullAlbumInfo i = new FullAlbumInfo();
+			i.id = cursor.getLong(0);
+			i.title = cleanString(cursor, 1);
+			i.artId = cleanString(cursor, 2);
+			i.trackCount = cursor.getInt(3);
+			i.artistId = cursor.getLong(4);
+			i.artistName = cleanString(cursor, 5);
 			info.add(i);
 		}
 		

@@ -37,6 +37,11 @@
 			android:name=".activity.ArtistActivity"
 			android:windowSoftInputMode="adjustResize"
 			android:theme="@android:style/Theme.NoTitleBar" />
+		
+		<activity
+			android:name=".activity.AlbumActivity"
+			android:windowSoftInputMode="adjustResize"
+			android:theme="@android:style/Theme.NoTitleBar" />
 
 		<activity
 			android:name=".activity.PlaylistActivity"
