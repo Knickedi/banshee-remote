@@ -36,6 +36,7 @@ namespace Banshee.RemoteListener
 		
 		#endregion
 		
+		
 		#region Test
 		
 		public static byte [] Test(int readBytes) {
@@ -43,6 +44,7 @@ namespace Banshee.RemoteListener
 		}
 		
 		#endregion
+		
 		
 		#region Player status
 		
@@ -117,6 +119,7 @@ namespace Banshee.RemoteListener
 		
 		#endregion
 		
+		
 		#region Song info
 		
 		public static byte [] SongInfo(int readBytes) {
@@ -165,6 +168,7 @@ namespace Banshee.RemoteListener
 		
 		#endregion
 		
+		
 		#region Sync database
 		
 		public static byte [] SyncDatabase(int readBytes) {
@@ -199,6 +203,7 @@ namespace Banshee.RemoteListener
 		
 		#endregion
 		
+		
 		#region Cover
 		
 		public static byte [] Cover(int readBytes) {
@@ -220,7 +225,7 @@ namespace Banshee.RemoteListener
 			
 			// if cover exists return it
 			if (artId != null) {
-				string coverPath = CoverArtSpec.RootPath + "/" + artId + ".jpg";
+				string coverPath = Path.Combine(CoverArtSpec.RootPath, artId + ".jpg");
 				
 				if (File.Exists(coverPath)) {
 					return File.ReadAllBytes(coverPath);
@@ -231,6 +236,7 @@ namespace Banshee.RemoteListener
 		}
 		
 		#endregion
+		
 		
 		#region Playlist
 		

@@ -22,7 +22,6 @@ namespace Banshee.RemoteListener
 	/// </summary>
 	public static class Helper
 	{
-		
 		#region Attributes
 		
 		/// <summary>
@@ -128,11 +127,8 @@ namespace Banshee.RemoteListener
 		/// </param>
 		public static void HandleRemovedSource(Source s) {
 			if (s.UniqueId == _remotePlaylistId) {
-				string home = Environment.GetEnvironmentVariable("HOME");
-				string path = home + "/.config/banshee-1/banshee_remote_playlist_id";
-				
 				try {
-					File.Delete(path);
+					File.Delete(Paths.Combine(Paths.ApplicationData, "banshee_remote_playlist_id"));
 				} catch {
 					// you never know...
 				}
@@ -315,10 +311,8 @@ namespace Banshee.RemoteListener
 		/// Path to database.
 		/// </returns>
 		public static string DatabasePath(bool compressed) {
-			string home = Environment.GetEnvironmentVariable("HOME");
-			string dbPath = home + "/.config/banshee-1/banshee";
-			
-			return dbPath + (compressed ? "compressed.db" : ".db");
+			return Paths.Combine(Paths.ApplicationData,
+					"banshee" + (compressed ? "compressed.db" : ".db"));
 		}
 		
 		/// <summary>
@@ -328,8 +322,7 @@ namespace Banshee.RemoteListener
 		/// Remote playlist.
 		/// </returns>
 		public static Source GetOrCreateRemotePlaylist() {
-			string home = Environment.GetEnvironmentVariable("HOME");
-			string path = home + "/.config/banshee-1/banshee_remote_playlist_id";
+			string path = Paths.Combine(Paths.ApplicationData, "banshee_remote_playlist_id");
 			
 			if (_remotePlaylistId == null) {
 				if (File.Exists(path)) {

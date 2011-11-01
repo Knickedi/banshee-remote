@@ -142,8 +142,9 @@ namespace Banshee.RemoteListener
 		{
 			int port = (int) _prefs["RemoteControl"]["BansheeRemote"]["remote_control_port"].BoxedValue;
 			
-			if (_listener != null) {
+			try {
 				_listener.Disconnect(false);
+			} catch {
 			}
 			
 			try {
