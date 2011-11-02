@@ -3,6 +3,8 @@ package de.viktorreiser.bansheeremote.activity;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
@@ -156,7 +158,8 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle {
 	
 	private void setupAllArtistsInfo() {
 		List<ArtistInfo> artistInfo = BansheeDatabase.getArtistInfo();
-		List<String> sections = new LinkedList<String>();
+		List<SectionEntry> sections = new LinkedList<SectionEntry>();
+		Set<String> characters = new TreeSet<String>();
 		mArtistEntries = new ArrayList<ArtistEntry>();
 		mArtistCount = artistInfo.size();
 		
@@ -164,18 +167,24 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle {
 			ArtistInfo info = artistInfo.get(i);
 			String c = info.name.substring(0, 1).toUpperCase();
 			
+			if (!characters.contains(c)) {
+				SectionEntry e = new SectionEntry();
+				e.character = c;
+				e.position = mArtistEntries.size();
+				sections.add(e);
+				characters.add(c);
+			}
+			
 			ArtistEntry artist = new ArtistEntry();
 			artist.artist = info;
 			artist.isAlbum = false;
 			mArtistEntries.add(artist);
-			sections.add(c);
 			
 			for (int j = 0; j < info.albumCount; j++) {
 				ArtistEntry album = new ArtistEntry();
 				album.artist = info;
 				album.isAlbum = true;
 				mArtistEntries.add(album);
-				sections.add(c);
 			}
 			
 			mAdapterSections = sections.toArray();
@@ -183,10 +192,20 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle {
 	}
 	
 	
-	private class ArtistEntry {
+	private static class ArtistEntry {
 		public ArtistInfo artist;
 		public boolean isAlbum = false;
 		public AlbumInfo album;
+	}
+	
+	private static class SectionEntry {
+		public String character;
+		public int position;
+		
+		@Override
+		public String toString() {
+			return character;
+		}
 	}
 	
 	private static class ViewHolder {
@@ -304,7 +323,7 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle {
 		
 		@Override
 		public int getPositionForSection(int section) {
-			return section;
+			return ((SectionEntry) mAdapterSections[section]).position;
 		}
 		
 		@Override

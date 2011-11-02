@@ -1,6 +1,9 @@
 package de.viktorreiser.bansheeremote.activity;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
@@ -48,11 +51,22 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle {
 			mAdapterSections = (Object []) data[1];
 		} else {
 			mAlbumEntries = BansheeDatabase.getAllAlbums();
-			mAdapterSections = new Object [mAlbumEntries.size()];
+			List<SectionEntry> sections = new ArrayList<SectionEntry>();
+			Set<String> characters = new TreeSet<String>();
 			
 			for (int i = 0; i < mAlbumEntries.size(); i++) {
-				mAdapterSections[i] = mAlbumEntries.get(i).title.substring(0, 1).toUpperCase();
+				String c = mAlbumEntries.get(i).title.substring(0, 1).toUpperCase();
+				
+				if (!characters.contains(c)) {
+					SectionEntry s = new SectionEntry();
+					s.character = c;
+					s.position = i;
+					sections.add(s);
+					characters.add(c);
+				}
 			}
+
+			mAdapterSections = sections.toArray();
 		}
 		
 		mOldCommandHandler = CurrentSongActivity.getConnection().getHandleCallback();
@@ -127,6 +141,16 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle {
 		public ImageView cover;
 	}
 	
+	private static class SectionEntry {
+		public String character;
+		public int position;
+		
+		@Override
+		public String toString() {
+			return character;
+		}
+	}
+	
 	private class AlbumAdapter extends BaseAdapter implements SectionIndexer {
 
 		@Override
@@ -180,7 +204,7 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle {
 		
 		@Override
 		public int getPositionForSection(int section) {
-			return section;
+			return ((SectionEntry) mAdapterSections[section]).position;
 		}
 		
 		@Override
