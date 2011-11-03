@@ -641,6 +641,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		mConnection = new BansheeConnection(server, mCommandHandler);
 		BansheeDatabase.open(server);
 		mCoverAnimator.setDefaultCover();
+		mDatabaseSyncRunning = false;
 		
 		if (!mActivityPaused) {
 			mStatusPollHandler.start();

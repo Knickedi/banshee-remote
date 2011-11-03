@@ -6,11 +6,14 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -23,9 +26,11 @@ import de.viktorreiser.bansheeremote.data.BansheeDatabase;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase.FullAlbumInfo;
 import de.viktorreiser.bansheeremote.data.CoverCache;
 
-public class AlbumActivity extends Activity implements OnBansheeCommandHandle {
+public class AlbumActivity extends Activity implements OnBansheeCommandHandle, OnItemClickListener {
 	
 	// PRIVATE ====================================================================================
+
+	private static final int REQUEST_ACTIVITY = 1;
 	
 	private OnBansheeCommandHandle mOldCommandHandler;
 	private List<FullAlbumInfo> mAlbumEntries;
@@ -85,6 +90,7 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle {
 		
 		mList = (ListView) findViewById(R.id.list);
 		mList.setAdapter(new AlbumAdapter());
+		mList.setOnItemClickListener(this);
 		
 		((TextView) findViewById(R.id.album_title)).setText(
 				getString(R.string.all_albums) + " (" + mAlbumEntries.size() + ")");
@@ -98,6 +104,10 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle {
 		if (CurrentSongActivity.getConnection() != null) {
 			CurrentSongActivity.getConnection().updateHandleCallback(mOldCommandHandler);
 		}
+		
+		if (isFinishing()) {
+			finishActivity(REQUEST_ACTIVITY);
+		}
 	}
 	
 	@Override
@@ -108,6 +118,14 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle {
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent e) {
 		return CurrentSongActivity.handleKeyEvent(e) ? true : super.dispatchKeyEvent(e);
+	}
+	
+	@Override
+	public void onItemClick(AdapterView<?> a, View v, int p, long id) {
+		Intent intent = new Intent(this, TrackActivity.class);
+		intent.putExtra(TrackActivity.EXTRA_ALBUM_ID, mAlbumEntries.get(p).id);
+		intent.putExtra(TrackActivity.EXTRA_ARTIST_ID, mAlbumEntries.get(p).artistId);
+		startActivityForResult(intent, REQUEST_ACTIVITY);
 	}
 
 	@Override

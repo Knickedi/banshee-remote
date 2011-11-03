@@ -366,6 +366,36 @@ public class BansheeDatabase {
 		return aritstInfo;
 	}
 	
+	public static AlbumInfo getAlbumInfo(long id) {
+		if (!isOpen()) {
+			return null;
+		}
+		
+		AlbumInfo info = new AlbumInfo();
+		
+		Cursor cursor = mBansheeDatabase.rawQuery(""
+				+ "SELECT a." + DB.ID + ", a." + DB.TITLE + ", a." + DB.ART_ID
+				+ ", COUNT(a." + DB.ID + ")"
+				+ " FROM " + DB.TABLE_TRACKS + " AS t"
+				+ " JOIN " + DB.TABLE_ALBUM + " AS a"
+				+ " ON a." + DB.ID + "=t." + DB.ALBUM_ID
+				+ " WHERE t." + DB.ALBUM_ID + "=" + id
+				+ " GROUP BY a." + DB.ID + ", a." + DB.TITLE + ", a." + DB.ART_ID
+				+ " ORDER BY a." + DB.TITLE + " ASC;",
+				null);
+		
+		if (cursor.moveToFirst()) {
+			info.id = cursor.getLong(0);
+			info.title = cleanString(cursor, 1);
+			info.artId = cleanString(cursor, 2);
+			info.trackCount = cursor.getInt(3);
+		}
+		
+		cursor.close();
+		
+		return info;
+	}
+	
 	public static List<AlbumInfo> getAlbumInfoOfArtist(long id) {
 		if (!isOpen()) {
 			return null;
@@ -445,7 +475,7 @@ public class BansheeDatabase {
 		Cursor cursor = mBansheeDatabase.rawQuery(""
 				+ " SELECT " + DB.ID + "," + DB.TITLE
 				+ " FROM " + DB.TABLE_TRACKS
-				+ " ORDER BY " + DB.TITLE,
+				+ " ORDER BY " + DB.TITLE + " ASC",
 				null);
 		
 		while (cursor.moveToNext()) {
@@ -457,6 +487,56 @@ public class BansheeDatabase {
 		}
 		
 		cursor.close();
+		
+		return info;
+	}
+	
+	public static List<SimpleTrackInfo> getTrackInfoForArtist(long id) {
+		if (!isOpen()) {
+			return null;
+		}
+		
+		List<SimpleTrackInfo> info = new ArrayList<SimpleTrackInfo>();
+		
+		Cursor cursor = mBansheeDatabase.rawQuery(""
+				+ " SELECT " + DB.ID + "," + DB.TITLE
+				+ " FROM " + DB.TABLE_TRACKS
+				+ " WHERE " + DB.ARTIST_ID + "=" + id
+				+ " ORDER BY " + DB.TITLE + " ASC",
+				null);
+		
+		while (cursor.moveToNext()) {
+			SimpleTrackInfo i = new SimpleTrackInfo();
+			i.id = cursor.getLong(0);
+			i.title = cleanString(cursor, 1);
+			
+			info.add(i);
+		}
+		
+		return info;
+	}
+	
+	public static List<SimpleTrackInfo> getTrackInfoForAlbum(long id) {
+		if (!isOpen()) {
+			return null;
+		}
+		
+		List<SimpleTrackInfo> info = new ArrayList<SimpleTrackInfo>();
+		
+		Cursor cursor = mBansheeDatabase.rawQuery(""
+				+ " SELECT " + DB.ID + "," + DB.TITLE
+				+ " FROM " + DB.TABLE_TRACKS
+				+ " WHERE " + DB.ALBUM_ID + "=" + id
+				+ " ORDER BY " + DB.TRACK_NUMBER + " ASC",
+				null);
+		
+		while (cursor.moveToNext()) {
+			SimpleTrackInfo i = new SimpleTrackInfo();
+			i.id = cursor.getLong(0);
+			i.title = cleanString(cursor, 1);
+			
+			info.add(i);
+		}
 		
 		return info;
 	}
