@@ -25,12 +25,9 @@
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
             android:layout_toRightOf="@+id/l_icon"
-            android:ellipsize="middle"
             android:paddingTop="10dip"
             android:paddingBottom="10dip"
             android:paddingRight="10dip"
-            android:scrollHorizontally="false"
-            android:singleLine="true"
             android:text="Playlist name"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:textStyle="bold" />

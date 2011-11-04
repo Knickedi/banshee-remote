@@ -29,9 +29,6 @@
             android:layout_alignParentTop="true"
             android:layout_centerVertical="true"
             android:layout_toLeftOf="@id/playing"
-            android:ellipsize="end"
-            android:scrollHorizontally="false"
-            android:singleLine="true"
             android:text="@string/unknown_track"
             android:textAppearance="?android:attr/textAppearanceMedium" />
     </RelativeLayout>

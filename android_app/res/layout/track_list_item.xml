@@ -35,9 +35,6 @@
             android:layout_alignParentTop="true"
             android:layout_toLeftOf="@id/playing"
             android:layout_toRightOf="@id/cover1"
-            android:ellipsize="end"
-            android:scrollHorizontally="false"
-            android:singleLine="true"
             android:text="@string/unknown_track"
             android:textAppearance="?android:attr/textAppearanceMedium" />
 
@@ -48,9 +45,6 @@
             android:layout_below="@id/song_title"
             android:layout_toLeftOf="@id/playing"
             android:layout_toRightOf="@id/cover1"
-            android:ellipsize="end"
-            android:scrollHorizontally="false"
-            android:singleLine="true"
             android:text="@string/unknown_artist" />
 
         <TextView
@@ -60,9 +54,6 @@
             android:layout_below="@id/song_artist"
             android:layout_toLeftOf="@id/playing"
             android:layout_toRightOf="@id/cover1"
-            android:ellipsize="end"
-            android:scrollHorizontally="false"
-            android:singleLine="true"
             android:text="@string/unknown_album" />
     </RelativeLayout>
 

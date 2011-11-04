@@ -27,8 +27,6 @@
         android:layout_height="wrap_content"
         android:layout_toRightOf="@+id/cover1"
         android:layout_toLeftOf="@+id/count"
-        android:ellipsize="end"
-        android:singleLine="true"
         android:scrollHorizontally="false"
         android:text="Album title"
         android:textAppearance="?android:attr/textAppearanceMedium" />
@@ -40,8 +38,6 @@
         android:layout_toRightOf="@+id/cover1"
         android:layout_toLeftOf="@+id/count"
         android:layout_below="@+id/album_title"
-        android:ellipsize="end"
-        android:singleLine="true"
         android:scrollHorizontally="false"
         android:text="Artist name"
         android:textAppearance="?android:attr/textAppearanceSmall" />

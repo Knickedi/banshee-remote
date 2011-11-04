@@ -23,12 +23,10 @@
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
             android:layout_toRightOf="@+id/artist_icon"
-            android:ellipsize="end"
             android:paddingBottom="10dip"
             android:paddingRight="10dip"
             android:paddingTop="10dip"
             android:scrollHorizontally="false"
-            android:singleLine="true"
             android:text="@string/all_artists"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:textStyle="bold" />
