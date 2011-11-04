@@ -11,6 +11,8 @@ import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -25,7 +27,7 @@ import de.viktorreiser.bansheeremote.data.BansheeDatabase.FullTrackInfo;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase.SimpleTrackInfo;
 import de.viktorreiser.bansheeremote.data.CoverCache;
 
-public class TrackActivity extends Activity implements OnBansheeCommandHandle {
+public class TrackActivity extends Activity implements OnBansheeCommandHandle, OnItemClickListener {
 	
 	// PRIVATE ====================================================================================
 	
@@ -108,6 +110,7 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle {
 		
 		mList = (ListView) findViewById(R.id.list);
 		mList.setAdapter(new TrackAdapter());
+		mList.setOnItemClickListener(this);
 		
 		View headerCommon = findViewById(R.id.header_common);
 		View headerArtist = findViewById(R.id.header_artist);
@@ -161,6 +164,12 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle {
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent e) {
 		return CurrentSongActivity.handleKeyEvent(e) ? true : super.dispatchKeyEvent(e);
+	}
+	
+	@Override
+	public void onItemClick(AdapterView<?> a, View v, int p, long id) {
+		CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
+				Command.Playlist.encodePlayTrack(mTrackEntries.get(p).id));
 	}
 	
 	@Override
