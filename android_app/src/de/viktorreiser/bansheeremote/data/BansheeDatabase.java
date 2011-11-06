@@ -244,6 +244,65 @@ public class BansheeDatabase {
 		return i == null ? TrackI.createUnknown() : i;
 	}
 	
+	public static TrackI getUncachedTrackI(long id) {
+		if (!isOpen()) {
+			return null;
+		}
+		
+		if (mOrderedTrackInfo != null) {
+			TrackI i = mTrackInfo.get(id);
+			return i == null ? TrackI.createUnknown() : i;
+		}
+		
+		TrackI i = null;
+		
+		Cursor c = mBansheeDatabase.rawQuery(""
+				+ "SELECT t." + DB.ID + ", t." + DB.ARTIST_ID + ", t." + DB.ALBUM_ID
+				+ ", t." + DB.TITLE + ", t." + DB.TRACK_NUMBER + ", t." + DB.DURATION
+				+ ", t." + DB.YEAR + ", t." + DB.GENRE + ", a." + DB.NAME
+				+ ", l." + DB.TITLE + ", l." + DB.ART_ID
+				+ " FROM " + DB.TABLE_TRACKS + " AS t"
+				+ " JOIN " + DB.TABLE_ARTISTS + " AS a, " + DB.TABLE_ALBUMS + " AS l"
+				+ " ON a." + DB.ID + "=t." + DB.ARTIST_ID
+				+ " AND l." + DB.ID + "=t." + DB.ALBUM_ID
+				+ " WHERE t." + DB.ID + "=" + id,
+				null);
+		
+		if (c.moveToFirst()) {
+			i = new TrackI();
+			
+			String title = cleanString(c, 3);
+			String artist = cleanString(c, 8);
+			String album = cleanString(c, 9);
+			
+			i.id = c.getLong(0);
+			i.artistId = c.getLong(1);
+			i.albumId = c.getLong(2);
+			i.title = "".equals(title) ? App.getContext().getString(R.string.unknown_track) : title;
+			i.trackNumber = cleanInt(c, 4);
+			i.duration = cleanInt(c, 5);
+			i.year = cleanInt(c, 6);
+			i.genre = cleanString(c, 7);
+			
+			i.artist = new ArtistI();
+			i.artist.id = i.artistId;
+			i.artist.name = "".equals(artist)
+					? App.getContext().getString(R.string.unknown_artist) : artist;
+			
+			i.album = new AlbumI();
+			i.album.id = i.albumId;
+			i.album.artistId = i.artistId;
+			i.album.artist = i.artist;
+			i.album.title = "".equals(album)
+					? App.getContext().getString(R.string.unknown_album) : album;
+			i.album.artId = cleanString(c, 10);
+		}
+		
+		c.close();
+		
+		return i == null ? TrackI.createUnknown() : i;
+	}
+	
 	public static AlbumI [] getOrderedAlbumI(long id) {
 		if (!isOpen()) {
 			return null;

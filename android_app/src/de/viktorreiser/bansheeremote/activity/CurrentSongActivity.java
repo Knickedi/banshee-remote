@@ -820,7 +820,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			updateComplete(false);
 			
 			if (mData.changeFlag != mPreviousData.changeFlag) {
-				TrackI info = BansheeDatabase.getTrackI(mData.currentSongId);
+				TrackI info = BansheeDatabase.getUncachedTrackI(mData.currentSongId);
 				
 				if (info != null) {
 					mData.totalTime = info.getDuration();
