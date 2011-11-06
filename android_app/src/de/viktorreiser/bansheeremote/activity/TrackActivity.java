@@ -22,17 +22,21 @@ import de.viktorreiser.bansheeremote.R;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandle;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase;
-import de.viktorreiser.bansheeremote.data.BansheeDatabase.AlbumInfo;
-import de.viktorreiser.bansheeremote.data.BansheeDatabase.FullTrackInfo;
-import de.viktorreiser.bansheeremote.data.BansheeDatabase.SimpleTrackInfo;
+import de.viktorreiser.bansheeremote.data.BansheeDatabase.AlbumI;
+import de.viktorreiser.bansheeremote.data.BansheeDatabase.TrackI;
 import de.viktorreiser.bansheeremote.data.CoverCache;
 
+/**
+ * Browse tracks from synchronized database.
+ * 
+ * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+ */
 public class TrackActivity extends Activity implements OnBansheeCommandHandle, OnItemClickListener {
 	
 	// PRIVATE ====================================================================================
 	
 	private OnBansheeCommandHandle mOldCommandHandler;
-	private List<SimpleTrackInfo> mTrackEntries;
+	private TrackI [] mTrackEntries;
 	private Object [] mAdapterSections;
 	private ListView mList;
 	private long mAlbumId;
@@ -45,7 +49,6 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 	
 	// OVERRIDDEN =================================================================================
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	public void onCreate(Bundle bundle) {
 		super.onCreate(bundle);
@@ -58,7 +61,7 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 		Object [] data = (Object []) getLastNonConfigurationInstance();
 		
 		if (data != null) {
-			mTrackEntries = (List<SimpleTrackInfo>) data[0];
+			mTrackEntries = (TrackI []) data[0];
 			mAdapterSections = (Object []) data[1];
 			mAlbumId = (Long) data[2];
 			mArtistId = (Long) data[3];
@@ -66,20 +69,20 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 			if (getIntent().hasExtra(EXTRA_ALBUM_ID) && getIntent().hasExtra(EXTRA_ARTIST_ID)) {
 				mAlbumId = getIntent().getLongExtra(EXTRA_ALBUM_ID, -1);
 				mArtistId = getIntent().getLongExtra(EXTRA_ARTIST_ID, -1);
-				mTrackEntries = BansheeDatabase.getTrackInfoForAlbum(mAlbumId);
+				mTrackEntries = BansheeDatabase.getOrderedTrackIForAlbum(mAlbumId);
 			} else if (getIntent().hasExtra(EXTRA_ARTIST_ID)) {
 				mArtistId = getIntent().getLongExtra(EXTRA_ARTIST_ID, -1);
-				mTrackEntries = BansheeDatabase.getTrackInfoForArtist(mArtistId);
+				mTrackEntries = BansheeDatabase.getOrderedTrackIForArtist(mArtistId);
 			} else {
-				mTrackEntries = BansheeDatabase.getAllTracks();
+				mTrackEntries = BansheeDatabase.getOrderedTrackI();
 			}
 			
 			if (mAlbumId < 1) {
 				List<SectionEntry> sections = new LinkedList<SectionEntry>();
 				Set<String> characters = new TreeSet<String>();
 				
-				for (int i = 0; i < mTrackEntries.size(); i++) {
-					String c = mTrackEntries.get(i).title.substring(0, 1).toUpperCase();
+				for (int i = 0; i < mTrackEntries.length; i++) {
+					String c = mTrackEntries[i].getTitle().substring(0, 1).toUpperCase();
 					
 					if (!characters.contains(c)) {
 						SectionEntry s = new SectionEntry();
@@ -121,28 +124,28 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 		headerAlbum.setVisibility(mAlbumId > 0 && mArtistId > 0 ? View.VISIBLE : View.GONE);
 		
 		if (mAlbumId > 0 && mArtistId > 0) {
-			String artistName = BansheeDatabase.getArtistInfo(mArtistId).name;
-			AlbumInfo album = BansheeDatabase.getAlbumInfo(mAlbumId);
+			String artistName = BansheeDatabase.getArtistI(mArtistId).getName();
+			AlbumI album = BansheeDatabase.getAlbumI(mAlbumId);
 			
 			((TextView) headerAlbum.findViewById(R.id.artist_name)).setText(artistName);
 			((TextView) headerAlbum.findViewById(R.id.album_title)).setText(
-					album.title + " (" + album.trackCount + ")");
+					album.getTitle() + " (" + album.getTrackCount() + ")");
 			
-			if (CoverCache.coverExists(album.artId)) {
+			if (CoverCache.coverExists(album.getArtId())) {
 				((ImageView) headerAlbum.findViewById(R.id.cover1)).setImageBitmap(
-						CoverCache.getThumbnailedCover(album.artId));
+						CoverCache.getThumbnailedCover(album.getArtId()));
 			}
 		} else if (mArtistId > 0) {
 			((TextView) headerArtist.findViewById(R.id.artist_name)).setText(
-					BansheeDatabase.getArtistInfo(mArtistId).name
-							+ " (" + mTrackEntries.size() + ")");
+					BansheeDatabase.getArtistI(mArtistId).getName()
+							+ " (" + mTrackEntries.length + ")");
 			
-			if (mTrackEntries.size() > 50) {
+			if (mTrackEntries.length > 25) {
 				mList.setFastScrollEnabled(true);
 			}
 		} else {
 			((TextView) headerCommon.findViewById(R.id.track_title)).setText(
-					getString(R.string.all_tracks) + " (" + mTrackEntries.size() + ")");
+					getString(R.string.all_tracks) + " (" + mTrackEntries.length + ")");
 			mList.setFastScrollEnabled(true);
 		}
 	}
@@ -169,7 +172,7 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 	@Override
 	public void onItemClick(AdapterView<?> a, View v, int p, long id) {
 		CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
-				Command.Playlist.encodePlayTrack(mTrackEntries.get(p).id));
+				Command.Playlist.encodePlayTrack(mTrackEntries[p].getId()));
 	}
 	
 	@Override
@@ -226,7 +229,7 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 		
 		@Override
 		public int getCount() {
-			return mTrackEntries.size();
+			return mTrackEntries.length;
 		}
 		
 		@Override
@@ -259,33 +262,26 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 			}
 			
 			ViewHolder holder = (ViewHolder) convertView.getTag();
-			SimpleTrackInfo si = mTrackEntries.get(position);
-			FullTrackInfo info = null;
-			
-			if (si instanceof FullTrackInfo) {
-				info = (FullTrackInfo) si;
-			} else {
-				info = BansheeDatabase.getTrackInfo(si.id);
-				mTrackEntries.set(position, info);
-			}
-			
-			holder.track.setText(info.title);
+			TrackI i = mTrackEntries[position];
+			holder.track.setText(i.getTitle());
 			
 			if (type == 0) {
 				if (mArtistId > 0) {
-					holder.artist.setText(info.album);
+					holder.artist.setText(i.getAlbum().getTitle());
 				} else {
-					holder.artist.setText(info.artist);
+					holder.artist.setText(i.getArtist().getName());
 				}
 				
-				if (CoverCache.coverExists(info.artId)) {
-					holder.cover.setImageBitmap(CoverCache.getThumbnailedCover(info.artId));
+				String artId = i.getAlbum().getArtId();
+				
+				if (CoverCache.coverExists(artId)) {
+					holder.cover.setImageBitmap(CoverCache.getThumbnailedCover(artId));
 					holder.cover.setTag(null);
 				} else {
 					CurrentSongActivity.getConnection().sendCommand(
-							Command.COVER, Command.Cover.encode(info.artId), false);
+							Command.COVER, Command.Cover.encode(artId), false);
 					holder.cover.setImageResource(R.drawable.no_cover);
-					holder.cover.setTag(info.artId);
+					holder.cover.setTag(artId);
 				}
 			}
 			

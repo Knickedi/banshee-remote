@@ -29,7 +29,7 @@ import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHand
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Repeat;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Shuffle;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase;
-import de.viktorreiser.bansheeremote.data.BansheeDatabase.FullTrackInfo;
+import de.viktorreiser.bansheeremote.data.BansheeDatabase.TrackI;
 import de.viktorreiser.bansheeremote.data.BansheeServer;
 import de.viktorreiser.bansheeremote.data.BansheeServerCheckTask;
 import de.viktorreiser.bansheeremote.data.BansheeServerCheckTask.OnBansheeServerCheck;
@@ -54,14 +54,14 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	 * 
 	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
 	 */
-	class BansheeData {
+	static class BansheeData {
 		boolean playing = false;
 		int volume = -1;
 		Shuffle shuffle = Shuffle.UNKNOWN;
 		Repeat repeat = Repeat.UNKNOWN;
-		String song = "";
-		String artist = "";
-		String album = "";
+		String song = App.getContext().getString(R.string.unknown_track);
+		String artist = App.getContext().getString(R.string.unknown_artist);
+		String album = App.getContext().getString(R.string.unknown_album);
 		String genre = "";
 		int year = 0;
 		String artId = "";
@@ -714,46 +714,28 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		public void updateSongData(boolean force) {
 			if (force || !mData.song.equals(mPreviousData.song)
 					|| (App.isDisplaySongGenre() && !mData.genre.equals(mPreviousData.genre))) {
-				String song = mData.song;
-				
-				if (song.equals("")) {
-					song = getString(R.string.unknown_track);
-				}
-				
 				if (App.isDisplaySongGenre() && !mData.genre.equals("")) {
-					song += " [" + mData.genre + "]";
 					mAlbum.setEllipsize(TruncateAt.MIDDLE);
+					mSong.setText(mData.song + " [" + mData.genre + "]");
 				} else {
 					mAlbum.setEllipsize(TruncateAt.END);
+					mSong.setText(mData.song);
 				}
-				
-				mSong.setText(song);
 			}
 			
 			if (force || !mData.artist.equals(mPreviousData.artist)) {
-				if (mData.artist.equals("")) {
-					mArtist.setText(R.string.unknown_artist);
-				} else {
-					mArtist.setText(mData.artist);
-				}
+				mArtist.setText(mData.artist);
 			}
 			
 			if (force || !mData.album.equals(mPreviousData.album)
 					|| (App.isDisplayAlbumYear() && mData.year != mPreviousData.year)) {
-				String album = mData.album;
-				
-				if (album.equals("")) {
-					album = getString(R.string.unknown_album);
-				}
-				
 				if (App.isDisplayAlbumYear() && mData.year >= 1000) {
-					album += " [" + mData.year + "]";
 					mAlbum.setEllipsize(TruncateAt.MIDDLE);
+					mAlbum.setText(mData.album + " [" + mData.year + "]");
 				} else {
 					mAlbum.setEllipsize(TruncateAt.END);
+					mAlbum.setText(mData.album);
 				}
-				
-				mAlbum.setText(album);
 			}
 		}
 		
@@ -838,16 +820,16 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			updateComplete(false);
 			
 			if (mData.changeFlag != mPreviousData.changeFlag) {
-				FullTrackInfo info = BansheeDatabase.getTrackInfo(mData.currentSongId);
+				TrackI info = BansheeDatabase.getTrackI(mData.currentSongId);
 				
 				if (info != null) {
-					mData.totalTime = info.totalTime;
-					mData.song = info.title;
-					mData.artist = info.artist;
-					mData.album = info.album;
-					mData.genre = info.genre;
-					mData.year = info.year;
-					mData.artId = info.artId;
+					mData.totalTime = info.getDuration();
+					mData.song = info.getTitle();
+					mData.artist = info.getArtist().getName();
+					mData.album = info.getAlbum().getTitle();
+					mData.genre = info.getGenre();
+					mData.year = info.getYear();
+					mData.artId = info.getAlbum().getArtId();
 					updateComplete(false);
 					handleCoverStatus();
 				} else if (mData.currentSongId > 0) {
@@ -867,8 +849,10 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			if (d != null) {
 				mData.totalTime = (Long) d[0];
 				mData.song = (String) d[1];
-				mData.artist = (String) d[2];
-				mData.album = (String) d[3];
+				mData.artist = "".equals((String) d[2])
+						? App.getContext().getString(R.string.unknown_artist) : (String) d[2];
+				mData.album = "".equals((String) d[3])
+						? App.getContext().getString(R.string.unknown_album) : (String) d[3];
 				mData.genre = (String) d[4];
 				mData.year = (Integer) d[5];
 				mData.artId = (String) d[6];
@@ -937,16 +921,20 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		}
 		
 		private void handleCover(byte [] response, byte [] params) {
-			if (response == null || response.length < 2) {
-				mCoverAnimator.setDefaultCover();
-			} else {
-				if (!mActivityPaused) {
-					Bitmap cover = CoverCache.getUnscaledCover(Command.Cover.getId(params));
-					
-					if (cover == null) {
-						mCoverAnimator.setDefaultCover();
-					} else {
-						mCoverAnimator.setCover(cover);
+			String artId = Command.Cover.getId(params);
+			
+			if (artId.equals(mData.artId)) {
+				if (response == null || response.length < 2) {
+					mCoverAnimator.setDefaultCover();
+				} else {
+					if (!mActivityPaused) {
+						Bitmap cover = CoverCache.getUnscaledCover(artId);
+						
+						if (cover == null) {
+							mCoverAnimator.setDefaultCover();
+						} else {
+							mCoverAnimator.setCover(cover);
+						}
 					}
 				}
 			}

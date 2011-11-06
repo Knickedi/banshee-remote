@@ -14,19 +14,19 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
-import android.widget.AdapterView.OnItemClickListener;
 import de.viktorreiser.bansheeremote.R;
 import de.viktorreiser.bansheeremote.data.App;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandle;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase;
-import de.viktorreiser.bansheeremote.data.BansheeDatabase.AlbumInfo;
-import de.viktorreiser.bansheeremote.data.BansheeDatabase.ArtistInfo;
+import de.viktorreiser.bansheeremote.data.BansheeDatabase.AlbumI;
+import de.viktorreiser.bansheeremote.data.BansheeDatabase.ArtistI;
 import de.viktorreiser.bansheeremote.data.CoverCache;
 import de.viktorreiser.toolbox.content.NetworkStateBroadcast;
 
@@ -71,16 +71,16 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle, 
 			mAdapterSections = (Object []) data[2];
 		} else {
 			if (getIntent().hasExtra(EXTRA_ARITST_ID)) {
-				ArtistInfo info = BansheeDatabase.getArtistInfo(
+				ArtistI info = BansheeDatabase.getArtistI(
 						getIntent().getLongExtra(EXTRA_ARITST_ID, -1));
 				mArtistCount = 1;
-				mArtistEntries = new ArrayList<ArtistEntry>(info.albumCount + 1);
+				mArtistEntries = new ArrayList<ArtistEntry>(info.getAlbumCount() + 1);
 				
 				ArtistEntry e = new ArtistEntry();
 				e.artist = info;
 				mArtistEntries.add(e);
 				
-				for (int i = 0; i < info.albumCount; i++) {
+				for (int i = 0; i < info.getAlbumCount(); i++) {
 					e = new ArtistEntry();
 					e.artist = info;
 					e.isAlbum = true;
@@ -147,10 +147,10 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle, 
 		Intent intent = new Intent(this, TrackActivity.class);
 		
 		if (e.isAlbum) {
-			intent.putExtra(TrackActivity.EXTRA_ALBUM_ID, e.album.id);
+			intent.putExtra(TrackActivity.EXTRA_ALBUM_ID, e.album.getId());
 		}
 		
-		intent.putExtra(TrackActivity.EXTRA_ARTIST_ID, e.artist.id);
+		intent.putExtra(TrackActivity.EXTRA_ARTIST_ID, e.artist.getId());
 		startActivityForResult(intent, REQUEST_ACTIVITY);
 	}
 	
@@ -180,15 +180,14 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle, 
 	// PRIVATE ====================================================================================
 	
 	private void setupAllArtistsInfo() {
-		List<ArtistInfo> artistInfo = BansheeDatabase.getArtistInfo();
+		ArtistI [] artistInfo = BansheeDatabase.getOrderedArtistI();
 		List<SectionEntry> sections = new LinkedList<SectionEntry>();
 		Set<String> characters = new TreeSet<String>();
 		mArtistEntries = new ArrayList<ArtistEntry>();
-		mArtistCount = artistInfo.size();
+		mArtistCount = artistInfo.length;
 		
 		for (int i = 0; i < mArtistCount; i++) {
-			ArtistInfo info = artistInfo.get(i);
-			String c = info.name.substring(0, 1).toUpperCase();
+			String c = artistInfo[i].getName().substring(0, 1).toUpperCase();
 			
 			if (!characters.contains(c)) {
 				SectionEntry e = new SectionEntry();
@@ -199,13 +198,13 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle, 
 			}
 			
 			ArtistEntry artist = new ArtistEntry();
-			artist.artist = info;
+			artist.artist = artistInfo[i];
 			artist.isAlbum = false;
 			mArtistEntries.add(artist);
 			
-			for (int j = 0; j < info.albumCount; j++) {
+			for (int j = 0; j < artistInfo[i].getAlbumCount(); j++) {
 				ArtistEntry album = new ArtistEntry();
-				album.artist = info;
+				album.artist = artistInfo[i];
 				album.isAlbum = true;
 				mArtistEntries.add(album);
 			}
@@ -216,9 +215,9 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle, 
 	
 	
 	private static class ArtistEntry {
-		public ArtistInfo artist;
+		public ArtistI artist;
 		public boolean isAlbum = false;
-		public AlbumInfo album;
+		public AlbumI album;
 	}
 	
 	private static class SectionEntry {
@@ -288,7 +287,7 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle, 
 			
 			if (entry.isAlbum) {
 				if (entry.album == null) {
-					List<AlbumInfo> info = BansheeDatabase.getAlbumInfoOfArtist(entry.artist.id);
+					AlbumI [] info = BansheeDatabase.getOrderedAlbumI(entry.artist.getId());
 					ArtistEntry tmpEntry = entry;
 					int i = position;
 					
@@ -304,21 +303,17 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle, 
 					
 					i++;
 					
-					for (int j = 0; j < info.size(); j++) {
-						mArtistEntries.get(i + j).album = info.get(j);
+					for (int j = 0; j < info.length; j++) {
+						mArtistEntries.get(i + j).album = info[j];
 					}
 				}
 				
-				if (entry.album.title.equals("")) {
-					holder.title.setText(R.string.no_album);
-				} else {
-					holder.title.setText(entry.album.title);
-				}
+				holder.title.setText(entry.album.getTitle());
 				
-				holder.count.setText("(" + entry.album.trackCount + ")");
+				holder.count.setText("(" + entry.album.getTrackCount() + ")");
 				
-				if (CoverCache.coverExists(entry.album.artId)) {
-					holder.cover.setImageBitmap(CoverCache.getThumbnailedCover(entry.album.artId));
+				if (CoverCache.coverExists(entry.album.getArtId())) {
+					holder.cover.setImageBitmap(CoverCache.getThumbnailedCover(entry.album.getArtId()));
 					holder.cover.setTag(null);
 				} else {
 					holder.cover.setImageResource(R.drawable.no_cover);
@@ -326,19 +321,14 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle, 
 					if (NetworkStateBroadcast.isWifiConnected()
 							|| App.isMobileNetworkCoverFetch()) {
 						CurrentSongActivity.getConnection().sendCommand(Command.COVER,
-								Command.Cover.encode(entry.album.artId), false);
+								Command.Cover.encode(entry.album.getArtId()), false);
 					}
 					
-					holder.cover.setTag(entry.album.artId);
+					holder.cover.setTag(entry.album.getArtId());
 				}
 			} else {
-				if (entry.artist.name.equals("")) {
-					holder.title.setText(R.string.unknown_artist);
-				} else {
-					holder.title.setText(entry.artist.name);
-				}
-				
-				holder.count.setText("(" + entry.artist.trackCount + ")");
+				holder.title.setText(entry.artist.getName());
+				holder.count.setText("(" + entry.artist.getTrackCount() + ")");
 			}
 			
 			return convertView;

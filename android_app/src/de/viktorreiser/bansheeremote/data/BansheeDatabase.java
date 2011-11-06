@@ -3,11 +3,18 @@ package de.viktorreiser.bansheeremote.data;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import de.viktorreiser.bansheeremote.R;
 
 /**
  * This class handles the synchronized banshee database(s).
@@ -21,68 +28,429 @@ public class BansheeDatabase {
 	private static SQLiteDatabase mBansheeDatabase;
 	private static BansheeServer mServer;
 	
+	private static Set<TrackI> mOrderedTrackInfo = null;
+	private static Map<Long, TrackI> mTrackInfo = null;
+	private static Set<AlbumI> mOrderedAlbumInfo = null;
+	private static Map<Long, AlbumI> mAlbumInfo = null;
+	private static Set<ArtistI> mOrderedArtistInfo = null;
+	private static Map<Long, ArtistI> mArtistInfo = null;
+	
 	// PUBLIC =====================================================================================
 	
-	/**
-	 * Track data returned by a database request.
-	 * 
-	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
-	 */
-	public static class SimpleTrackInfo {
-		public long id;
-		public String title;
+	public static class TrackI {
+		
+		private static TrackI createUnknown() {
+			TrackI i = new TrackI();
+			i.title = App.getContext().getString(R.string.unknown_track);
+			i.genre = "";
+			return i;
+		}
+		
+		private long id;
+		private long artistId;
+		private long albumId;
+		private String title;
+		private int trackNumber;
+		private int duration;
+		private int year;
+		private String genre;
+		private AlbumI album;
+		private ArtistI artist;
+		
+		public long getId() {
+			return id;
+		}
+		
+		public long getArtistId() {
+			return artistId;
+		}
+		
+		public long getAlbumId() {
+			return albumId;
+		}
+		
+		public String getTitle() {
+			return title;
+		}
+		
+		public int getTrackNumber() {
+			return trackNumber;
+		}
+		
+		public int getDuration() {
+			return duration;
+		}
+		
+		public int getYear() {
+			return year;
+		}
+		
+		public String getGenre() {
+			return genre;
+		}
+		
+		public AlbumI getAlbum() {
+			if (album == null) {
+				album = getAlbumI(albumId);
+			}
+			
+			return album;
+		}
+		
+		public ArtistI getArtist() {
+			if (artist == null) {
+				artist = getArtistI(artistId);
+			}
+			
+			return artist;
+		}
 	}
 	
-	/**
-	 * Track data returned by a database request.
-	 * 
-	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
-	 */
-	public static class FullTrackInfo extends SimpleTrackInfo {
-		public long aritstId;
-		public long albumId;
-		public int trackNumber;
-		public int year;
-		public String genre;
-		public String artist;
-		public String album;
-		public long totalTime;
-		public String artId;
+	public static class AlbumI {
+		
+		private static AlbumI createUnknown() {
+			AlbumI i = new AlbumI();
+			i.title = App.getContext().getString(R.string.all_albums);
+			i.artId = "";
+			return i;
+		}
+		
+		private long id;
+		private long artistId;
+		private String title;
+		private String artId;
+		private int trackCount;
+		private ArtistI artist;
+		
+		public long getId() {
+			return id;
+		}
+		
+		public long getArtistId() {
+			return artistId;
+		}
+		
+		public String getTitle() {
+			return title;
+		}
+		
+		public String getArtId() {
+			return artId;
+		}
+		
+		public int getTrackCount() {
+			return trackCount;
+		}
+		
+		public ArtistI getArtistI() {
+			if (artist == null) {
+				artist = BansheeDatabase.getArtistI(artistId);
+			}
+			
+			return artist;
+		}
 	}
 	
-	/**
-	 * Artist data returned by a database request.
-	 * 
-	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
-	 */
-	public static class ArtistInfo {
-		public long id;
-		public String name;
-		public int trackCount;
-		public int albumCount;
+	public static class ArtistI {
+		
+		private static ArtistI createUnknown() {
+			ArtistI i = new ArtistI();
+			i.name = App.getContext().getString(R.string.unknown_artist);
+			return i;
+		}
+		
+		private long id;
+		private String name;
+		private int trackCount;
+		private int albumCount;
+		
+		public long getId() {
+			return id;
+		}
+		
+		public String getName() {
+			return name;
+		}
+		
+		public int getTrackCount() {
+			return trackCount;
+		}
+		
+		public int getAlbumCount() {
+			return albumCount;
+		}
 	}
 	
-	/**
-	 * Album data returned by a database request.
-	 * 
-	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
-	 */
-	public static class AlbumInfo {
-		public long id;
-		public String title;
-		public String artId;
-		public int trackCount;
+	
+	public static TrackI [] getOrderedTrackI() {
+		if (!isOpen()) {
+			return null;
+		}
+		
+		setupDbCache();
+		
+		return mOrderedTrackInfo.toArray(new TrackI [0]);
 	}
 	
-	/**
-	 * Album data returned by a database request.
-	 * 
-	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
-	 */
-	public static class FullAlbumInfo extends AlbumInfo {
-		public long artistId;
-		public String artistName;
+	public static TrackI [] getOrderedTrackIForAlbum(long id) {
+		if (!isOpen()) {
+			return null;
+		}
+		
+		setupDbCache();
+		
+		List<TrackI> info = new LinkedList<TrackI>();
+		
+		for (TrackI i : mOrderedTrackInfo) {
+			if (i.getAlbumId() == id) {
+				info.add(i);
+			}
+		}
+		
+		Collections.sort(info, new Comparator<TrackI>() {
+			@Override
+			public int compare(TrackI lhs, TrackI rhs) {
+				return lhs.trackNumber - rhs.trackNumber;
+			}
+		});
+		
+		return info.toArray(new TrackI [0]);
 	}
+	
+	public static TrackI [] getOrderedTrackIForArtist(long id) {
+		if (!isOpen()) {
+			return null;
+		}
+		
+		List<TrackI> info = new LinkedList<TrackI>();
+		
+		for (TrackI i : mOrderedTrackInfo) {
+			if (i.getArtistId() == id) {
+				info.add(i);
+			}
+		}
+		
+		return info.toArray(new TrackI [0]);
+	}
+	
+	public static TrackI getTrackI(long id) {
+		if (!isOpen()) {
+			return null;
+		}
+		
+		setupDbCache();
+		
+		TrackI i = mTrackInfo.get(id);
+		return i == null ? TrackI.createUnknown() : i;
+	}
+	
+	public static AlbumI [] getOrderedAlbumI(long id) {
+		if (!isOpen()) {
+			return null;
+		}
+		
+		setupDbCache();
+		List<AlbumI> info = new LinkedList<AlbumI>();
+		
+		for (AlbumI i : mOrderedAlbumInfo) {
+			if (i.getArtistId() == id) {
+				info.add(i);
+			}
+		}
+		
+		return info.toArray(new AlbumI [0]);
+	}
+	
+	public static AlbumI [] getOrderedAlbumI() {
+		if (!isOpen()) {
+			return null;
+		}
+		
+		setupDbCache();
+		
+		return mOrderedAlbumInfo.toArray(new AlbumI [0]);
+	}
+	
+	public static AlbumI getAlbumI(long id) {
+		if (!isOpen()) {
+			return null;
+		}
+		
+		setupDbCache();
+		
+		AlbumI i = mAlbumInfo.get(id);
+		return i == null ? AlbumI.createUnknown() : i;
+	}
+	
+	public static ArtistI [] getOrderedArtistI() {
+		if (!isOpen()) {
+			return null;
+		}
+		
+		setupDbCache();
+		
+		return mOrderedArtistInfo.toArray(new ArtistI [0]);
+	}
+	
+	public static ArtistI getArtistI(long id) {
+		if (!isOpen()) {
+			return null;
+		}
+		
+		setupDbCache();
+		
+		ArtistI i = mArtistInfo.get(id);
+		return i == null ? ArtistI.createUnknown() : i;
+	}
+	
+	public static void setupDbCache() {
+		if (!isOpen() || mOrderedTrackInfo != null) {
+			return;
+		}
+		
+		mTrackInfo = new TreeMap<Long, TrackI>();
+		mAlbumInfo = new TreeMap<Long, AlbumI>();
+		mArtistInfo = new TreeMap<Long, ArtistI>();
+		
+		mOrderedTrackInfo = new TreeSet<TrackI>(new Comparator<TrackI>() {
+			@Override
+			public int compare(TrackI lhs, TrackI rhs) {
+				char lc = lhs.title.charAt(0);
+				char rc = rhs.title.charAt(0);
+				boolean ra = Character.isLetter(rc);
+				int result;
+				
+				if (Character.isLetter(lc)) {
+					result = ra ? lhs.title.compareToIgnoreCase(rhs.title) : 1;
+				} else {
+					result = ra ? -1 : lhs.title.compareToIgnoreCase(rhs.title);
+				}
+				
+				return result == 0 ? -1 : result;
+			}
+		});
+		
+		Cursor c = mBansheeDatabase.query(
+				DB.TABLE_TRACKS,
+				new String [] {
+						DB.ID, DB.ARTIST_ID, DB.ALBUM_ID, DB.TITLE,
+						DB.TRACK_NUMBER, DB.DURATION, DB.YEAR, DB.GENRE},
+				null, null, null, null, null);
+		
+		while (c.moveToNext()) {
+			String title = cleanString(c, 3);
+			TrackI i = new TrackI();
+			
+			i.id = c.getLong(0);
+			i.artistId = c.getLong(1);
+			i.albumId = c.getLong(2);
+			i.title = "".equals(title) ? App.getContext().getString(R.string.unknown_track) : title;
+			i.trackNumber = cleanInt(c, 4);
+			i.duration = cleanInt(c, 5);
+			i.year = cleanInt(c, 6);
+			i.genre = cleanString(c, 7);
+			
+			mOrderedTrackInfo.add(i);
+			mTrackInfo.put(i.id, i);
+		}
+		
+		mOrderedAlbumInfo = new TreeSet<AlbumI>(new Comparator<AlbumI>() {
+			@Override
+			public int compare(AlbumI lhs, AlbumI rhs) {
+				char lc = lhs.title.charAt(0);
+				char rc = rhs.title.charAt(0);
+				boolean ra = Character.isLetter(rc);
+				int result;
+				
+				if (Character.isLetter(lc)) {
+					result = ra ? lhs.title.compareToIgnoreCase(rhs.title) : 1;
+				} else {
+					result = ra ? -1 : lhs.title.compareToIgnoreCase(rhs.title);
+				}
+				
+				return result == 0 ? -1 : result;
+			}
+		});
+		
+		c.close();
+		c = mBansheeDatabase.query(
+				DB.TABLE_ALBUMS,
+				new String [] {DB.ID, DB.ARTIST_ID, DB.TITLE, DB.ART_ID},
+				null, null, null, null, null);
+		
+		while (c.moveToNext()) {
+			String title = cleanString(c, 2);
+			AlbumI i = new AlbumI();
+			
+			i.id = c.getLong(0);
+			i.artistId = c.getLong(1);
+			i.title = "".equals(title) ? App.getContext().getString(R.string.unknown_album) : title;
+			i.artId = cleanString(c, 3);
+			
+			mOrderedAlbumInfo.add(i);
+			mAlbumInfo.put(i.id, i);
+		}
+		
+		mOrderedArtistInfo = new TreeSet<ArtistI>(new Comparator<ArtistI>() {
+			@Override
+			public int compare(ArtistI lhs, ArtistI rhs) {
+				char lc = lhs.name.charAt(0);
+				char rc = rhs.name.charAt(0);
+				boolean ra = Character.isLetter(rc);
+				int result;
+				
+				if (Character.isLetter(lc)) {
+					result = ra ? lhs.name.compareToIgnoreCase(rhs.name) : 1;
+				} else {
+					result = ra ? -1 : lhs.name.compareToIgnoreCase(rhs.name);
+				}
+				
+				return result == 0 ? -1 : result;
+			}
+		});
+		
+		c.close();
+		c = mBansheeDatabase.query(
+				DB.TABLE_ARTISTS,
+				new String [] {DB.ID, DB.NAME},
+				null, null, null, null, null);
+		
+		while (c.moveToNext()) {
+			String title = cleanString(c, 1);
+			ArtistI i = new ArtistI();
+			
+			i.id = c.getLong(0);
+			i.name = "".equals(title) ? App.getContext().getString(R.string.unknown_artist) : title;
+			
+			mOrderedArtistInfo.add(i);
+			mArtistInfo.put(i.id, i);
+		}
+		
+		c.close();
+		c = mBansheeDatabase.query(
+				DB.TABLE_TRACKS,
+				new String [] {DB.ARTIST_ID, "COUNT(*), COUNT(DISTINCT " + DB.ALBUM_ID + ")"},
+				null, null, DB.ARTIST_ID, null, null);
+		
+		while (c.moveToNext()) {
+			ArtistI i = mArtistInfo.get(c.getLong(0));
+			i.trackCount = c.getInt(1);
+			i.albumCount = c.getInt(2);
+		}
+		
+		c.close();
+		c = mBansheeDatabase.query(
+				DB.TABLE_TRACKS,
+				new String [] {DB.ALBUM_ID, "COUNT(" + DB.ID + ")"},
+				null, null, DB.ALBUM_ID, null, null);
+		
+		while (c.moveToNext()) {
+			mAlbumInfo.get(c.getLong(0)).trackCount = c.getInt(1);
+		}
+		
+		c.close();
+	}
+	
 	
 	/**
 	 * Is database up to date?
@@ -246,6 +614,13 @@ public class BansheeDatabase {
 			mBansheeDatabase = null;
 			mServer = null;
 		}
+		
+		mOrderedAlbumInfo = null;
+		mOrderedArtistInfo = null;
+		mOrderedTrackInfo = null;
+		mAlbumInfo = null;
+		mArtistInfo = null;
+		mTrackInfo = null;
 	}
 	
 	/**
@@ -255,290 +630,6 @@ public class BansheeDatabase {
 	 */
 	public static BansheeServer getServer() {
 		return mServer;
-	}
-	
-	/**
-	 * Get track info for a track.
-	 * 
-	 * @param id
-	 *            ID of track
-	 * 
-	 * @return track info or {@code null} if no database is open or the given track ID is not found
-	 *         in the database
-	 */
-	public static FullTrackInfo getTrackInfo(long id) {
-		if (!isOpen()) {
-			return null;
-		}
-		
-		Cursor cursor = mBansheeDatabase.rawQuery(""
-				+ " SELECT t." + DB.ID + ", t." + DB.TITLE + ", t." + DB.DURATION
-				+ ", t." + DB.YEAR + ", t." + DB.GENRE + ", r." + DB.NAME
-				+ ", l." + DB.TITLE + ", l." + DB.ART_ID + ", r." + DB.ID + ", l." + DB.ID
-				+ ", t." + DB.TRACK_NUMBER
-				+ " FROM " + DB.TABLE_TRACKS + " AS t"
-				+ " JOIN " + DB.TABLE_ARTISTS + " AS r, " + DB.TABLE_ALBUM + " AS l"
-				+ " ON r." + DB.ID + "=t." + DB.ARTIST_ID
-				+ " AND l." + DB.ID + "=t." + DB.ALBUM_ID
-				+ " WHERE t." + DB.ID + "=" + id, null);
-		
-		if (cursor.moveToFirst()) {
-			FullTrackInfo info = new FullTrackInfo();
-			
-			info.id = cursor.getLong(0);
-			info.title = cleanString(cursor, 1);
-			info.totalTime = cursor.getLong(2);
-			info.year = cleanInt(cursor, 3);
-			info.genre = cleanString(cursor, 4);
-			info.artist = cleanString(cursor, 5);
-			info.album = cleanString(cursor, 6);
-			info.artId = cleanString(cursor, 7);
-			info.aritstId = cursor.getLong(8);
-			info.albumId = cursor.getLong(9);
-			info.trackNumber = cleanInt(cursor, 10);
-			
-			cursor.close();
-			return info;
-		} else {
-			cursor.close();
-			return null;
-		}
-	}
-	
-	public static List<ArtistInfo> getArtistInfo() {
-		if (!isOpen()) {
-			return null;
-		}
-		
-		List<ArtistInfo> artistInfo = new ArrayList<ArtistInfo>();
-		
-		Cursor cursor = mBansheeDatabase.rawQuery(""
-				+ "SELECT a." + DB.ID + ",a." + DB.NAME
-				+ ", COUNT(*), COUNT(DISTINCT " + DB.ALBUM_ID + ")"
-				+ " FROM " + DB.TABLE_TRACKS + " AS t"
-				+ " JOIN " + DB.TABLE_ARTISTS + " AS a"
-				+ " ON a." + DB.ID + "=t." + DB.ARTIST_ID
-				+ " GROUP BY t." + DB.ARTIST_ID
-				+ " ORDER BY a." + DB.NAME,
-				null);
-		
-		while (cursor.moveToNext()) {
-			ArtistInfo i = new ArtistInfo();
-			i.id = cursor.getLong(0);
-			i.name = cleanString(cursor, 1);
-			i.trackCount = cursor.getInt(2);
-			i.albumCount = cursor.getInt(3);
-			artistInfo.add(i);
-		}
-		
-		cursor.close();
-		
-		return artistInfo;
-	}
-	
-	public static ArtistInfo getArtistInfo(long id) {
-		if (!isOpen()) {
-			return null;
-		}
-		
-		Cursor cursor = mBansheeDatabase.rawQuery(""
-				+ "SELECT a." + DB.ID + ",a." + DB.NAME
-				+ ", COUNT(*), COUNT(DISTINCT " + DB.ALBUM_ID + ")"
-				+ " FROM " + DB.TABLE_TRACKS + " AS t"
-				+ " JOIN " + DB.TABLE_ARTISTS + " AS a"
-				+ " ON a." + DB.ID + "=t." + DB.ARTIST_ID
-				+ " WHERE t." + DB.ARTIST_ID + "=" + id
-				+ " GROUP BY t." + DB.ARTIST_ID
-				+ " ORDER BY a." + DB.NAME,
-				null);
-		
-		ArtistInfo aritstInfo = new ArtistInfo();
-		
-		if (cursor.moveToFirst()) {
-			aritstInfo.id = cursor.getLong(0);
-			aritstInfo.name = cleanString(cursor, 1);
-			aritstInfo.trackCount = cursor.getInt(2);
-			aritstInfo.albumCount = cursor.getInt(3);
-		}
-		
-		cursor.close();
-		
-		return aritstInfo;
-	}
-	
-	public static AlbumInfo getAlbumInfo(long id) {
-		if (!isOpen()) {
-			return null;
-		}
-		
-		AlbumInfo info = new AlbumInfo();
-		
-		Cursor cursor = mBansheeDatabase.rawQuery(""
-				+ "SELECT a." + DB.ID + ", a." + DB.TITLE + ", a." + DB.ART_ID
-				+ ", COUNT(a." + DB.ID + ")"
-				+ " FROM " + DB.TABLE_TRACKS + " AS t"
-				+ " JOIN " + DB.TABLE_ALBUM + " AS a"
-				+ " ON a." + DB.ID + "=t." + DB.ALBUM_ID
-				+ " WHERE t." + DB.ALBUM_ID + "=" + id
-				+ " GROUP BY a." + DB.ID + ", a." + DB.TITLE + ", a." + DB.ART_ID
-				+ " ORDER BY a." + DB.TITLE + " ASC;",
-				null);
-		
-		if (cursor.moveToFirst()) {
-			info.id = cursor.getLong(0);
-			info.title = cleanString(cursor, 1);
-			info.artId = cleanString(cursor, 2);
-			info.trackCount = cursor.getInt(3);
-		}
-		
-		cursor.close();
-		
-		return info;
-	}
-	
-	public static List<AlbumInfo> getAlbumInfoOfArtist(long id) {
-		if (!isOpen()) {
-			return null;
-		}
-		
-		List<AlbumInfo> info = new ArrayList<AlbumInfo>();
-		
-		Cursor cursor = mBansheeDatabase.rawQuery(""
-				+ "SELECT a." + DB.ID + ", a." + DB.TITLE + ", a." + DB.ART_ID
-				+ ", COUNT(a." + DB.ID + ")"
-				+ " FROM " + DB.TABLE_TRACKS + " AS t"
-				+ " JOIN " + DB.TABLE_ALBUM + " AS a"
-				+ " ON a." + DB.ID + "=t." + DB.ALBUM_ID
-				+ " WHERE t." + DB.ARTIST_ID + "=" + id
-				+ " GROUP BY a." + DB.ID + ", a." + DB.TITLE + ", a." + DB.ART_ID
-				+ " ORDER BY a." + DB.TITLE + " ASC;",
-				null);
-		
-		while (cursor.moveToNext()) {
-			AlbumInfo i = new AlbumInfo();
-			i.id = cursor.getLong(0);
-			i.title = cleanString(cursor, 1);
-			i.artId = cleanString(cursor, 2);
-			i.trackCount = cursor.getInt(3);
-			info.add(i);
-		}
-		
-		cursor.close();
-		
-		return info;
-	}
-	
-	public static List<FullAlbumInfo> getAllAlbums() {
-		if (!isOpen()) {
-			return null;
-		}
-		
-		List<FullAlbumInfo> info = new ArrayList<FullAlbumInfo>();
-		
-		Cursor cursor = mBansheeDatabase.rawQuery(""
-				+ "SELECT a." + DB.ID + ", a." + DB.TITLE + ", a." + DB.ART_ID
-				+ ", COUNT(a." + DB.ID + "), r." + DB.ID + ", r." + DB.NAME
-				+ " FROM " + DB.TABLE_TRACKS + " AS t"
-				+ " JOIN " + DB.TABLE_ALBUM + " AS a"
-				+ ", " + DB.TABLE_ARTISTS + " AS r"
-				+ " ON a." + DB.ID + "=t." + DB.ALBUM_ID
-				+ " AND a." + DB.TITLE + "!=''"
-				+ " AND r." + DB.ID + "=t." + DB.ARTIST_ID
-				+ " GROUP BY a." + DB.ID + ", a." + DB.TITLE + ", a." + DB.ART_ID
-				+ ", r." + DB.ID + ", r." + DB.NAME
-				+ " ORDER BY a." + DB.TITLE + " ASC;",
-				null);
-		
-		while (cursor.moveToNext()) {
-			FullAlbumInfo i = new FullAlbumInfo();
-			i.id = cursor.getLong(0);
-			i.title = cleanString(cursor, 1);
-			i.artId = cleanString(cursor, 2);
-			i.trackCount = cursor.getInt(3);
-			i.artistId = cursor.getLong(4);
-			i.artistName = cleanString(cursor, 5);
-			info.add(i);
-		}
-		
-		cursor.close();
-		
-		return info;
-	}
-	
-	public static List<SimpleTrackInfo> getAllTracks() {
-		if (!isOpen()) {
-			return null;
-		}
-		
-		List<SimpleTrackInfo> info = new ArrayList<SimpleTrackInfo>();
-		
-		Cursor cursor = mBansheeDatabase.rawQuery(""
-				+ " SELECT " + DB.ID + "," + DB.TITLE
-				+ " FROM " + DB.TABLE_TRACKS
-				+ " ORDER BY " + DB.TITLE + " ASC",
-				null);
-		
-		while (cursor.moveToNext()) {
-			SimpleTrackInfo i = new SimpleTrackInfo();
-			i.id = cursor.getLong(0);
-			i.title = cleanString(cursor, 1);
-			
-			info.add(i);
-		}
-		
-		cursor.close();
-		
-		return info;
-	}
-	
-	public static List<SimpleTrackInfo> getTrackInfoForArtist(long id) {
-		if (!isOpen()) {
-			return null;
-		}
-		
-		List<SimpleTrackInfo> info = new ArrayList<SimpleTrackInfo>();
-		
-		Cursor cursor = mBansheeDatabase.rawQuery(""
-				+ " SELECT " + DB.ID + "," + DB.TITLE
-				+ " FROM " + DB.TABLE_TRACKS
-				+ " WHERE " + DB.ARTIST_ID + "=" + id
-				+ " ORDER BY " + DB.TITLE + " ASC",
-				null);
-		
-		while (cursor.moveToNext()) {
-			SimpleTrackInfo i = new SimpleTrackInfo();
-			i.id = cursor.getLong(0);
-			i.title = cleanString(cursor, 1);
-			
-			info.add(i);
-		}
-		
-		return info;
-	}
-	
-	public static List<SimpleTrackInfo> getTrackInfoForAlbum(long id) {
-		if (!isOpen()) {
-			return null;
-		}
-		
-		List<SimpleTrackInfo> info = new ArrayList<SimpleTrackInfo>();
-		
-		Cursor cursor = mBansheeDatabase.rawQuery(""
-				+ " SELECT " + DB.ID + "," + DB.TITLE
-				+ " FROM " + DB.TABLE_TRACKS
-				+ " WHERE " + DB.ALBUM_ID + "=" + id
-				+ " ORDER BY " + DB.TRACK_NUMBER + " ASC",
-				null);
-		
-		while (cursor.moveToNext()) {
-			SimpleTrackInfo i = new SimpleTrackInfo();
-			i.id = cursor.getLong(0);
-			i.title = cleanString(cursor, 1);
-			
-			info.add(i);
-		}
-		
-		return info;
 	}
 	
 	// PRIVATE ====================================================================================
@@ -554,7 +645,7 @@ public class BansheeDatabase {
 	 * @return if string is {@code null} you'll get an empty string otherwise the string itself
 	 */
 	private static String cleanString(Cursor c, int index) {
-		return c.isNull(index) ? "" : c.getString(index);
+		return c.isNull(index) ? "" : c.getString(index).trim();
 	}
 	
 	/**
@@ -579,7 +670,7 @@ public class BansheeDatabase {
 	private static class DB {
 		public static final String TABLE_TRACKS = "tracks";
 		public static final String TABLE_ARTISTS = "artists";
-		public static final String TABLE_ALBUM = "albums";
+		public static final String TABLE_ALBUMS = "albums";
 		
 		public static final String ID = "_id";
 		public static final String ARTIST_ID = "artistId";

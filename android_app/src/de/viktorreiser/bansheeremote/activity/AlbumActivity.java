@@ -23,9 +23,14 @@ import de.viktorreiser.bansheeremote.R;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandle;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase;
-import de.viktorreiser.bansheeremote.data.BansheeDatabase.FullAlbumInfo;
+import de.viktorreiser.bansheeremote.data.BansheeDatabase.AlbumI;
 import de.viktorreiser.bansheeremote.data.CoverCache;
 
+/**
+ * Browse albums from synchronized database.
+ * 
+ * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+ */
 public class AlbumActivity extends Activity implements OnBansheeCommandHandle, OnItemClickListener {
 	
 	// PRIVATE ====================================================================================
@@ -33,13 +38,12 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle, O
 	private static final int REQUEST_ACTIVITY = 1;
 	
 	private OnBansheeCommandHandle mOldCommandHandler;
-	private List<FullAlbumInfo> mAlbumEntries;
+	private AlbumI [] mAlbumEntries;
 	private Object [] mAdapterSections;
 	private ListView mList;
 	
 	// OVERRIDDEN =================================================================================
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	public void onCreate(Bundle bundle) {
 		super.onCreate(bundle);
@@ -52,15 +56,15 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle, O
 		Object [] data = (Object []) getLastNonConfigurationInstance();
 		
 		if (data != null) {
-			mAlbumEntries = (List<FullAlbumInfo>) data[0];
+			mAlbumEntries = (AlbumI []) data[0];
 			mAdapterSections = (Object []) data[1];
 		} else {
-			mAlbumEntries = BansheeDatabase.getAllAlbums();
+			mAlbumEntries = BansheeDatabase.getOrderedAlbumI();
 			List<SectionEntry> sections = new ArrayList<SectionEntry>();
 			Set<String> characters = new TreeSet<String>();
 			
-			for (int i = 0; i < mAlbumEntries.size(); i++) {
-				String c = mAlbumEntries.get(i).title.substring(0, 1).toUpperCase();
+			for (int i = 0; i < mAlbumEntries.length; i++) {
+				String c = mAlbumEntries[i].getTitle().substring(0, 1).toUpperCase();
 				
 				if (!characters.contains(c)) {
 					SectionEntry s = new SectionEntry();
@@ -93,7 +97,7 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle, O
 		mList.setOnItemClickListener(this);
 		
 		((TextView) findViewById(R.id.album_title)).setText(
-				getString(R.string.all_albums) + " (" + mAlbumEntries.size() + ")");
+				getString(R.string.all_albums) + " (" + mAlbumEntries.length + ")");
 		mList.setFastScrollEnabled(true);
 	}
 	
@@ -123,8 +127,8 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle, O
 	@Override
 	public void onItemClick(AdapterView<?> a, View v, int p, long id) {
 		Intent intent = new Intent(this, TrackActivity.class);
-		intent.putExtra(TrackActivity.EXTRA_ALBUM_ID, mAlbumEntries.get(p).id);
-		intent.putExtra(TrackActivity.EXTRA_ARTIST_ID, mAlbumEntries.get(p).artistId);
+		intent.putExtra(TrackActivity.EXTRA_ALBUM_ID, mAlbumEntries[p].getId());
+		intent.putExtra(TrackActivity.EXTRA_ARTIST_ID, mAlbumEntries[p].getArtistId());
 		startActivityForResult(intent, REQUEST_ACTIVITY);
 	}
 
@@ -173,7 +177,7 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle, O
 
 		@Override
 		public int getCount() {
-			return mAlbumEntries.size();
+			return mAlbumEntries.length;
 		}
 
 		@Override
@@ -201,20 +205,20 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle, O
 			}
 			
 			ViewHolder holder = (ViewHolder) convertView.getTag();
-			FullAlbumInfo info = mAlbumEntries.get(position);
+			AlbumI info = mAlbumEntries[position];
 			
-			holder.album.setText(info.title);
-			holder.artist.setText(info.artistName);
-			holder.count.setText("(" + info.trackCount + ")");
+			holder.album.setText(info.getTitle());
+			holder.artist.setText(info.getArtistI().getName());
+			holder.count.setText("(" + info.getTrackCount() + ")");
 			
-			if (CoverCache.coverExists(info.artId)) {
-				holder.cover.setImageBitmap(CoverCache.getThumbnailedCover(info.artId));
+			if (CoverCache.coverExists(info.getArtId())) {
+				holder.cover.setImageBitmap(CoverCache.getThumbnailedCover(info.getArtId()));
 				holder.cover.setTag(null);
 			} else {
 				CurrentSongActivity.getConnection().sendCommand(
-						Command.COVER, Command.Cover.encode(info.artId), false);
+						Command.COVER, Command.Cover.encode(info.getArtId()), false);
 				holder.cover.setImageResource(R.drawable.no_cover);
-				holder.cover.setTag(info.artId);
+				holder.cover.setTag(info.getArtId());
 			}
 			
 			return convertView;

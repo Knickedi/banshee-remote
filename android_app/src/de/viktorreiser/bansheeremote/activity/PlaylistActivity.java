@@ -27,7 +27,7 @@ import de.viktorreiser.bansheeremote.data.App;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandle;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase;
-import de.viktorreiser.bansheeremote.data.BansheeDatabase.FullTrackInfo;
+import de.viktorreiser.bansheeremote.data.BansheeDatabase.TrackI;
 import de.viktorreiser.bansheeremote.data.CoverCache;
 import de.viktorreiser.toolbox.content.NetworkStateBroadcast;
 import de.viktorreiser.toolbox.widget.HiddenQuickActionSetup;
@@ -35,7 +35,7 @@ import de.viktorreiser.toolbox.widget.HiddenQuickActionSetup.OnQuickActionListen
 import de.viktorreiser.toolbox.widget.SwipeableHiddenView;
 
 /**
- * Here we will load the current player play list, show it and interact with it.
+ * Here we will load the current player playlist, show it and interact with it.
  * 
  * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
  */
@@ -301,7 +301,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		case App.QUICK_ACTION_ARTIST: {
 			Intent intent = new Intent(this, ArtistActivity.class);
 			intent.putExtra(ArtistActivity.EXTRA_ARITST_ID,
-					mPlaylist.get(position).trackInfo.aritstId);
+					mPlaylist.get(position).trackInfo.getArtistId());
 			startActivityForResult(intent, REQUEST_ACTIVITY);
 			break;
 		}
@@ -413,7 +413,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		
 		public long id;
 		public boolean requestedTrackInfo = false;
-		public FullTrackInfo trackInfo;
+		public TrackI trackInfo;
 	}
 	
 	private static class ViewHolder {
@@ -551,7 +551,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 					return 0;
 				}
 				
-				return entry.trackInfo.albumId == previousEntry.trackInfo.albumId ? 1 : 0;
+				return entry.trackInfo.getAlbumId() == previousEntry.trackInfo.getAlbumId() ? 1 : 0;
 			} else {
 				return 0;
 			}
@@ -614,71 +614,49 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 				PlaylistEntry entry = mPlaylist.get(position + offset);
 				requestTrackInfo(entry);
 				
-				if (entry.trackInfo != null) {
-					if (CoverCache.coverExists(entry.trackInfo.artId)) {
-						holder.cover.setImageBitmap(CoverCache.getThumbnailedCover(
-								entry.trackInfo.artId));
-						holder.cover.setTag(null);
-					} else {
-						holder.cover.setImageResource(R.drawable.no_cover);
-						
-						if (NetworkStateBroadcast.isWifiConnected()
-								|| App.isMobileNetworkCoverFetch()) {
-							CurrentSongActivity.getConnection().sendCommand(Command.COVER,
-									Command.Cover.encode(entry.trackInfo.artId));
-						}
-						
-						holder.cover.setTag(entry.trackInfo.artId);
-					}
-					
-					if (entry.trackInfo.artist.equals("")) {
-						holder.artist.setText(R.string.unknown_artist);
-					} else {
-						holder.artist.setText(entry.trackInfo.artist);
-					}
-					
-					String year = "";
-					
-					if (App.isDisplayAlbumYear() && entry.trackInfo.year >= 1000) {
-						year = " [" + entry.trackInfo.year + "]";
-						holder.album.setEllipsize(TruncateAt.MIDDLE);
-					} else {
-						holder.album.setEllipsize(TruncateAt.END);
-					}
-					
-					if (entry.trackInfo.album.equals("")) {
-						holder.album.setText(getString(R.string.unknown_album) + year);
-					} else {
-						holder.album.setText(entry.trackInfo.album + year);
-					}
+				String artId = entry.trackInfo.getAlbum().getArtId();
+				
+				if (!"".equals(artId)) {
+					holder.cover.setImageBitmap(CoverCache.getThumbnailedCover(artId));
+					holder.cover.setTag(null);
 				} else {
 					holder.cover.setImageResource(R.drawable.no_cover);
-					holder.artist.setText(R.string.unknown_artist);
-					holder.album.setText(R.string.unknown_album);
+					
+					if (NetworkStateBroadcast.isWifiConnected()
+							|| App.isMobileNetworkCoverFetch()) {
+						CurrentSongActivity.getConnection().sendCommand(Command.COVER,
+								Command.Cover.encode(artId));
+					}
+					
+					holder.cover.setTag(artId);
 				}
+				
+				holder.artist.setText(entry.trackInfo.getArtist().getName());
+				
+				String year = "";
+				
+				if (App.isDisplayAlbumYear() && entry.trackInfo.getYear() >= 1000) {
+					year = " [" + entry.trackInfo.getYear() + "]";
+					holder.album.setEllipsize(TruncateAt.MIDDLE);
+				} else {
+					holder.album.setEllipsize(TruncateAt.END);
+				}
+				
+				holder.album.setText(entry.trackInfo.getAlbum().getTitle() + year);
 			}
 			
 			if (type == 0 || type == 1) {
 				PlaylistEntry entry = mPlaylist.get(position + offset);
 				requestTrackInfo(entry);
 				
-				if (entry.trackInfo != null) {
-					if (entry.trackInfo.title.equals("")) {
-						holder.track.setText(R.string.unknown_track);
-					} else {
-						holder.track.setText(entry.trackInfo.title);
-					}
-					
-					if (entry.trackInfo.id == CurrentSongActivity.getData().currentSongId
-							&& PlaylistOverviewActivity.mActivePlaylistIdChange == mPlaylistId) {
-						holder.playing.setVisibility(View.VISIBLE);
-						holder.playing.setImageResource(CurrentSongActivity.getData().playing
-								? R.drawable.ic_media_play : R.drawable.ic_media_pause);
-					} else {
-						holder.playing.setVisibility(View.GONE);
-					}
+				holder.track.setText(entry.trackInfo.getTitle());
+				
+				if (entry.trackInfo.getId() == CurrentSongActivity.getData().currentSongId
+						&& PlaylistOverviewActivity.mActivePlaylistIdChange == mPlaylistId) {
+					holder.playing.setVisibility(View.VISIBLE);
+					holder.playing.setImageResource(CurrentSongActivity.getData().playing
+							? R.drawable.ic_media_play : R.drawable.ic_media_pause);
 				} else {
-					holder.track.setText(R.string.unknown_track);
 					holder.playing.setVisibility(View.GONE);
 				}
 			}
@@ -711,10 +689,9 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		private void requestTrackInfo(PlaylistEntry entry) {
 			if (!entry.requestedTrackInfo) {
 				entry.requestedTrackInfo = true;
-				entry.trackInfo = BansheeDatabase.getTrackInfo(entry.id);
+				entry.trackInfo = BansheeDatabase.getTrackI(entry.id);
 				
-				if (entry.id > 0 && !mDbOutOfDateHintShown && entry.trackInfo == null
-						&& BansheeDatabase.isOpen() && App.isShowDbOutOfDateHint()) {
+				if (entry.id < 1 && App.isShowDbOutOfDateHint()) {
 					mDbOutOfDateHintShown = true;
 					Toast.makeText(PlaylistActivity.this, R.string.out_of_data_hint_db,
 							Toast.LENGTH_SHORT).show();
