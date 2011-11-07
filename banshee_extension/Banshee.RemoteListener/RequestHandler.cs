@@ -250,7 +250,7 @@ namespace Banshee.RemoteListener
 			switch (request) {
 			case 1: {
 				// requested playlist names
-				Source remotePlaylist = Helper.GetOrCreateRemotePlaylist();
+				Source remotePlaylist = Helper.RemotePlaylist;
 				((DatabaseSource) remotePlaylist).Reload();
 				
 				ushort count = 0;
@@ -270,14 +270,14 @@ namespace Banshee.RemoteListener
 						}
 						
 						if (((ITrackModelSource) s).TrackModel.Count > 0) {
-							if (!remotePlaylistAdded && String.Compare(s.Name, remotePlaylist.Name, true) >= 0) {
+							if (!remotePlaylistAdded && String.Compare(s.Name, remotePlaylist.Name) >= 0) {
 								count++;
-								index = Helper.SourceAsPlaylistToBuffer(index, remotePlaylist, true);
+								index = Helper.SourceAsPlaylistToBuffer(index, remotePlaylist);
 								remotePlaylistAdded = true;
 							}
 							
 							count++;
-							index = Helper.SourceAsPlaylistToBuffer(index, s, false);
+							index = Helper.SourceAsPlaylistToBuffer(index, s);
 						}
 					}
 				}
@@ -285,7 +285,7 @@ namespace Banshee.RemoteListener
 				// remote playlist would be at the end so it's still not added to return - do it
 				if (!remotePlaylistAdded) {
 					count++;
-					index = Helper.SourceAsPlaylistToBuffer(index, remotePlaylist, true);
+					index = Helper.SourceAsPlaylistToBuffer(index, remotePlaylist);
 				}
 				
 				// write playlist count to buffer

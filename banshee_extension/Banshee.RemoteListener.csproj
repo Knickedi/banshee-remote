@@ -44,21 +44,30 @@
     </Reference>
     <Reference Include="Banshee.Core, Version=2.2.0.0, Culture=neutral, PublicKeyToken=null">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\usr\lib\banshee\Banshee.Core.dll</HintPath>
+      <HintPath>\usr\lib\banshee\Banshee.Core.dll</HintPath>
       <Package>banshee-core</Package>
     </Reference>
     <Reference Include="Banshee.Services, Version=2.2.0.0, Culture=neutral, PublicKeyToken=null">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\usr\lib\banshee\Banshee.Services.dll</HintPath>
+      <HintPath>\usr\lib\banshee\Banshee.Services.dll</HintPath>
       <Package>banshee-services</Package>
     </Reference>
     <Reference Include="Hyena, Version=2.2.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\..\..\usr\lib\banshee\Hyena.dll</HintPath>
+      <HintPath>\usr\lib\banshee\Hyena.dll</HintPath>
       <Package>banshee-hyena</Package>
     </Reference>
     <Reference Include="Hyena.Data.Sqlite, Version=2.2.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\..\..\usr\lib\banshee\Hyena.Data.Sqlite.dll</HintPath>
+      <HintPath>\usr\lib\banshee\Hyena.Data.Sqlite.dll</HintPath>
       <Package>banshee-hyena-data-sqlite</Package>
+    </Reference>
+    <Reference Include="Banshee.ThickClient, Version=2.2.0.0, Culture=neutral, PublicKeyToken=null">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>\usr\lib\banshee\Banshee.ThickClient.dll</HintPath>
+      <Package>banshee-core</Package>
+    </Reference>
+    <Reference Include="Banshee.PlayQueue, Version=2.2.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>\usr\lib\banshee\Extensions\Banshee.PlayQueue.dll</HintPath>
+      <Package>banshee-playqueue</Package>
     </Reference>
   </ItemGroup>
   <ItemGroup>

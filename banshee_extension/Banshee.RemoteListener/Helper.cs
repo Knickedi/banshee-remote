@@ -2,12 +2,16 @@ using System;
 using System.IO;
 using System.Text;
 
+using Mono.Unix;
+
 using Banshee.Collection;
 using Banshee.Collection.Database;
+using Banshee.Configuration;
 using Banshee.Library;
 using Banshee.MediaEngine;
 using Banshee.PlaybackController;
 using Banshee.Playlist;
+using Banshee.PlayQueue;
 using Banshee.ServiceStack;
 using Banshee.Sources;
 
@@ -78,10 +82,14 @@ namespace Banshee.RemoteListener
 		private static int _playTimeout = 0;
 		
 		/// <summary>
-		/// Unique ID of remote playlist.
+		/// Reference to remote playlist.
 		/// </summary>
-		private static string _remotePlaylistId = null;
+		private static PlaylistSource _remotePlaylist = null;
 		
+		/// <summary>
+		/// Reference to play queue playlist.
+		/// </summary>
+		private static PlayQueueSource _playQueuePlaylist = null;
 		#endregion
 		
 		
@@ -100,9 +108,48 @@ namespace Banshee.RemoteListener
 			get { return Timestamp() - _playTimeout <= 1; }
 		}
 		
-		public static string RemotePlaylistId {
-			get { return _remotePlaylistId; }
+		public static Source RemotePlaylist {
+			get {
+				if (_remotePlaylist != null) {
+					return _remotePlaylist;
+				}
+				
+				int dbId = -1;
+				DatabaseConfigurationClient.Client.TryGet<int>("banshee_remote", "remote_playlist_id", out dbId);
+					
+				foreach (Source s in ServiceManager.SourceManager.Sources) {
+					if (s is PlaylistSource && ((PlaylistSource) s).DbId == dbId) {
+						_remotePlaylist = s as PlaylistSource;
+						return _remotePlaylist;
+					}
+				}
+				
+				PlaylistSource source = new PlaylistSource("Banshee Remote", ServiceManager.SourceManager.MusicLibrary);
+				source.Save();
+				source.PrimarySource.AddChildSource(source);
+				source.NotifyUser();
+				_remotePlaylist = source;
+				
+				DatabaseConfigurationClient.Client.Set<int>("banshee_remote", "remote_playlist_id", source.DbId.Value);
+				
+				return _remotePlaylist;
+			}
 		}
+		
+		public static PlayQueueSource PlayQueuePlaylist {
+			get {
+				if (_playQueuePlaylist == null) {
+					foreach (Source s in ServiceManager.SourceManager.Sources) {
+						if (s is PlayQueueSource && s.Name == Catalog.GetString("Play Queue")) {
+							_playQueuePlaylist = s as PlayQueueSource;
+							return _playQueuePlaylist;
+						}
+					}
+				}
+				
+				return _playQueuePlaylist;
+			}
+		} 
 		
 		#endregion
 		
@@ -126,14 +173,14 @@ namespace Banshee.RemoteListener
 		/// Removed resource.
 		/// </param>
 		public static void HandleRemovedSource(Source s) {
-			if (s.UniqueId == _remotePlaylistId) {
+			if (s == _remotePlaylist) {
 				try {
-					File.Delete(Paths.Combine(Paths.ApplicationData, "banshee_remote_playlist_id"));
+					DatabaseConfigurationClient.Client.Set<int>("banshee_remote", "remote_playlist_id", -1);
 				} catch {
 					// you never know...
 				}
 				
-				_remotePlaylistId = null;
+				_remotePlaylist = null;
 			}
 		}
 		
@@ -313,40 +360,6 @@ namespace Banshee.RemoteListener
 		public static string DatabasePath(bool compressed) {
 			return Paths.Combine(Paths.ApplicationData,
 					"banshee" + (compressed ? "compressed.db" : ".db"));
-		}
-		
-		/// <summary>
-		/// Get reference to the remote playlist or create it if it's not available.
-		/// </summary>
-		/// <returns>
-		/// Remote playlist.
-		/// </returns>
-		public static Source GetOrCreateRemotePlaylist() {
-			string path = Paths.Combine(Paths.ApplicationData, "banshee_remote_playlist_id");
-			
-			if (_remotePlaylistId == null) {
-				if (File.Exists(path)) {
-					_remotePlaylistId = File.ReadAllText(path);
-				}
-			}
-			
-			if (_remotePlaylistId != null) {
-				foreach (Source s in ServiceManager.SourceManager.Sources) {
-					if (s.UniqueId == _remotePlaylistId) {
-						return s;
-					}
-				}
-			}
-			
-			PlaylistSource source = new PlaylistSource("Banshee Remote", ServiceManager.SourceManager.MusicLibrary);
-			source.Save();
-			source.PrimarySource.AddChildSource(source);
-			source.NotifyUser();
-			
-			File.WriteAllText(path, source.UniqueId);
-			_remotePlaylistId = source.UniqueId;
-			
-			return source;
 		}
 		
 		/// <summary>
@@ -756,9 +769,11 @@ namespace Banshee.RemoteListener
 		#region Playlist request helpers
 		
 		public static Source GetPlaylistSource(int id) {
-			if (id < 2) {
-				return Helper.GetOrCreateRemotePlaylist();
-			} else {
+			if (id == 1) {
+				return Helper.RemotePlaylist;
+			} else if (id == 2) {
+				return Helper.PlayQueuePlaylist;
+			} else if (id > 2) {
 				foreach (Source s in ServiceManager.SourceManager.Sources) {
 					if (s is ITrackModelSource && Helper.SourceHashCode(s) == id) {
 						return s;
@@ -784,8 +799,16 @@ namespace Banshee.RemoteListener
 		/// <returns>
 		/// Buffer position after write.
 		/// </returns>
-		public static int SourceAsPlaylistToBuffer(int index, Source s, bool isRemotePlaylist) {
-			byte [] id = ShortToByte(isRemotePlaylist ? (ushort) 1 : SourceHashCode(s));
+		public static int SourceAsPlaylistToBuffer(int index, Source s) {
+			byte [] id = null;
+			
+			if (s == RemotePlaylist) {
+				id = ShortToByte(1);
+			} else if (s == PlayQueuePlaylist) {
+				id = ShortToByte(2);
+			} else {
+				id = ShortToByte(SourceHashCode(s));
+			}
 						
 			if (s == ServiceManager.PlaybackController.Source) {
 				Array.Copy(id, 0, _buffer, 0, 2);
