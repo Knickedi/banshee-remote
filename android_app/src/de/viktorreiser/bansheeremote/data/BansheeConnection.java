@@ -501,6 +501,10 @@ public class BansheeConnection {
 				return encodePlaylistTracks(playlistId, startOffset | 0x80000000, maxReturns);
 			}
 			
+			public static boolean isPlaylistTracks(byte [] params) {
+				return params[0] == 2;
+			}
+			
 			/**
 			 * Get the start position we were requesting for.
 			 */
@@ -573,6 +577,14 @@ public class BansheeConnection {
 			 */
 			public static boolean isPlayTrack(byte [] params) {
 				return params[0] == 3;
+			}
+			
+			public static byte [] encodeEnqueue(long trackId) {
+				byte [] result = new byte [7];
+				result[0] = 4;
+				System.arraycopy(encodeShort(2), 0, result, 1, 2);
+				System.arraycopy(encodeInt(trackId), 0, result, 3, 4);
+				return result;
 			}
 		}
 		

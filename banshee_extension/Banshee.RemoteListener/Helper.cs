@@ -884,6 +884,23 @@ namespace Banshee.RemoteListener
 			return 1;
 		}
 		
+		public static bool AddTrackToPlayList(int playlistId, int trackId) {
+			switch (playlistId) {
+			case 2: {
+				DatabaseTrackInfo track = new DatabaseTrackModelProvider<DatabaseTrackInfo>(
+					ServiceManager.DbConnection).FetchSingle(trackId);
+				
+				if (track != null) {
+					PlayQueuePlaylist.EnqueueTrack(track, false);
+					return true;
+				}
+				
+				break;
+			}
+			}
+			return false;
+		}
+		
 		#endregion
 	}
 }

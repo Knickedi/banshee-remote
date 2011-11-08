@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
+using Hyena;
+
 using Banshee.Base;
 using Banshee.Collection;
 using Banshee.Collection.Database;
@@ -389,6 +391,26 @@ namespace Banshee.RemoteListener
 				}
 				
 				return new byte [] {Helper.PlayTrack(playlistId, trackId)};
+			}
+				
+			case 4: {
+				int playlistId = -1;
+				Log.Information("enqueue");
+				
+				if (readBytes > 2) {
+					playlistId = Helper.ShortFromBuffer(1);
+				}
+				
+				if (readBytes > 6) {
+					int trackId = (int) Helper.IntFromBuffer(3);
+					
+					Log.Information(playlistId + " " + trackId);
+					if (Helper.AddTrackToPlayList(playlistId, trackId)) {
+						return new byte [] {1};
+					}
+				}
+				
+				break;
 			}
 			}
 			
