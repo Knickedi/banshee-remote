@@ -1,15 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<de.viktorreiser.toolbox.widget.SwipeableHiddenView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent" >
+    android:layout_height="wrap_content" >
 
-    <TextView
-        android:id="@+id/track_title"
+    <FrameLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="Track title"
-        android:padding="10dip"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
+        android:layout_height="fill_parent" >
 
-</FrameLayout>
+        <TextView
+            android:id="@+id/track_title"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dip"
+            android:text="Track title"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+    </FrameLayout>
+
+</de.viktorreiser.toolbox.widget.SwipeableHiddenView>

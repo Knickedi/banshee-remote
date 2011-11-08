@@ -1,32 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<de.viktorreiser.toolbox.widget.SwipeableHiddenView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:padding="10dip">
+    android:layout_height="wrap_content" >
 
-    <ImageView 
-        android:id="@+id/cover1"
-        android:layout_centerVertical="true"
-        android:layout_height="40dip"
-        android:layout_width="40dip"
-        android:src="@drawable/no_cover"
-        android:layout_marginRight="10dip"/>
-
-    <TextView
-        android:id="@+id/track_title"
-        android:layout_width="wrap_content"
+    <RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_toRightOf="@+id/cover1"
-        android:text="Track title"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
-    
-    <TextView
-        android:id="@+id/artist_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_toRightOf="@+id/cover1"
-        android:layout_below="@+id/track_title"
-        android:text="Artist name"
-        android:textAppearance="?android:attr/textAppearanceSmall" />
+        android:padding="10dip" >
 
-</RelativeLayout>
+        <ImageView
+            android:id="@+id/cover1"
+            android:layout_width="40dip"
+            android:layout_height="40dip"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="10dip"
+            android:src="@drawable/no_cover" />
+
+        <TextView
+            android:id="@+id/track_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@+id/cover1"
+            android:text="Track title"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <TextView
+            android:id="@+id/artist_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/track_title"
+            android:layout_toRightOf="@+id/cover1"
+            android:text="Artist name"
+            android:textAppearance="?android:attr/textAppearanceSmall" />
+    </RelativeLayout>
+
+</de.viktorreiser.toolbox.widget.SwipeableHiddenView>

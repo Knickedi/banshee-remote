@@ -394,20 +394,9 @@ namespace Banshee.RemoteListener
 			}
 				
 			case 4: {
-				int playlistId = -1;
-				Log.Information("enqueue");
-				
-				if (readBytes > 2) {
-					playlistId = Helper.ShortFromBuffer(1);
-				}
-				
-				if (readBytes > 6) {
-					int trackId = (int) Helper.IntFromBuffer(3);
-					
-					Log.Information(playlistId + " " + trackId);
-					if (Helper.AddTrackToPlayList(playlistId, trackId)) {
-						return new byte [] {1};
-					}
+				if (readBytes > 6 && Helper.AddTrackToPlayList(
+						Helper.ShortFromBuffer(1), (int) Helper.IntFromBuffer(3))) {
+					return new byte [] {1};
 				}
 				
 				break;

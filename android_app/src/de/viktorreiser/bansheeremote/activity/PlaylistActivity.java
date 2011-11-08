@@ -102,7 +102,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		mPositionPopup = new PositionPopup();
 		
 		mQuickActionSetup = App.getDefaultHiddenViewSetup(this);
-		mQuickActionSetup.setOnQuickActionListener(PlaylistActivity.this);
+		mQuickActionSetup.setOnQuickActionListener(this);
 		
 		mQuickActionSetup.addAction(
 				App.QUICK_ACTION_ENQUEUE, R.string.quick_enqueue, R.drawable.enqueue);

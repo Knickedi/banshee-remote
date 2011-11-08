@@ -19,19 +19,24 @@ import android.widget.ListView;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
 import de.viktorreiser.bansheeremote.R;
+import de.viktorreiser.bansheeremote.data.App;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandle;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase.AlbumI;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase.TrackI;
 import de.viktorreiser.bansheeremote.data.CoverCache;
+import de.viktorreiser.toolbox.widget.HiddenQuickActionSetup;
+import de.viktorreiser.toolbox.widget.HiddenQuickActionSetup.OnQuickActionListener;
+import de.viktorreiser.toolbox.widget.SwipeableHiddenView;
 
 /**
  * Browse tracks from synchronized database.
  * 
  * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
  */
-public class TrackActivity extends Activity implements OnBansheeCommandHandle, OnItemClickListener {
+public class TrackActivity extends Activity implements OnBansheeCommandHandle, OnItemClickListener,
+		OnQuickActionListener {
 	
 	// PRIVATE ====================================================================================
 	
@@ -41,6 +46,7 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 	private ListView mList;
 	private long mAlbumId;
 	private long mArtistId;
+	private HiddenQuickActionSetup mQuickActionSetup;
 	
 	// PUBLIC =====================================================================================
 	
@@ -109,6 +115,14 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 			}
 		});
 		
+		mQuickActionSetup = App.getDefaultHiddenViewSetup(this);
+		mQuickActionSetup.setOnQuickActionListener(this);
+		
+		mQuickActionSetup.addAction(
+				App.QUICK_ACTION_ENQUEUE, R.string.quick_enqueue, R.drawable.enqueue);
+		mQuickActionSetup.addAction(
+				App.QUICK_ACTION_REMOVE, R.string.quick_remove, R.drawable.remove);
+		
 		setContentView(R.layout.track);
 		
 		mList = (ListView) findViewById(R.id.list);
@@ -173,6 +187,18 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 	public void onItemClick(AdapterView<?> a, View v, int p, long id) {
 		CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
 				Command.Playlist.encodePlayTrack(mTrackEntries[p].getId()));
+	}
+	
+	@Override
+	public void onQuickAction(AdapterView<?> parent, View view, int position, int quickActionId) {
+		// TODO implement quick action on playlist
+		switch (quickActionId) {
+		case App.QUICK_ACTION_ENQUEUE: {
+			CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
+					Command.Playlist.encodeEnqueue(mTrackEntries[position].getId()));
+			break;
+		}
+		}
 	}
 	
 	@Override
@@ -256,6 +282,8 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 				} else {
 					convertView = getLayoutInflater().inflate(R.layout.track_item_simple, null);
 				}
+				
+				((SwipeableHiddenView) convertView).setHiddenViewSetup(mQuickActionSetup);
 				
 				holder.track = (TextView) convertView.findViewById(R.id.track_title);
 				convertView.setTag(holder);
