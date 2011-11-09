@@ -121,6 +121,8 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 		mQuickActionSetup.addAction(
 				App.QUICK_ACTION_ENQUEUE, R.string.quick_enqueue, R.drawable.enqueue);
 		mQuickActionSetup.addAction(
+				App.QUICK_ACTION_ADD, R.string.quick_add, R.drawable.add);
+		mQuickActionSetup.addAction(
 				App.QUICK_ACTION_REMOVE, R.string.quick_remove, R.drawable.remove);
 		
 		setContentView(R.layout.track);
@@ -196,6 +198,11 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 		case App.QUICK_ACTION_ENQUEUE: {
 			CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
 					Command.Playlist.encodeEnqueue(mTrackEntries[position].getId()));
+			break;
+		}
+		case App.QUICK_ACTION_ADD: {
+			CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
+					Command.Playlist.encodeAdd(mTrackEntries[position].getId()));
 			break;
 		}
 		}

@@ -16,6 +16,7 @@ using Banshee.ServiceStack;
 using Banshee.Sources;
 
 using Hyena;
+using Hyena.Collections;
 using Hyena.Data;
 using Hyena.Data.Sqlite;
 
@@ -108,7 +109,7 @@ namespace Banshee.RemoteListener
 			get { return Timestamp() - _playTimeout <= 1; }
 		}
 		
-		public static Source RemotePlaylist {
+		public static PlaylistSource RemotePlaylist {
 			get {
 				if (_remotePlaylist != null) {
 					return _remotePlaylist;
@@ -149,7 +150,7 @@ namespace Banshee.RemoteListener
 				
 				return _playQueuePlaylist;
 			}
-		} 
+		}
 		
 		#endregion
 		
@@ -886,18 +887,43 @@ namespace Banshee.RemoteListener
 		
 		public static bool AddTrackToPlayList(int playlistId, int trackId) {
 			switch (playlistId) {
+			case 1: {
+				Selection selection = null;
+				MusicLibrarySource source = ServiceManager.SourceManager.MusicLibrary;
+				
+				for (int i = 0; i < source.TrackModel.Count; i++) {
+					object t = source.TrackModel.GetItem(i);
+					
+					if (t is DatabaseTrackInfo && ((DatabaseTrackInfo) t).TrackId == trackId) {
+						selection = new Hyena.Collections.Selection();
+						selection.Select(i);
+						break;
+					}
+				}
+				
+				if (selection != null) {
+					RemotePlaylist.AddSelectedTracks(source, selection);
+				}
+				
+				break;
+			}
 			case 2: {
 				DatabaseTrackInfo track = new DatabaseTrackModelProvider<DatabaseTrackInfo>(
 					ServiceManager.DbConnection).FetchSingle(trackId);
 				
 				if (track != null) {
 					PlayQueuePlaylist.EnqueueTrack(track, false);
-					return true;
+					return true;;
 				}
 				
 				break;
 			}
 			}
+			
+			return false;
+		}
+		
+		public static bool RemoveTrackFromPlaylist(int playlistId, int trackId) {
 			return false;
 		}
 		

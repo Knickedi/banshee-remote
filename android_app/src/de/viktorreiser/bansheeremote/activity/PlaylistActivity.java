@@ -107,7 +107,10 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		mQuickActionSetup.addAction(
 				App.QUICK_ACTION_ENQUEUE, R.string.quick_enqueue, R.drawable.enqueue);
 		
-		if (mPlaylistId == 1) {
+		mQuickActionSetup.addAction(
+				App.QUICK_ACTION_ADD, R.string.quick_add, R.drawable.add);
+		
+		if (mPlaylistId == 1 || mPlaylistId == 2) {
 			mQuickActionSetup.addAction(
 					App.QUICK_ACTION_REMOVE, R.string.quick_remove, R.drawable.remove);
 		}
@@ -301,6 +304,11 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		case App.QUICK_ACTION_ENQUEUE: {
 			CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
 					Command.Playlist.encodeEnqueue(mPlaylist.get(position).trackInfo.getId()));
+			break;
+		}
+		case App.QUICK_ACTION_ADD: {
+			CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
+					Command.Playlist.encodeAdd(mPlaylist.get(position).trackInfo.getId()));
 			break;
 		}
 		case App.QUICK_ACTION_ARTIST: {

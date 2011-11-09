@@ -393,14 +393,21 @@ namespace Banshee.RemoteListener
 				return new byte [] {Helper.PlayTrack(playlistId, trackId)};
 			}
 				
-			case 4: {
+			case 4:
 				if (readBytes > 6 && Helper.AddTrackToPlayList(
 						Helper.ShortFromBuffer(1), (int) Helper.IntFromBuffer(3))) {
 					return new byte [] {1};
 				}
 				
 				break;
-			}
+				
+			case 5:
+				if (readBytes > 6 && Helper.RemoveTrackFromPlaylist(
+						Helper.ShortFromBuffer(1), (int) Helper.IntFromBuffer(3))) {
+					return new byte [] {1};
+				}
+				
+				break;
 			}
 			
 			return new byte [] {0};
