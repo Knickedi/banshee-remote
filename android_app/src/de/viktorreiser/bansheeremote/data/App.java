@@ -154,6 +154,26 @@ public class App extends Application {
 	}
 	
 	/**
+	 * Is adding same track twice to playlist allowed?
+	 * 
+	 * @return {@code true} if allowed
+	 */
+	public static boolean isPlaylistAddTwice() {
+		return PreferenceManager.getDefaultSharedPreferences(mContext)
+				.getBoolean("playlisttwice", false);
+	}
+	
+	/**
+	 * Is adding same track twice to play queue allowed?
+	 * 
+	 * @return {@code true} if allowed
+	 */
+	public static boolean isQueueAddTwice() {
+		return PreferenceManager.getDefaultSharedPreferences(mContext)
+				.getBoolean("queuetwice", true);
+	}
+	
+	/**
 	 * Default and global setup for a quick action (to keep it similar everywhere).
 	 * 
 	 * @param context
@@ -194,6 +214,11 @@ public class App extends Application {
 		return setup;
 	}
 	
+	/**
+	 * Get size of cover thumbnail which should be cached in pixel.
+	 * 
+	 * @return size in pixel
+	 */
 	public static int getCacheSize() {
 		return mCacheSize;
 	}

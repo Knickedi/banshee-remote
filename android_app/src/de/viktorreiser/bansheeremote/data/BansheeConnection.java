@@ -579,19 +579,21 @@ public class BansheeConnection {
 				return params[0] == 3;
 			}
 			
-			public static byte [] encodeEnqueue(long trackId) {
-				byte [] result = new byte [7];
+			public static byte [] encodeEnqueue(long trackId, boolean allowTwice) {
+				byte [] result = new byte [8];
 				result[0] = 4;
-				System.arraycopy(encodeShort(2), 0, result, 1, 2);
-				System.arraycopy(encodeInt(trackId), 0, result, 3, 4);
+				result[1] = (byte) (allowTwice ? 1 : 0);
+				System.arraycopy(encodeShort(2), 0, result, 2, 2);
+				System.arraycopy(encodeInt(trackId), 0, result, 4, 4);
 				return result;
 			}
 			
-			public static byte [] encodeAdd(long trackId) {
-				byte [] result = new byte [7];
+			public static byte [] encodeAdd(long trackId, boolean allowTwice) {
+				byte [] result = new byte [8];
 				result[0] = 4;
-				System.arraycopy(encodeShort(1), 0, result, 1, 2);
-				System.arraycopy(encodeInt(trackId), 0, result, 3, 4);
+				result[1] = (byte) (allowTwice ? 1 : 0);
+				System.arraycopy(encodeShort(1), 0, result, 2, 2);
+				System.arraycopy(encodeInt(trackId), 0, result, 4, 4);
 				return result;
 			}
 		}

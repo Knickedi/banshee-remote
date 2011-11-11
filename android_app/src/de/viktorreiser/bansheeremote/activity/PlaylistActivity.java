@@ -309,12 +309,14 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		switch (quickActionId) {
 		case App.QUICK_ACTION_ENQUEUE: {
 			CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
-					Command.Playlist.encodeEnqueue(mPlaylist.get(position).trackInfo.getId()));
+					Command.Playlist.encodeEnqueue(
+							mPlaylist.get(position).trackInfo.getId(), App.isQueueAddTwice()));
 			break;
 		}
 		case App.QUICK_ACTION_ADD: {
 			CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
-					Command.Playlist.encodeAdd(mPlaylist.get(position).trackInfo.getId()));
+					Command.Playlist.encodeAdd(
+							mPlaylist.get(position).trackInfo.getId(), App.isPlaylistAddTwice()));
 			break;
 		}
 		case App.QUICK_ACTION_ARTIST: {

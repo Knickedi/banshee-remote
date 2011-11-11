@@ -58,6 +58,20 @@
 			android:title="@string/volume_key_control"
 			android:summaryOn="@string/volume_key_control_on"
 			android:summaryOff="@string/volume_key_control_off" />
+		
+		<CheckBoxPreference
+		    android:key="playlisttwice"
+		    android:defaultValue="false"
+		    android:title="@string/playlist_twice"
+		    android:summaryOn="@string/playlist_twice_on"
+		    android:summaryOff="@string/playlist_twice_off" />
+		
+		<CheckBoxPreference
+		    android:key="queuetwice"
+		    android:defaultValue="true"
+		    android:title="@string/queue_twice"
+		    android:summaryOn="@string/queue_twice_on"
+		    android:summaryOff="@string/queue_twice_off" />
 
 	</PreferenceCategory>
 

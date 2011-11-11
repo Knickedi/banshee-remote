@@ -91,6 +91,7 @@ namespace Banshee.RemoteListener
 		/// Reference to play queue playlist.
 		/// </summary>
 		private static PlayQueueSource _playQueuePlaylist = null;
+		
 		#endregion
 		
 		
@@ -769,6 +770,15 @@ namespace Banshee.RemoteListener
 		
 		#region Playlist request helpers
 		
+		/// <summary>
+		/// Get playlist for a certain ID.
+		/// </summary>
+		/// <param name="id">
+		/// ID which was generated for response and used for next request.
+		/// </param>
+		/// <returns>
+		/// Source which relates to the given id or null.
+		/// </returns>
 		public static Source GetPlaylistSource(int id) {
 			if (id == 1) {
 				return Helper.RemotePlaylist;
@@ -885,7 +895,19 @@ namespace Banshee.RemoteListener
 			return 1;
 		}
 		
-		public static bool AddTrackToPlayList(int playlistId, int trackId) {
+		public static bool AddTrackToPlayList(int playlistId, int trackId, bool allowTwice) {
+			if (!allowTwice) {
+				TrackListModel m = (playlistId == 1 ? RemotePlaylist : PlayQueuePlaylist).TrackModel;
+				
+				for (int i = 0; i < m.Count; i++) {
+					object t = m.GetItem(i);
+					
+					if (t is DatabaseTrackInfo && ((DatabaseTrackInfo) t).TrackId == trackId) {
+						return false;
+					}
+				}
+			}
+			
 			switch (playlistId) {
 			case 1: {
 				Selection selection = null;

@@ -32,6 +32,9 @@ namespace Banshee.RemoteListener
 		/// </summary>
 		private int _passId;
 		
+		/// <summary>
+		/// Was extension disposed.
+		/// </summary>
 		private bool _disposed = true;
 		
 		/// <summary>

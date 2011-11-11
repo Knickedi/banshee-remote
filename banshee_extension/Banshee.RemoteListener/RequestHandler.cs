@@ -394,8 +394,10 @@ namespace Banshee.RemoteListener
 			}
 				
 			case 4:
-				if (readBytes > 6 && Helper.AddTrackToPlayList(
-						Helper.ShortFromBuffer(1), (int) Helper.IntFromBuffer(3))) {
+				if (readBytes > 7 && Helper.AddTrackToPlayList(
+						Helper.ShortFromBuffer(2),
+						(int) Helper.IntFromBuffer(4),
+				    	(Helper.Buffer[1] & 0x1) != 0)) {
 					return new byte [] {1};
 				}
 				

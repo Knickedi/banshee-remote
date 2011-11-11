@@ -56,6 +56,12 @@
 	<string name="volume_key_control">Volume control by key</string>
 	<string name="volume_key_control_on">You can use volume keys to control banshee volume</string>
 	<string name="volume_key_control_off">Volume keys won\'t control banshee volume</string>
+	<string name="playlist_twice">Playlist track twice</string>
+	<string name="playlist_twice_on">It\'s allowed to add the same track twice to the remote playlist</string>
+	<string name="playlist_twice_off">Tracks which are added twice to the remote playlist will be ignored</string>
+	<string name="queue_twice">Queue track twice</string>
+	<string name="queue_twice_on">It\'s allowed to add the same track twice to the play queue</string>
+	<string name="queue_twice_off">Tracks which are added twice to the play queue will be ignored</string>
 	<string name="compact_playlist">Compact playlist layout</string>
 	<string name="compact_playlist_on">If previous playlist track is from same album all following will only display the track title</string>
 	<string name="compact_playlist_off">Every playlist item will have a cover, artist name and album title</string>

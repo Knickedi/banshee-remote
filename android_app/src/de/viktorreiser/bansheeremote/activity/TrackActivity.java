@@ -195,12 +195,14 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 		switch (quickActionId) {
 		case App.QUICK_ACTION_ENQUEUE: {
 			CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
-					Command.Playlist.encodeEnqueue(mTrackEntries[position].getId()));
+					Command.Playlist.encodeEnqueue(
+							mTrackEntries[position].getId(), App.isQueueAddTwice()));
 			break;
 		}
 		case App.QUICK_ACTION_ADD: {
 			CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
-					Command.Playlist.encodeAdd(mTrackEntries[position].getId()));
+					Command.Playlist.encodeAdd(
+							mTrackEntries[position].getId(), App.isPlaylistAddTwice()));
 			break;
 		}
 		}
