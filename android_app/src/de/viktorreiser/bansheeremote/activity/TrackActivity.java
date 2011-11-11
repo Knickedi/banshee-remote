@@ -122,8 +122,6 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 				App.QUICK_ACTION_ENQUEUE, R.string.quick_enqueue, R.drawable.enqueue);
 		mQuickActionSetup.addAction(
 				App.QUICK_ACTION_ADD, R.string.quick_add, R.drawable.add);
-		mQuickActionSetup.addAction(
-				App.QUICK_ACTION_REMOVE, R.string.quick_remove, R.drawable.remove);
 		
 		setContentView(R.layout.track);
 		

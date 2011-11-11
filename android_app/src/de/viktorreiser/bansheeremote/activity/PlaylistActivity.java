@@ -104,15 +104,21 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		mQuickActionSetup = App.getDefaultHiddenViewSetup(this);
 		mQuickActionSetup.setOnQuickActionListener(this);
 		
-		mQuickActionSetup.addAction(
-				App.QUICK_ACTION_ENQUEUE, R.string.quick_enqueue, R.drawable.enqueue);
+		if (mPlaylistId != 2) {
+			mQuickActionSetup.addAction(
+					App.QUICK_ACTION_ENQUEUE, R.string.quick_enqueue, R.drawable.enqueue);
+		}
 		
-		mQuickActionSetup.addAction(
-				App.QUICK_ACTION_ADD, R.string.quick_add, R.drawable.add);
+		if (mPlaylistId != 1) {
+			mQuickActionSetup.addAction(
+					App.QUICK_ACTION_ADD, R.string.quick_add, R.drawable.add);
+		}
 		
 		if (mPlaylistId == 1 || mPlaylistId == 2) {
 			mQuickActionSetup.addAction(
-					App.QUICK_ACTION_REMOVE, R.string.quick_remove, R.drawable.remove);
+					App.QUICK_ACTION_REMOVE,
+					mPlaylistId == 1 ? R.string.quick_remove : R.string.quick_remove_queue,
+					R.drawable.remove);
 		}
 		
 		mQuickActionSetup.addAction(

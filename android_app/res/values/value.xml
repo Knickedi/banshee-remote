@@ -34,6 +34,7 @@
 	<string name="loading_playlist">Loading %1$s to %2$s of %3$s tracks...</string>
 	<string name="quick_add">Add selection to playlist</string>
 	<string name="quick_remove">Remove selection from playlist</string>
+	<string name="quick_remove_queue">Remove selection from queue</string>
 	<string name="quick_enqueue">Add selection to playing queue</string>
 	<string name="quick_artist">Browse artist tracks</string>
 	<string name="all_artists">All artists</string>
