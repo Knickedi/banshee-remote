@@ -2,6 +2,10 @@ package de.viktorreiser.bansheeremote.data;
 
 import android.app.Application;
 import android.content.Context;
+import android.graphics.Shader.TileMode;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.view.animation.Interpolator;
@@ -31,6 +35,7 @@ public class App extends Application {
 	public static final int QUICK_ACTION_REMOVE = 2;
 	public static final int QUICK_ACTION_ENQUEUE = 3;
 	public static final int QUICK_ACTION_ARTIST = 4;
+	public static final int QUICK_ACTION_REMOVE_QUEUE = 6;
 	
 	
 	public static final String BANSHEE_PATH = Environment.getExternalStorageDirectory()
@@ -201,7 +206,12 @@ public class App extends Application {
 		
 		int imageSize = AndroidUtils.dipToPixel(context, 25);
 		
-		setup.setBackgroundResource(R.drawable.quickaction_background);
+		Drawable background = App.getContext().getResources().getDrawable(
+				R.drawable.quickaction_background);
+		((BitmapDrawable) ((LayerDrawable) background).getDrawable(0)).setTileModeXY(
+				TileMode.REPEAT, TileMode.REPEAT);
+		
+		setup.setBackgroundDrawable(background);
 		setup.setImageSize(imageSize, imageSize);
 		setup.setAnimationSpeed(700);
 		// the ease animation is nice but we don't want it to intercept quick action clicks

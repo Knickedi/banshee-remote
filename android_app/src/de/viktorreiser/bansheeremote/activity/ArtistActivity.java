@@ -29,6 +29,8 @@ import de.viktorreiser.bansheeremote.data.BansheeDatabase.AlbumI;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase.ArtistI;
 import de.viktorreiser.bansheeremote.data.CoverCache;
 import de.viktorreiser.toolbox.content.NetworkStateBroadcast;
+import de.viktorreiser.toolbox.widget.HiddenQuickActionSetup;
+import de.viktorreiser.toolbox.widget.SwipeableHiddenView;
 
 /**
  * Browse artists from synchronized database.
@@ -46,6 +48,8 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle, 
 	private List<ArtistEntry> mArtistEntries;
 	private Object [] mAdapterSections;
 	private ListView mList;
+	private HiddenQuickActionSetup mQuickActionSetupArtist;
+	private HiddenQuickActionSetup mQuickActionSetupAlbum;
 	
 	// PUBLIC =====================================================================================
 	
@@ -102,6 +106,27 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle, 
 				}
 			}
 		});
+		
+		mQuickActionSetupAlbum = App.getDefaultHiddenViewSetup(this);
+		mQuickActionSetupArtist = App.getDefaultHiddenViewSetup(this);
+		
+		mQuickActionSetupAlbum.addAction(App.QUICK_ACTION_ENQUEUE,
+				R.string.quick_enqueue_album, R.drawable.enqueue);
+		mQuickActionSetupAlbum.addAction(App.QUICK_ACTION_REMOVE_QUEUE,
+				R.string.quick_remove_queue_album, R.drawable.queue_remove);
+		mQuickActionSetupAlbum.addAction(App.QUICK_ACTION_ADD,
+				R.string.quick_add_album, R.drawable.add);
+		mQuickActionSetupAlbum.addAction(App.QUICK_ACTION_REMOVE,
+				R.string.quick_remove_album, R.drawable.remove);
+		
+		mQuickActionSetupArtist.addAction(App.QUICK_ACTION_ENQUEUE,
+				R.string.quick_enqueue_artist, R.drawable.enqueue);
+		mQuickActionSetupArtist.addAction(App.QUICK_ACTION_REMOVE_QUEUE,
+				R.string.quick_remove_queue_artist, R.drawable.queue_remove);
+		mQuickActionSetupArtist.addAction(App.QUICK_ACTION_ADD,
+				R.string.quick_add_artist, R.drawable.add);
+		mQuickActionSetupArtist.addAction(App.QUICK_ACTION_REMOVE,
+				R.string.quick_remove_artist, R.drawable.remove);
 		
 		setContentView(R.layout.artist);
 		
@@ -273,8 +298,10 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle, 
 				if (entry.isAlbum) {
 					convertView = getLayoutInflater().inflate(R.layout.artist_item_2, null);
 					holder.cover = (ImageView) convertView.findViewById(R.id.cover1);
+					((SwipeableHiddenView) convertView).setHiddenViewSetup(mQuickActionSetupAlbum);
 				} else {
 					convertView = getLayoutInflater().inflate(R.layout.artist_item, null);
+					((SwipeableHiddenView) convertView).setHiddenViewSetup(mQuickActionSetupArtist);
 				}
 				
 				holder.title = (TextView) convertView.findViewById(R.id.title);

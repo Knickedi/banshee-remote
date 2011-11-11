@@ -22,9 +22,12 @@ import android.widget.TextView;
 import de.viktorreiser.bansheeremote.R;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandle;
+import de.viktorreiser.bansheeremote.data.App;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase.AlbumI;
 import de.viktorreiser.bansheeremote.data.CoverCache;
+import de.viktorreiser.toolbox.widget.HiddenQuickActionSetup;
+import de.viktorreiser.toolbox.widget.SwipeableHiddenView;
 
 /**
  * Browse albums from synchronized database.
@@ -41,6 +44,7 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle, O
 	private AlbumI [] mAlbumEntries;
 	private Object [] mAdapterSections;
 	private ListView mList;
+	private HiddenQuickActionSetup mQuickActionSetup;
 	
 	// OVERRIDDEN =================================================================================
 	
@@ -89,6 +93,17 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle, O
 				}
 			}
 		});
+		
+		mQuickActionSetup = App.getDefaultHiddenViewSetup(this);
+		
+		mQuickActionSetup.addAction(App.QUICK_ACTION_ENQUEUE,
+				R.string.quick_enqueue_album, R.drawable.enqueue);
+		mQuickActionSetup.addAction(App.QUICK_ACTION_REMOVE_QUEUE,
+				R.string.quick_remove_queue_album, R.drawable.queue_remove);
+		mQuickActionSetup.addAction(App.QUICK_ACTION_ADD,
+				R.string.quick_add_album, R.drawable.add);
+		mQuickActionSetup.addAction(App.QUICK_ACTION_REMOVE,
+				R.string.quick_remove_album, R.drawable.remove);
 		
 		setContentView(R.layout.album);
 		
@@ -202,6 +217,8 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle, O
 				holder.count = (TextView) convertView.findViewById(R.id.count);
 				
 				convertView.setTag(holder);
+				
+				((SwipeableHiddenView) convertView).setHiddenViewSetup(mQuickActionSetup);
 			}
 			
 			ViewHolder holder = (ViewHolder) convertView.getTag();

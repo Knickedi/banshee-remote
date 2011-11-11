@@ -1,35 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<de.viktorreiser.toolbox.widget.SwipeableHiddenView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:paddingTop="5dip"
-    android:paddingBottom="5dip"
-    android:paddingLeft="10dip"
-    android:paddingRight="10dip"
-    android:gravity="center_vertical" >
+    android:layout_height="wrap_content" >
 
-    <ImageView 
-        android:id="@+id/cover1"
-        android:src="@drawable/no_cover"
-        android:layout_width="30dip"
-        android:layout_height="30dip"
-        android:layout_marginRight="10dip"
-        android:scaleType="fitCenter" />
-    
-    <TextView 
-        android:id="@+id/title"
-        android:text="Album title"
-        android:layout_width="0dip"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
-    
-    <TextView 
-        android:id="@+id/count"
-        android:text="(12)"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmall" />
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:gravity="center_vertical"
+        android:paddingBottom="5dip"
+        android:paddingLeft="10dip"
+        android:paddingRight="10dip"
+        android:paddingTop="5dip" >
 
-</LinearLayout>
+        <ImageView
+            android:id="@+id/cover1"
+            android:layout_width="30dip"
+            android:layout_height="30dip"
+            android:layout_marginRight="10dip"
+            android:scaleType="fitCenter"
+            android:src="@drawable/no_cover" />
+
+        <TextView
+            android:id="@+id/title"
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Album title"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <TextView
+            android:id="@+id/count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="(12)"
+            android:textAppearance="?android:attr/textAppearanceSmall" />
+    </LinearLayout>
+
+</de.viktorreiser.toolbox.widget.SwipeableHiddenView>
