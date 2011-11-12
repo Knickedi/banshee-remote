@@ -271,7 +271,7 @@ namespace Banshee.RemoteListener
 							((DatabaseSource) s).Reload();
 						}
 						
-						if (((ITrackModelSource) s).TrackModel.Count > 0) {
+						if (((ITrackModelSource) s).TrackModel.Count > 0 || s == Helper.PlayQueuePlaylist) {
 							if (!remotePlaylistAdded && String.Compare(s.Name, remotePlaylist.Name) >= 0) {
 								count++;
 								index = Helper.SourceAsPlaylistToBuffer(index, remotePlaylist);
