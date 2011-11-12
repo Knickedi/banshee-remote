@@ -849,7 +849,6 @@ namespace Banshee.RemoteListener
 		/// Returns true if track is available and is plaing now.
 		/// </returns>
 		public static byte PlayTrack(int playlistId, long trackId) {
-			Log.Information(playlistId + " " + trackId);
 			if (trackId < 1) {
 				return 0;
 			}
@@ -925,6 +924,7 @@ namespace Banshee.RemoteListener
 				
 				if (selection != null) {
 					RemotePlaylist.AddSelectedTracks(source, selection);
+					return true;
 				}
 				
 				break;
@@ -935,7 +935,7 @@ namespace Banshee.RemoteListener
 				
 				if (track != null) {
 					PlayQueuePlaylist.EnqueueTrack(track, false);
-					return true;;
+					return true;
 				}
 				
 				break;
@@ -946,6 +946,21 @@ namespace Banshee.RemoteListener
 		}
 		
 		public static bool RemoveTrackFromPlaylist(int playlistId, int trackId) {
+			if (playlistId != 1 && playlistId != 2) {
+				return false;
+			}
+			
+			PlaylistSource source = playlistId == 1 ? RemotePlaylist : PlayQueuePlaylist;
+			
+			for (int i = 0; i < source.TrackModel.Count; i++) {
+				object t = source.TrackModel.GetItem(i);
+				
+				if (t is DatabaseTrackInfo && ((DatabaseTrackInfo) t).TrackId == trackId) {
+					source.RemoveTrack(i);
+					return true;
+				}
+			}
+			
 			return false;
 		}
 		

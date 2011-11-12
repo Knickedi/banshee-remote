@@ -319,6 +319,12 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 							mPlaylist.get(position).trackInfo.getId(), App.isPlaylistAddTwice()));
 			break;
 		}
+		case App.QUICK_ACTION_REMOVE: {
+			CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
+					Command.Playlist.encodeRemove(
+							mPlaylistId, mPlaylist.get(position).trackInfo.getId()));
+			break;
+		}
 		case App.QUICK_ACTION_ARTIST: {
 			Intent intent = new Intent(this, ArtistActivity.class);
 			intent.putExtra(ArtistActivity.EXTRA_ARITST_ID,

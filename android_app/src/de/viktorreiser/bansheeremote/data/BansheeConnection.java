@@ -596,6 +596,14 @@ public class BansheeConnection {
 				System.arraycopy(encodeInt(trackId), 0, result, 4, 4);
 				return result;
 			}
+			
+			public static byte [] encodeRemove(int playlistId, long trackId) {
+				byte [] result = new byte [7];
+				result[0] = 5;
+				System.arraycopy(encodeShort(playlistId), 0, result, 1, 2);
+				System.arraycopy(encodeInt(trackId), 0, result, 3, 4);
+				return result;
+			}
 		}
 		
 		private static byte [] encodeShort(int value) {
