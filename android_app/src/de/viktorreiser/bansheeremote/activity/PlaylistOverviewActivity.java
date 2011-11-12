@@ -18,7 +18,6 @@ import android.widget.TextView;
 import de.viktorreiser.bansheeremote.R;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandle;
-import de.viktorreiser.toolbox.util.L;
 
 /**
  * This will load all available playlists on the server.
@@ -155,7 +154,6 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 				} else {
 					Object [][] playlists = Command.Playlist.decodePlaylistNames(result);
 					mActivePlaylistId = Command.Playlist.decodeActivePlaylist(result);
-					L.d("active " + mActivePlaylistId);
 					mActivePlaylistIdChange = mActivePlaylistId;
 					
 					for (int i = 0; i < playlists.length; i++) {
@@ -163,7 +161,6 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 						e.count = (Integer) playlists[i][0];
 						e.id = (Integer) playlists[i][1];
 						e.name = (String) playlists[i][2];
-						L.d(e.name + " " + e.id);
 						mPlaylists.add(e);
 					}
 					

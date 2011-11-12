@@ -305,7 +305,6 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 	
 	@Override
 	public void onQuickAction(AdapterView<?> parent, View view, int position, int quickActionId) {
-		// TODO implement quick action on playlist
 		switch (quickActionId) {
 		case App.QUICK_ACTION_ENQUEUE: {
 			CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
@@ -718,7 +717,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 				entry.requestedTrackInfo = true;
 				entry.trackInfo = BansheeDatabase.getTrackI(entry.id);
 				
-				if (entry.id < 1 && App.isShowDbOutOfDateHint()) {
+				if (!mDbOutOfDateHintShown && entry.id > 0 && App.isShowDbOutOfDateHint()) {
 					mDbOutOfDateHintShown = true;
 					Toast.makeText(PlaylistActivity.this, R.string.out_of_data_hint_db,
 							Toast.LENGTH_SHORT).show();

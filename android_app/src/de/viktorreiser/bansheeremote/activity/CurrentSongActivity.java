@@ -822,7 +822,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			if (mData.changeFlag != mPreviousData.changeFlag) {
 				TrackI info = BansheeDatabase.getUncachedTrackI(mData.currentSongId);
 				
-				if (info != null) {
+				if (info.getId() > 0) {
 					mData.totalTime = info.getDuration();
 					mData.song = info.getTitle();
 					mData.artist = info.getArtist().getName();
@@ -832,8 +832,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 					mData.artId = info.getAlbum().getArtId();
 					updateComplete(false);
 					handleCoverStatus();
-				} else if (mData.currentSongId > 0) {
-					if (BansheeDatabase.isOpen() && App.isShowDbOutOfDateHint()) {
+				} else {
+					if (mData.currentSongId > 0 && BansheeDatabase.isOpen()
+							&& App.isShowDbOutOfDateHint()) {
 						Toast.makeText(CurrentSongActivity.this, R.string.out_of_data_hint_db,
 								Toast.LENGTH_SHORT).show();
 					}
