@@ -403,9 +403,9 @@ namespace Banshee.RemoteListener
 				return Helper.ShortToByte(0);
 				
 			case 5:
-				if (readBytes > 6 && Helper.RemoveTrackFromPlaylist(
-						Helper.ShortFromBuffer(1), (int) Helper.IntFromBuffer(3))) {
-					return Helper.ShortToByte(1);
+				if (readBytes > 6) {
+					return Helper.ShortToByte((ushort) Helper.RemoveTrackFromPlaylist(
+						Helper.ShortFromBuffer(1), (int) Helper.IntFromBuffer(3)));
 				}
 				
 				return Helper.ShortToByte(0);

@@ -266,7 +266,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		}
 		case App.QUICK_ACTION_ADD: {
 			CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
-					Command.Playlist.encodeAdd(
+					Command.Playlist.encodeAddTrack(
 							mPlaylist.get(position).trackInfo.getId(), App.isPlaylistAddTwice()));
 			break;
 		}

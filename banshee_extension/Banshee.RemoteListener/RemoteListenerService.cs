@@ -33,7 +33,7 @@ namespace Banshee.RemoteListener
 		private int _passId;
 		
 		/// <summary>
-		/// Was extension disposed.
+		/// Was extension disposed (banshee shutdown).
 		/// </summary>
 		private bool _disposed = true;
 		
@@ -41,6 +41,11 @@ namespace Banshee.RemoteListener
 		/// Banshee port preference.
 		/// </summary>
 		private PreferenceBase _portPref;
+		
+		/// <summary>
+		/// Banshee password ID preference.
+		/// </summary>
+		private PreferenceBase _passIdPref;
 		
 		/// <summary>
 		/// Banshee preferences
@@ -54,8 +59,7 @@ namespace Banshee.RemoteListener
 
 		string IService.ServiceName { get { return "RemoteServer"; } }
 
-		void IExtensionService.Initialize()
-		{
+		void IExtensionService.Initialize() {
 			_prefs = ServiceManager.Get<PreferenceService>();
 			
 			if (_prefs == null) {
@@ -74,7 +78,7 @@ namespace Banshee.RemoteListener
 			    Catalog.GetString("Banshee will listen for remote control requests on this port")
 			));
 			
-			_portPref = BansheeRemotePrefs.Add(new SchemaPreference<int>(
+			_passIdPref = BansheeRemotePrefs.Add(new SchemaPreference<int>(
 				RemotePassIdSchema,
 				Catalog.GetString("Password ID"),
 			    Catalog.GetString("\"Secret\" ID which is required to be specified in incoming requests")
@@ -99,11 +103,11 @@ namespace Banshee.RemoteListener
 			StartRemoteListener();
 		}
 
-		void IDisposable.Dispose()
-		{
+		void IDisposable.Dispose() {
 			_disposed = true;
 			
 			_prefs["RemoteControl"]["BansheeRemote"].Remove(_portPref);
+			_prefs["RemoteControl"]["BansheeRemote"].Remove(_passIdPref);
 			_prefs["RemoteControl"].Remove(_prefs["RemoteControl"].FindById("BansheeRemote"));
 			_prefs.Remove(_prefs.FindById("RemoteControl"));
 			
@@ -126,7 +130,8 @@ namespace Banshee.RemoteListener
 
 
 		public static readonly SchemaEntry<int> RemotePortSchema = new SchemaEntry<int>(
-			"remServiceManager.SourceManager.SourceRemoved += OnSourceRemoved;ote_control", "remote_control_port", 8484, 1024, 49151, "", ""
+			"remServiceManager.SourceManager.SourceRemoved += OnSourceRemoved;ote_control",
+			"remote_control_port", 8484, 1024, 49151, "", ""
 		);
 		
 		public static readonly SchemaEntry<int> RemotePassIdSchema = new SchemaEntry<int>(
@@ -160,7 +165,9 @@ namespace Banshee.RemoteListener
 				_listener.Listen(10);
 				_listener.BeginAccept(OnIncomingConnection, _listener);
 			} catch (Exception e) {
-				Log.Error("error while starting remote listener", e.Message);
+				if (!_disposed) {
+					Log.Error("error while starting remote listener", e.Message);
+				}
 			}
 		}
 
@@ -179,8 +186,10 @@ namespace Banshee.RemoteListener
 				client.BeginReceive(Helper.Buffer, 0, Helper.Buffer.Length, SocketFlags.None,
 					OnReceiveRequest, client);
 			} catch (Exception e) {
-				Log.Error("error while handling client request by remote listener: " + e.Message);
-				_listener.BeginAccept(new AsyncCallback(OnIncomingConnection), _listener);
+				if (!_disposed) {
+					Log.Error("error while handling client request by remote listener: " + e.Message);
+					_listener.BeginAccept(new AsyncCallback(OnIncomingConnection), _listener);
+				}
 			}
 		}
 		
@@ -218,14 +227,16 @@ namespace Banshee.RemoteListener
 					                 OnSentResponse, client);
 				}
 			} catch (Exception e) {
-				Log.Error("remote listener request error", e.StackTrace);
-				
-				if (!isListenerAccepting) {
-					try {
-						// error occurred on request handle listening was not started
-						_listener.BeginAccept(new AsyncCallback(OnIncomingConnection), _listener);
-					} catch (Exception e2) {
-						Log.Error("error while starting accepting of remote listener", e2.Message);
+				if (!_disposed)  {
+					Log.Error("remote listener request error", e.StackTrace);
+					
+					if (!isListenerAccepting) {
+						try {
+							// error occurred on request handle listening was not started
+							_listener.BeginAccept(new AsyncCallback(OnIncomingConnection), _listener);
+						} catch (Exception e2) {
+							Log.Error("error while starting accepting of remote listener", e2.Message);
+						}
 					}
 				}
 			}

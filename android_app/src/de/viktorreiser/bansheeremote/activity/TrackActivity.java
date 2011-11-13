@@ -201,7 +201,7 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 		}
 		case App.QUICK_ACTION_ADD: {
 			CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
-					Command.Playlist.encodeAdd(
+					Command.Playlist.encodeAddTrack(
 							mTrackEntries[position].getId(), App.isPlaylistAddTwice()));
 			break;
 		}

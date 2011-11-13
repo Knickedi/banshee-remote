@@ -30,7 +30,7 @@ namespace Banshee.RemoteListener
 		#region Attributes
 		
 		/// <summary>
-		/// Timespan the compressed database will be cached (in seconds)
+		/// Timespan for which the compressed database will be cached (in seconds)
 		/// </summary>
 		private static int _DB_CACHED_COMPRESSION = 24 * 60 * 60;
 		
@@ -39,11 +39,11 @@ namespace Banshee.RemoteListener
 		/// </summary>
 		/// Amount of seconds which should be passed so the current song is played again on
 		/// "previous" track request if given amount of seconds hasn't passed the track prior to
-		/// the urrent will be played (allows replay of current track).
+		/// the current will be played (allows replay of current track).
 		private static int _PREVIOUS_TRACK_OFFSET = 15;
 		
 		/// <summary>
-		/// Volume step down / up steps.
+		/// Volume step down / up steps (for smooth volume control).
 		/// </summary>
 		private static int [] _VolumeSteps = new int [] {
 			0, 1, 2, 3, 5, 7, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 90, 100
@@ -76,10 +76,11 @@ namespace Banshee.RemoteListener
 		private static byte[] _buffer = new byte[1024 * 100];
 		
 		/// <summary>
+		/// Timestamp of last forced playing state.
+		/// </summary>
 		/// Banshee is not understanding that another track is chosen to be played and reports that
 		/// player engine has stopped playing for a while. So we will force the playing status for
 		/// two seconds.
-		/// </summary>
 		private static int _playTimeout = 0;
 		
 		/// <summary>
@@ -97,19 +98,32 @@ namespace Banshee.RemoteListener
 		
 		#region Getter / Setter
 		
+		/// <summary>
+		/// Timestamp of last database compression.
+		/// </summary>
 		public static int DbCompressTime {
 			get { return _dbCompressTime; }
 			set { _dbCompressTime = value; }
 		}
 		
+		/// <summary>
+		/// Reference to request buffer.
+		/// </summary>
 		public static byte [] Buffer {
 			get { return _buffer; }
 		}
 		
+		/// <summary>
+		/// Should playing state should be forced?
+		/// </summary>
 		public static bool ForcePlay {
 			get { return Timestamp() - _playTimeout <= 1; }
 		}
 		
+		/// <summary>
+		/// Get reference to music library source.
+		/// </summary>
+		/// Filters will be cleared so whole music library will be visible. 
 		public static MusicLibrarySource MusicLibrary {
 			get {
 				MusicLibrarySource s = ServiceManager.SourceManager.MusicLibrary;
@@ -118,6 +132,11 @@ namespace Banshee.RemoteListener
 			}
 		}
 		
+		/// <summary>
+		/// Get reference to remote playlist source.
+		/// </summary>
+		/// This will search for the reference if not already found.
+		/// If the playlist is not available it will be created.
 		public static PlaylistSource RemotePlaylist {
 			get {
 				if (_remotePlaylist != null) {
@@ -146,6 +165,10 @@ namespace Banshee.RemoteListener
 			}
 		}
 		
+		/// <summary>
+		/// Reference to play queue source.
+		/// </summary>
+		/// This will search for the reference if not already found.
 		public static PlayQueueSource PlayQueuePlaylist {
 			get {
 				if (_playQueuePlaylist == null) {
@@ -920,6 +943,21 @@ namespace Banshee.RemoteListener
 			return 1;
 		}
 		
+		/// <summary>
+		/// Add track to playlist.
+		/// </summary>
+		/// <param name="playlistId">
+		/// ID of playlist (1 and 2 supported only).
+		/// </param>
+		/// <param name="trackId">
+		/// Track ID of track to add.
+		/// </param>
+		/// <param name="allowTwice">
+		/// True if track should be added although it's already in available in the playlist.
+		/// </param>
+		/// <returns>
+		/// True if track successfully added to playlist.
+		/// </returns>
 		public static bool AddTrackToPlayList(int playlistId, int trackId, bool allowTwice) {
 			if (!allowTwice) {
 				TrackListModel m = (playlistId == 1 ? RemotePlaylist : PlayQueuePlaylist).TrackModel;
@@ -971,23 +1009,37 @@ namespace Banshee.RemoteListener
 			return false;
 		}
 		
-		public static bool RemoveTrackFromPlaylist(int playlistId, int trackId) {
+		/// <summary>
+		/// Remove track from playlist.
+		/// </summary>
+		/// <param name="playlistId">
+		/// ID of playlist (1 and 2 supported only).
+		/// </param>
+		/// <param name="trackId">
+		/// Track ID of track to remove.
+		/// </param>
+		/// <returns>
+		/// Amount of removed tracks.
+		/// </returns>
+		public static int RemoveTrackFromPlaylist(int playlistId, int trackId) {
 			if (playlistId != 1 && playlistId != 2) {
-				return false;
+				return 0;
 			}
 			
 			PlaylistSource source = playlistId == 1 ? RemotePlaylist : PlayQueuePlaylist;
+			int removed = 0;
 			
 			for (int i = 0; i < source.TrackModel.Count; i++) {
 				object t = source.TrackModel.GetItem(i);
 				
 				if (t is DatabaseTrackInfo && ((DatabaseTrackInfo) t).TrackId == trackId) {
 					source.RemoveTrack(i);
-					return true;
+					i--;
+					removed++;
 				}
 			}
 			
-			return false;
+			return removed;
 		}
 		
 		#endregion
