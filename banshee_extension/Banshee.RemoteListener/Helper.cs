@@ -110,6 +110,14 @@ namespace Banshee.RemoteListener
 			get { return Timestamp() - _playTimeout <= 1; }
 		}
 		
+		public static MusicLibrarySource MusicLibrary {
+			get {
+				MusicLibrarySource s = ServiceManager.SourceManager.MusicLibrary;
+				ClearSourceFilters(s);
+				return s;
+			}
+		}
+		
 		public static PlaylistSource RemotePlaylist {
 			get {
 				if (_remotePlaylist != null) {
@@ -239,6 +247,24 @@ namespace Banshee.RemoteListener
 		/// </returns>
 		public static ushort SourceHashCode(Source s) {
 			return (ushort) ((s.Name + s.UniqueId).GetHashCode() & 0xffff);
+		}
+		
+		/// <summary>
+		/// Clear filters of a certain source.
+		/// </summary>
+		/// <param name="s">
+		/// Source whose filters sould be cleared.
+		/// </param>
+		public static void ClearSourceFilters(DatabaseSource s) {
+			foreach (IFilterListModel f in s.CurrentFilters) {
+				f.Selection.Clear();
+			}
+			
+			if (s.FilterQuery != null && s.FilterQuery.Trim().Length != 0) {
+				s.FilterQuery = "";
+			}
+			
+			s.Reload();
 		}
 		
 		/// <summary>
@@ -865,7 +891,7 @@ namespace Banshee.RemoteListener
 			TrackListModel model = null;
 			
 			if (source == null) {
-				source = ServiceManager.SourceManager.MusicLibrary;
+				source = MusicLibrary;
 			}
 			
 			model = ((ITrackModelSource) source).TrackModel;
@@ -910,7 +936,7 @@ namespace Banshee.RemoteListener
 			switch (playlistId) {
 			case 1: {
 				Selection selection = null;
-				MusicLibrarySource source = ServiceManager.SourceManager.MusicLibrary;
+				MusicLibrarySource source = MusicLibrary;
 				
 				for (int i = 0; i < source.TrackModel.Count; i++) {
 					object t = source.TrackModel.GetItem(i);

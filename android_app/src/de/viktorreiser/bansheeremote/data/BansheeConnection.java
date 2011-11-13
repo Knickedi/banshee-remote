@@ -43,7 +43,7 @@ public class BansheeConnection {
 	
 	// PRIVATE ====================================================================================
 	
-	private static final int CHECK_CONNECTION_TIMEOUT = 4000;
+	private static final int CHECK_CONNECTION_TIMEOUT = 3000;
 	
 	private static byte [] mBuffer = new byte [1024];
 	private static ByteArrayOutputStream mByteOutputStream = new ByteArrayOutputStream();
@@ -85,10 +85,10 @@ public class BansheeConnection {
 	public static enum Command {
 		
 		PLAYER_STATUS(1, 1000),
-		SONG_INFO(2, 1000),
+		SONG_INFO(2, 2000),
 		SYNC_DATABASE(3, 10000),
 		COVER(4, 5000),
-		PLAYLIST(5, 3000);
+		PLAYLIST(5, 5000);
 		
 		private final int mCode;
 		private final int mTimeout;
@@ -588,7 +588,7 @@ public class BansheeConnection {
 				return result;
 			}
 			
-			public static byte [] encodeAdd(long trackId, boolean allowTwice) {
+			public static byte [] encodeAddTrack(long trackId, boolean allowTwice) {
 				byte [] result = new byte [8];
 				result[0] = 4;
 				result[1] = (byte) (allowTwice ? 1 : 0);
@@ -597,12 +597,42 @@ public class BansheeConnection {
 				return result;
 			}
 			
+			public static boolean isPlaylistAddTrack(byte [] params) {
+				return params[0] == 4;
+			}
+			
 			public static byte [] encodeRemove(int playlistId, long trackId) {
 				byte [] result = new byte [7];
 				result[0] = 5;
 				System.arraycopy(encodeShort(playlistId), 0, result, 1, 2);
 				System.arraycopy(encodeInt(trackId), 0, result, 3, 4);
 				return result;
+			}
+			
+			public static boolean isPlaylistRemoveTrack(byte [] params) {
+				return params[0] == 5;
+			}
+			
+			public static int decodeAddOrRemoveCount(byte [] response, byte [] params) {
+				int count = decodeShort(response, 0);
+				
+				switch (params[0]) {
+				case 5:
+					return -count;
+				
+				default:
+					return count;
+				}
+			}
+			
+			public static int getAddOrRemovePlaylist(byte [] params) {
+				switch (params[0]) {
+				case 5:
+					return decodeShort(params, 1);
+				
+				default:
+					return decodeShort(params, 2);
+				}
 			}
 		}
 		

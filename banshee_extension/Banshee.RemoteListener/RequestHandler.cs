@@ -266,12 +266,11 @@ namespace Banshee.RemoteListener
 				// - the remote playlist won't be listed if it's fresh created, so we do that manually
 				//   we just fit it into position where the source enumaration would contain it 
 				foreach (Source s in ServiceManager.SourceManager.Sources) {
-					if (s is ITrackModelSource && s != remotePlaylist) {
-						if (s is DatabaseSource) {
-							((DatabaseSource) s).Reload();
-						}
+					if (s is DatabaseSource && s != remotePlaylist && s.Parent == ServiceManager.SourceManager.MusicLibrary) {
+						DatabaseSource so = s as DatabaseSource;
+						Helper.ClearSourceFilters(so);
 						
-						if (((ITrackModelSource) s).TrackModel.Count > 0 || s == Helper.PlayQueuePlaylist) {
+						if (so.TrackModel.Count > 0 || s == Helper.PlayQueuePlaylist) {
 							if (!remotePlaylistAdded && String.Compare(s.Name, remotePlaylist.Name) >= 0) {
 								count++;
 								index = Helper.SourceAsPlaylistToBuffer(index, remotePlaylist);
@@ -398,36 +397,30 @@ namespace Banshee.RemoteListener
 						Helper.ShortFromBuffer(2),
 						(int) Helper.IntFromBuffer(4),
 				    	(Helper.Buffer[1] & 0x1) != 0)) {
-					return new byte [] {0, 1};
+					return Helper.ShortToByte(1);
 				}
 				
-				return new byte [] {0, 0};
+				return Helper.ShortToByte(0);
 				
 			case 5:
 				if (readBytes > 6 && Helper.RemoveTrackFromPlaylist(
 						Helper.ShortFromBuffer(1), (int) Helper.IntFromBuffer(3))) {
-					return new byte [] {0, 1};
+					return Helper.ShortToByte(1);
 				}
 				
-				return new byte [] {0, 0};
+				return Helper.ShortToByte(0);
 				
 			case 6:
-				
-				
-				return new byte [] {0, 0};
+				return Helper.ShortToByte(0);
 				
 			case 7:
-				
-				return new byte [] {0, 0};
+				return Helper.ShortToByte(0);
 				
 			case 8:
-				return new byte [] {0, 0};
+				return Helper.ShortToByte(0);
 				
 			case 9:
-				return new byte [] {0, 0};
-				
-			case 10:
-				return new byte [] {0, 0};
+				return Helper.ShortToByte(0);
 			}
 			
 			return new byte [] {0};

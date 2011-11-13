@@ -18,6 +18,7 @@ import android.widget.TextView;
 import de.viktorreiser.bansheeremote.R;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandle;
+import de.viktorreiser.toolbox.util.L;
 
 /**
  * This will load all available playlists on the server.
@@ -34,11 +35,36 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 	
 	private static final int REQUEST_PLAYLIST = 1;
 	
+	private static PlaylistOverviewActivity mInstance;
+	
 	private OnBansheeCommandHandle mOldCommandHandler;
 	private List<PlaylistEntry> mPlaylists = new ArrayList<PlaylistEntry>();
 	private int mActivePlaylistId;
 	private boolean mLoadingDismissed;
 	private PlaylistsAdapter mAdapter;
+	
+	// PUBLIC =====================================================================================
+	
+	public static void updatePlaylistTrackCount(int playlistId, int trackChange,
+			boolean updatePlaylist) {
+		if (mInstance == null && trackChange != 0) {
+			return;
+		}
+		
+		for (PlaylistEntry e : mInstance.mPlaylists) {
+			if (e.id == playlistId) {
+				e.count += trackChange;
+				
+				if (mInstance.mAdapter != null) {
+					mInstance.mAdapter.notifyDataSetChanged();
+					L.d("hier " +  e.count + " " + trackChange + " " + playlistId);
+				}
+				
+				PlaylistActivity.updatePlaylist();
+				break;
+			}
+		}
+	}
 	
 	// OVERRIDDEN =================================================================================
 	
@@ -46,6 +72,8 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 	@Override
 	public void onCreate(Bundle bundle) {
 		super.onCreate(bundle);
+		
+		mInstance = this;
 		
 		if (CurrentSongActivity.getConnection() == null) {
 			finish();
@@ -122,6 +150,8 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 		if (isFinishing()) {
 			finishActivity(REQUEST_PLAYLIST);
 		}
+		
+		mInstance = null;
 	}
 	
 	@Override
