@@ -16,7 +16,7 @@ import android.database.sqlite.SQLiteOpenHelper;
  * An instance provides informations about a single server.<br>
  * <br>
  * This class has static helper methods which helps you to persist the default (chosen) server, get
- * all available server and add and remove saved servers.
+ * all available servers and add and remove saved servers.
  * 
  * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
  */
@@ -36,7 +36,7 @@ public class BansheeServer {
 	// PUBLIC =====================================================================================
 	
 	/**
-	 * Used to create a nice output for {@link #toString()}.
+	 * Used to create a nice output for {@link #toString()} (not a valid server).
 	 * 
 	 * @param host
 	 *            text to print with {@link #toString()}
@@ -68,7 +68,7 @@ public class BansheeServer {
 	}
 	
 	/**
-	 * Create banshee server with host, port and same banshee server ID.
+	 * Create banshee server with host, port and password ID.
 	 * 
 	 * @param host
 	 *            host of banshee server
@@ -125,7 +125,7 @@ public class BansheeServer {
 	}
 	
 	/**
-	 * Get id of server which database will be used by this server.
+	 * Get ID of server which database will be used by this server.
 	 * 
 	 * @return id of parent server or {@code -1} for none
 	 */
@@ -203,30 +203,6 @@ public class BansheeServer {
 		v.put(DB.SAME_ID, server.mSameHostId);
 		v.put(DB.PASSWORD_ID, sameServer == null ? server.mPasswordId : 0);
 		server.mId = getDb().insert(DB.TABLE_NAME, null, v);
-	}
-	
-	/**
-	 * Update server.
-	 * 
-	 * @param server
-	 *            server to update (server should be added with {@link #addServer(BansheeServer)}
-	 *            before)
-	 */
-	public static void updateServer(BansheeServer server) {
-		BansheeServer sameServer = getServer(server.mSameHostId);
-		
-		if (server.mSameHostId > 0 && sameServer == null) {
-			throw new IllegalArgumentException("same host id is invalid");
-		}
-		
-		ContentValues v = new ContentValues();
-		v.put(DB.SAME_ID, sameServer == null ? -1 : server.mSameHostId);
-		v.put(DB.DB_TIMESTAMP, sameServer == null ? server.mDbTimestamp : 0);
-		v.put(DB.HOST, server.mHost);
-		v.put(DB.PORT, sameServer == null ? server.mPort : 0);
-		v.put(DB.SAME_ID, server.mSameHostId);
-		v.put(DB.PASSWORD_ID, sameServer == null ? server.mPasswordId : 0);
-		getDb().update(DB.TABLE_NAME, v, DB.ID + "=" + server.mId, null);
 	}
 	
 	/**
@@ -334,6 +310,32 @@ public class BansheeServer {
 	public static void setDefaultServer(long id) {
 		getDb().execSQL("UPDATE " + DB.TABLE_NAME + " SET " + DB.DEFAULT
 				+ "= (CASE WHEN " + DB.ID + "=" + id + " THEN 1 ELSE 0 END);");
+	}
+	
+	// PACKAGE ====================================================================================
+	
+	/**
+	 * Update server.
+	 * 
+	 * @param server
+	 *            server to update (server should be added with {@link #addServer(BansheeServer)}
+	 *            before)
+	 */
+	static void updateServer(BansheeServer server) {
+		BansheeServer sameServer = getServer(server.mSameHostId);
+		
+		if (server.mSameHostId > 0 && sameServer == null) {
+			throw new IllegalArgumentException("same host id is invalid");
+		}
+		
+		ContentValues v = new ContentValues();
+		v.put(DB.SAME_ID, sameServer == null ? -1 : server.mSameHostId);
+		v.put(DB.DB_TIMESTAMP, sameServer == null ? server.mDbTimestamp : 0);
+		v.put(DB.HOST, server.mHost);
+		v.put(DB.PORT, sameServer == null ? server.mPort : 0);
+		v.put(DB.SAME_ID, server.mSameHostId);
+		v.put(DB.PASSWORD_ID, sameServer == null ? server.mPasswordId : 0);
+		getDb().update(DB.TABLE_NAME, v, DB.ID + "=" + server.mId, null);
 	}
 	
 	// OVERRIDDEN =================================================================================

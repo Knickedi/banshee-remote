@@ -29,7 +29,7 @@ import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHand
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Repeat;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Shuffle;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase;
-import de.viktorreiser.bansheeremote.data.BansheeDatabase.TrackI;
+import de.viktorreiser.bansheeremote.data.BansheeDatabase.Track;
 import de.viktorreiser.bansheeremote.data.BansheeServer;
 import de.viktorreiser.bansheeremote.data.BansheeServerCheckTask;
 import de.viktorreiser.bansheeremote.data.BansheeServerCheckTask.OnBansheeServerCheck;
@@ -820,7 +820,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			updateComplete(false);
 			
 			if (mData.changeFlag != mPreviousData.changeFlag) {
-				TrackI info = BansheeDatabase.getUncachedTrackI(mData.currentSongId);
+				Track info = BansheeDatabase.getUncachedTrack(mData.currentSongId);
 				
 				if (info.getId() > 0) {
 					mData.totalTime = info.getDuration();

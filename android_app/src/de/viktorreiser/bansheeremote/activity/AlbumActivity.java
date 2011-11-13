@@ -24,7 +24,7 @@ import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandle;
 import de.viktorreiser.bansheeremote.data.App;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase;
-import de.viktorreiser.bansheeremote.data.BansheeDatabase.AlbumI;
+import de.viktorreiser.bansheeremote.data.BansheeDatabase.Album;
 import de.viktorreiser.bansheeremote.data.CoverCache;
 import de.viktorreiser.toolbox.widget.HiddenQuickActionSetup;
 import de.viktorreiser.toolbox.widget.SwipeableHiddenView;
@@ -41,7 +41,7 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle, O
 	private static final int REQUEST_ACTIVITY = 1;
 	
 	private OnBansheeCommandHandle mOldCommandHandler;
-	private AlbumI [] mAlbumEntries;
+	private Album [] mAlbumEntries;
 	private Object [] mAdapterSections;
 	private ListView mList;
 	private HiddenQuickActionSetup mQuickActionSetup;
@@ -60,10 +60,10 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle, O
 		Object [] data = (Object []) getLastNonConfigurationInstance();
 		
 		if (data != null) {
-			mAlbumEntries = (AlbumI []) data[0];
+			mAlbumEntries = (Album []) data[0];
 			mAdapterSections = (Object []) data[1];
 		} else {
-			mAlbumEntries = BansheeDatabase.getOrderedAlbumI();
+			mAlbumEntries = BansheeDatabase.getOrderedAlbums();
 			List<SectionEntry> sections = new ArrayList<SectionEntry>();
 			Set<String> characters = new TreeSet<String>();
 			
@@ -222,7 +222,7 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle, O
 			}
 			
 			ViewHolder holder = (ViewHolder) convertView.getTag();
-			AlbumI info = mAlbumEntries[position];
+			Album info = mAlbumEntries[position];
 			
 			holder.album.setText(info.getTitle());
 			holder.artist.setText(info.getArtistI().getName());

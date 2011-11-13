@@ -28,19 +28,24 @@ public class BansheeDatabase {
 	private static SQLiteDatabase mBansheeDatabase;
 	private static BansheeServer mServer;
 	
-	private static Set<TrackI> mOrderedTrackInfo = null;
-	private static Map<Long, TrackI> mTrackInfo = null;
-	private static Set<AlbumI> mOrderedAlbumInfo = null;
-	private static Map<Long, AlbumI> mAlbumInfo = null;
-	private static Set<ArtistI> mOrderedArtistInfo = null;
-	private static Map<Long, ArtistI> mArtistInfo = null;
+	private static Set<Track> mOrderedTrackInfo = null;
+	private static Map<Long, Track> mTrackInfo = null;
+	private static Set<Album> mOrderedAlbumInfo = null;
+	private static Map<Long, Album> mAlbumInfo = null;
+	private static Set<Artist> mOrderedArtistInfo = null;
+	private static Map<Long, Artist> mArtistInfo = null;
 	
 	// PUBLIC =====================================================================================
 	
-	public static class TrackI {
+	/**
+	 * Track information returned by database requests.
+	 * 
+	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+	 */
+	public static class Track {
 		
-		private static TrackI createUnknown() {
-			TrackI i = new TrackI();
+		private static Track createUnknown() {
+			Track i = new Track();
 			i.title = App.getContext().getString(R.string.unknown_track);
 			i.genre = "";
 			return i;
@@ -54,8 +59,8 @@ public class BansheeDatabase {
 		private int duration;
 		private int year;
 		private String genre;
-		private AlbumI album;
-		private ArtistI artist;
+		private Album album;
+		private Artist artist;
 		
 		public long getId() {
 			return id;
@@ -89,27 +94,32 @@ public class BansheeDatabase {
 			return genre;
 		}
 		
-		public AlbumI getAlbum() {
+		public Album getAlbum() {
 			if (album == null) {
-				album = getAlbumI(albumId);
+				album = BansheeDatabase.getAlbum(albumId);
 			}
 			
 			return album;
 		}
 		
-		public ArtistI getArtist() {
+		public Artist getArtist() {
 			if (artist == null) {
-				artist = getArtistI(artistId);
+				artist = BansheeDatabase.getArtist(artistId);
 			}
 			
 			return artist;
 		}
 	}
 	
-	public static class AlbumI {
+	/**
+	 * Album information returned by database requests.
+	 * 
+	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+	 */
+	public static class Album {
 		
-		private static AlbumI createUnknown() {
-			AlbumI i = new AlbumI();
+		private static Album createUnknown() {
+			Album i = new Album();
 			i.title = App.getContext().getString(R.string.all_albums);
 			i.artId = "";
 			return i;
@@ -120,7 +130,7 @@ public class BansheeDatabase {
 		private String title;
 		private String artId;
 		private int trackCount;
-		private ArtistI artist;
+		private Artist artist;
 		
 		public long getId() {
 			return id;
@@ -142,19 +152,24 @@ public class BansheeDatabase {
 			return trackCount;
 		}
 		
-		public ArtistI getArtistI() {
+		public Artist getArtistI() {
 			if (artist == null) {
-				artist = BansheeDatabase.getArtistI(artistId);
+				artist = BansheeDatabase.getArtist(artistId);
 			}
 			
 			return artist;
 		}
 	}
 	
-	public static class ArtistI {
+	/**
+	 * Artist information returned by database requests.
+	 * 
+	 * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
+	 */
+	public static class Artist {
 		
-		private static ArtistI createUnknown() {
-			ArtistI i = new ArtistI();
+		private static Artist createUnknown() {
+			Artist i = new Artist();
 			i.name = App.getContext().getString(R.string.unknown_artist);
 			return i;
 		}
@@ -182,79 +197,120 @@ public class BansheeDatabase {
 	}
 	
 	
-	public static TrackI [] getOrderedTrackI() {
+	/**
+	 * Get all tracks ordered ascending by track title.
+	 * 
+	 * @return all tracks
+	 */
+	public static Track [] getOrderedTracks() {
 		if (!isOpen()) {
 			return null;
 		}
 		
 		setupDbCache();
 		
-		return mOrderedTrackInfo.toArray(new TrackI [0]);
+		return mOrderedTrackInfo.toArray(new Track [0]);
 	}
 	
-	public static TrackI [] getOrderedTrackIForAlbum(long id) {
+	/**
+	 * Get tracks of an album ordered by their track numbers.
+	 * 
+	 * @param id
+	 *            ID of album
+	 * 
+	 * @return tracks of the album or empty array for an invalid ID
+	 */
+	public static Track [] getOrderedTracksOfAlbum(long id) {
 		if (!isOpen()) {
 			return null;
 		}
 		
 		setupDbCache();
 		
-		List<TrackI> info = new LinkedList<TrackI>();
+		List<Track> info = new LinkedList<Track>();
 		
-		for (TrackI i : mOrderedTrackInfo) {
+		for (Track i : mOrderedTrackInfo) {
 			if (i.getAlbumId() == id) {
 				info.add(i);
 			}
 		}
 		
-		Collections.sort(info, new Comparator<TrackI>() {
+		Collections.sort(info, new Comparator<Track>() {
 			@Override
-			public int compare(TrackI lhs, TrackI rhs) {
+			public int compare(Track lhs, Track rhs) {
 				return lhs.trackNumber - rhs.trackNumber;
 			}
 		});
 		
-		return info.toArray(new TrackI [0]);
+		return info.toArray(new Track [0]);
 	}
 	
-	public static TrackI [] getOrderedTrackIForArtist(long id) {
+	/**
+	 * Get all tracks of an artist ordered ascending by track title.
+	 * 
+	 * @param id
+	 *            artist ID
+	 * 
+	 * @return all tracks of an artist or empty array for an invalid ID
+	 */
+	public static Track [] getOrderedTracksOfArtist(long id) {
 		if (!isOpen()) {
 			return null;
 		}
 		
-		List<TrackI> info = new LinkedList<TrackI>();
+		List<Track> info = new LinkedList<Track>();
 		
-		for (TrackI i : mOrderedTrackInfo) {
+		for (Track i : mOrderedTrackInfo) {
 			if (i.getArtistId() == id) {
 				info.add(i);
 			}
 		}
 		
-		return info.toArray(new TrackI [0]);
+		return info.toArray(new Track [0]);
 	}
 	
-	public static TrackI getTrackI(long id) {
+	/**
+	 * Get track information.
+	 * 
+	 * @param id
+	 *            track ID
+	 * 
+	 * @return track information (which will be filled with default data if ID is invalid)
+	 */
+	public static Track getTrack(long id) {
 		if (!isOpen()) {
 			return null;
 		}
 		
 		setupDbCache();
 		
-		TrackI i = mTrackInfo.get(id);
-		return i == null ? TrackI.createUnknown() : i;
+		Track i = mTrackInfo.get(id);
+		return i == null ? Track.createUnknown() : i;
 	}
 	
-	public static TrackI getUncachedTrackI(long id) {
+	/**
+	 * Get track information.<br>
+	 * <br>
+	 * The difference is that this request won't trigger {@link #setupDbCache()}. This has to be
+	 * done once but takes some time to finish. So this should be done for heavy database use but we
+	 * don't need to perform that for a single track lookup.
+	 * 
+	 * @param id
+	 *            track ID
+	 * 
+	 * @return track information (which will be filled with default data if ID is invalid)
+	 */
+	public static Track getUncachedTrack(long id) {
 		if (!isOpen()) {
 			return null;
 		}
 		
 		if (mOrderedTrackInfo != null) {
-			TrackI i = mTrackInfo.get(id);
-			return i == null ? TrackI.createUnknown() : i;
+			Track i = mTrackInfo.get(id);
+			return i == null ? Track.createUnknown() : i;
 		}
 		
-		TrackI i = null;
+		Track i = null;
 		
 		Cursor c = mBansheeDatabase.rawQuery(""
 				+ "SELECT t." + DB.ID + ", t." + DB.ARTIST_ID + ", t." + DB.ALBUM_ID
@@ -269,7 +325,7 @@ public class BansheeDatabase {
 				null);
 		
 		if (c.moveToFirst()) {
-			i = new TrackI();
+			i = new Track();
 			
 			String title = cleanString(c, 3);
 			String artist = cleanString(c, 8);
@@ -284,12 +340,12 @@ public class BansheeDatabase {
 			i.year = cleanInt(c, 6);
 			i.genre = cleanString(c, 7);
 			
-			i.artist = new ArtistI();
+			i.artist = new Artist();
 			i.artist.id = i.artistId;
 			i.artist.name = "".equals(artist)
 					? App.getContext().getString(R.string.unknown_artist) : artist;
 			
-			i.album = new AlbumI();
+			i.album = new Album();
 			i.album.id = i.albumId;
 			i.album.artistId = i.artistId;
 			i.album.artist = i.artist;
@@ -300,80 +356,118 @@ public class BansheeDatabase {
 		
 		c.close();
 		
-		return i == null ? TrackI.createUnknown() : i;
+		return i == null ? Track.createUnknown() : i;
 	}
 	
-	public static AlbumI [] getOrderedAlbumI(long id) {
+	/**
+	 * Get all albums ordered ascending by album title.
+	 * 
+	 * @return all albums
+	 */
+	public static Album [] getOrderedAlbums() {
 		if (!isOpen()) {
 			return null;
 		}
 		
 		setupDbCache();
-		List<AlbumI> info = new LinkedList<AlbumI>();
 		
-		for (AlbumI i : mOrderedAlbumInfo) {
+		return mOrderedAlbumInfo.toArray(new Album [0]);
+	}
+	
+	/**
+	 * Get all albums of an artist ordered ascending by artist ID.
+	 * 
+	 * @param id
+	 *            artist ID
+	 * 
+	 * @return all albums of an artist or emtpy array for an invalid ID
+	 */
+	public static Album [] getOrderedAlbumsOfArtist(long id) {
+		if (!isOpen()) {
+			return null;
+		}
+		
+		setupDbCache();
+		List<Album> info = new LinkedList<Album>();
+		
+		for (Album i : mOrderedAlbumInfo) {
 			if (i.getArtistId() == id) {
 				info.add(i);
 			}
 		}
 		
-		return info.toArray(new AlbumI [0]);
+		return info.toArray(new Album [0]);
 	}
 	
-	public static AlbumI [] getOrderedAlbumI() {
+	/**
+	 * Get album information.
+	 * 
+	 * @param id
+	 *            album ID
+	 * 
+	 * @return album information (which will be filled with default data if ID is invalid)
+	 */
+	public static Album getAlbum(long id) {
 		if (!isOpen()) {
 			return null;
 		}
 		
 		setupDbCache();
 		
-		return mOrderedAlbumInfo.toArray(new AlbumI [0]);
+		Album i = mAlbumInfo.get(id);
+		return i == null ? Album.createUnknown() : i;
 	}
 	
-	public static AlbumI getAlbumI(long id) {
+	/**
+	 * Get all artists ordered ascending by name.
+	 * 
+	 * @return all artists
+	 */
+	public static Artist [] getOrderedArtists() {
 		if (!isOpen()) {
 			return null;
 		}
 		
 		setupDbCache();
 		
-		AlbumI i = mAlbumInfo.get(id);
-		return i == null ? AlbumI.createUnknown() : i;
+		return mOrderedArtistInfo.toArray(new Artist [0]);
 	}
 	
-	public static ArtistI [] getOrderedArtistI() {
+	/**
+	 * Get artist information.
+	 * 
+	 * @param id
+	 *            artist ID
+	 * 
+	 * @return artist information (which will be filled with default data if ID is invalid)
+	 */
+	public static Artist getArtist(long id) {
 		if (!isOpen()) {
 			return null;
 		}
 		
 		setupDbCache();
 		
-		return mOrderedArtistInfo.toArray(new ArtistI [0]);
+		Artist i = mArtistInfo.get(id);
+		return i == null ? Artist.createUnknown() : i;
 	}
 	
-	public static ArtistI getArtistI(long id) {
-		if (!isOpen()) {
-			return null;
-		}
-		
-		setupDbCache();
-		
-		ArtistI i = mArtistInfo.get(id);
-		return i == null ? ArtistI.createUnknown() : i;
-	}
 	
+	/**
+	 * Read whole database into memory for a quick lookup.
+	 */
 	public static void setupDbCache() {
 		if (!isOpen() || mOrderedTrackInfo != null) {
 			return;
 		}
 		
-		mTrackInfo = new TreeMap<Long, TrackI>();
-		mAlbumInfo = new TreeMap<Long, AlbumI>();
-		mArtistInfo = new TreeMap<Long, ArtistI>();
+		mTrackInfo = new TreeMap<Long, Track>();
+		mAlbumInfo = new TreeMap<Long, Album>();
+		mArtistInfo = new TreeMap<Long, Artist>();
 		
-		mOrderedTrackInfo = new TreeSet<TrackI>(new Comparator<TrackI>() {
+		mOrderedTrackInfo = new TreeSet<Track>(new Comparator<Track>() {
 			@Override
-			public int compare(TrackI lhs, TrackI rhs) {
+			public int compare(Track lhs, Track rhs) {
 				char lc = lhs.title.charAt(0);
 				char rc = rhs.title.charAt(0);
 				boolean ra = Character.isLetter(rc);
@@ -398,7 +492,7 @@ public class BansheeDatabase {
 		
 		while (c.moveToNext()) {
 			String title = cleanString(c, 3);
-			TrackI i = new TrackI();
+			Track i = new Track();
 			
 			i.id = c.getLong(0);
 			i.artistId = c.getLong(1);
@@ -413,9 +507,9 @@ public class BansheeDatabase {
 			mTrackInfo.put(i.id, i);
 		}
 		
-		mOrderedAlbumInfo = new TreeSet<AlbumI>(new Comparator<AlbumI>() {
+		mOrderedAlbumInfo = new TreeSet<Album>(new Comparator<Album>() {
 			@Override
-			public int compare(AlbumI lhs, AlbumI rhs) {
+			public int compare(Album lhs, Album rhs) {
 				char lc = lhs.title.charAt(0);
 				char rc = rhs.title.charAt(0);
 				boolean ra = Character.isLetter(rc);
@@ -439,7 +533,7 @@ public class BansheeDatabase {
 		
 		while (c.moveToNext()) {
 			String title = cleanString(c, 2);
-			AlbumI i = new AlbumI();
+			Album i = new Album();
 			
 			i.id = c.getLong(0);
 			i.artistId = c.getLong(1);
@@ -450,9 +544,9 @@ public class BansheeDatabase {
 			mAlbumInfo.put(i.id, i);
 		}
 		
-		mOrderedArtistInfo = new TreeSet<ArtistI>(new Comparator<ArtistI>() {
+		mOrderedArtistInfo = new TreeSet<Artist>(new Comparator<Artist>() {
 			@Override
-			public int compare(ArtistI lhs, ArtistI rhs) {
+			public int compare(Artist lhs, Artist rhs) {
 				char lc = lhs.name.charAt(0);
 				char rc = rhs.name.charAt(0);
 				boolean ra = Character.isLetter(rc);
@@ -476,7 +570,7 @@ public class BansheeDatabase {
 		
 		while (c.moveToNext()) {
 			String title = cleanString(c, 1);
-			ArtistI i = new ArtistI();
+			Artist i = new Artist();
 			
 			i.id = c.getLong(0);
 			i.name = "".equals(title) ? App.getContext().getString(R.string.unknown_artist) : title;
@@ -492,7 +586,7 @@ public class BansheeDatabase {
 				null, null, DB.ARTIST_ID, null, null);
 		
 		while (c.moveToNext()) {
-			ArtistI i = mArtistInfo.get(c.getLong(0));
+			Artist i = mArtistInfo.get(c.getLong(0));
 			i.trackCount = c.getInt(1);
 			i.albumCount = c.getInt(2);
 		}
@@ -509,7 +603,6 @@ public class BansheeDatabase {
 		
 		c.close();
 	}
-	
 	
 	/**
 	 * Is database up to date?
@@ -577,6 +670,8 @@ public class BansheeDatabase {
 		}
 		
 		try {
+			close();
+			
 			File file = new File(App.BANSHEE_PATH + id + App.DB_EXT);
 			
 			file.getParentFile().mkdir();

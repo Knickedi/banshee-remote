@@ -27,7 +27,7 @@ import de.viktorreiser.bansheeremote.data.App;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandle;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase;
-import de.viktorreiser.bansheeremote.data.BansheeDatabase.TrackI;
+import de.viktorreiser.bansheeremote.data.BansheeDatabase.Track;
 import de.viktorreiser.bansheeremote.data.CoverCache;
 import de.viktorreiser.toolbox.content.NetworkStateBroadcast;
 import de.viktorreiser.toolbox.widget.HiddenQuickActionSetup;
@@ -465,7 +465,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		
 		public long id;
 		public boolean requestedTrackInfo = false;
-		public TrackI trackInfo;
+		public Track trackInfo;
 	}
 	
 	private static class ViewHolder {
@@ -741,7 +741,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		private void requestTrackInfo(PlaylistEntry entry) {
 			if (!entry.requestedTrackInfo) {
 				entry.requestedTrackInfo = true;
-				entry.trackInfo = BansheeDatabase.getTrackI(entry.id);
+				entry.trackInfo = BansheeDatabase.getTrack(entry.id);
 				
 				if (entry.trackInfo == null && !mDbOutOfDateHintShown && entry.id > 0
 						&& App.isShowDbOutOfDateHint()) {

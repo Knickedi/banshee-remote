@@ -28,7 +28,7 @@ public class CoverCache {
 	 * Does cover already exist?
 	 * 
 	 * @param id
-	 *            cover ID returned by server
+	 *            cover ID returned by server or stored in database
 	 * 
 	 * @return {@code true} if cover is available locally
 	 */
@@ -38,10 +38,12 @@ public class CoverCache {
 	}
 	
 	/**
-	 * Get cover.
+	 * Get (unscaled) cover.<br>
+	 * <br>
+	 * This cover <b>won't</b> be cached and directly returned from file.
 	 * 
 	 * @param id
-	 *            cover ID returned by server
+	 *            cover ID returned by server or stored in database
 	 * 
 	 * @return cover as bitmap or {@code null} when there is no cover for given ID
 	 */
@@ -55,6 +57,18 @@ public class CoverCache {
 		}
 	}
 	
+	/**
+	 * Get (scaled) cover.<br>
+	 * <br>
+	 * Returned cover will be held as soft reference in memory for next request.<br>
+	 * The scale factor is taken from {@link App#getCacheSize()} and narrowed down so it matches a
+	 * quadratic size.
+	 * 
+	 * @param id
+	 *            cover ID returned by server or stored in database
+	 * 
+	 * @return cover as bitmap or {@code null} when there is no cover for given ID
+	 */
 	public static Bitmap getThumbnailedCover(String id) {
 		int hash = id.hashCode();
 		Bitmap cover = mCoverCache.get(hash);
@@ -67,22 +81,22 @@ public class CoverCache {
 		
 		if (file.exists()) {
 			BitmapFactory.Options o = new BitmapFactory.Options();
-            o.inJustDecodeBounds = true;
-            BitmapFactory.decodeFile(file.getAbsolutePath(), o);
-            
-            int width = o.outWidth;
-            int height = o.outHeight;
-            int required = App.getCacheSize();
-            int scale = 1;
-            
-            while(width / 2 > required || height / 2 > required){
-                width /= 2;
-                height /= 2;
-                scale *= 2;
-            }
-            
-            BitmapFactory.Options o2 = new BitmapFactory.Options();
-            o2.inSampleSize = scale;
+			o.inJustDecodeBounds = true;
+			BitmapFactory.decodeFile(file.getAbsolutePath(), o);
+			
+			int width = o.outWidth;
+			int height = o.outHeight;
+			int required = App.getCacheSize();
+			int scale = 1;
+			
+			while (width / 2 > required || height / 2 > required) {
+				width /= 2;
+				height /= 2;
+				scale *= 2;
+			}
+			
+			BitmapFactory.Options o2 = new BitmapFactory.Options();
+			o2.inSampleSize = scale;
 			cover = BitmapFactory.decodeFile(file.getAbsolutePath(), o2);
 			
 			if (cover != null) {
@@ -101,7 +115,7 @@ public class CoverCache {
 	 * @param bitmapData
 	 *            image data as raw byte array
 	 * 
-	 * @return cover as bitmap or {@code null} if failed to persist or the given data was invalid
+	 * @return {@code false} if cover couldn't be persisted on SD card
 	 */
 	public static boolean addCover(String id, byte [] bitmapData) {
 		Bitmap cover = BitmapFactory.decodeByteArray(bitmapData, 0, bitmapData.length);

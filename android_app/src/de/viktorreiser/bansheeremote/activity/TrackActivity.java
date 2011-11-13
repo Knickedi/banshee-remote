@@ -23,8 +23,8 @@ import de.viktorreiser.bansheeremote.data.App;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandle;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase;
-import de.viktorreiser.bansheeremote.data.BansheeDatabase.AlbumI;
-import de.viktorreiser.bansheeremote.data.BansheeDatabase.TrackI;
+import de.viktorreiser.bansheeremote.data.BansheeDatabase.Album;
+import de.viktorreiser.bansheeremote.data.BansheeDatabase.Track;
 import de.viktorreiser.bansheeremote.data.CoverCache;
 import de.viktorreiser.toolbox.widget.HiddenQuickActionSetup;
 import de.viktorreiser.toolbox.widget.HiddenQuickActionSetup.OnQuickActionListener;
@@ -41,7 +41,7 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 	// PRIVATE ====================================================================================
 	
 	private OnBansheeCommandHandle mOldCommandHandler;
-	private TrackI [] mTrackEntries;
+	private Track [] mTrackEntries;
 	private Object [] mAdapterSections;
 	private ListView mList;
 	private long mAlbumId;
@@ -67,7 +67,7 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 		Object [] data = (Object []) getLastNonConfigurationInstance();
 		
 		if (data != null) {
-			mTrackEntries = (TrackI []) data[0];
+			mTrackEntries = (Track []) data[0];
 			mAdapterSections = (Object []) data[1];
 			mAlbumId = (Long) data[2];
 			mArtistId = (Long) data[3];
@@ -75,12 +75,12 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 			if (getIntent().hasExtra(EXTRA_ALBUM_ID) && getIntent().hasExtra(EXTRA_ARTIST_ID)) {
 				mAlbumId = getIntent().getLongExtra(EXTRA_ALBUM_ID, -1);
 				mArtistId = getIntent().getLongExtra(EXTRA_ARTIST_ID, -1);
-				mTrackEntries = BansheeDatabase.getOrderedTrackIForAlbum(mAlbumId);
+				mTrackEntries = BansheeDatabase.getOrderedTracksOfAlbum(mAlbumId);
 			} else if (getIntent().hasExtra(EXTRA_ARTIST_ID)) {
 				mArtistId = getIntent().getLongExtra(EXTRA_ARTIST_ID, -1);
-				mTrackEntries = BansheeDatabase.getOrderedTrackIForArtist(mArtistId);
+				mTrackEntries = BansheeDatabase.getOrderedTracksOfArtist(mArtistId);
 			} else {
-				mTrackEntries = BansheeDatabase.getOrderedTrackI();
+				mTrackEntries = BansheeDatabase.getOrderedTracks();
 			}
 			
 			if (mAlbumId < 1) {
@@ -138,8 +138,8 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 		headerAlbum.setVisibility(mAlbumId > 0 && mArtistId > 0 ? View.VISIBLE : View.GONE);
 		
 		if (mAlbumId > 0 && mArtistId > 0) {
-			String artistName = BansheeDatabase.getArtistI(mArtistId).getName();
-			AlbumI album = BansheeDatabase.getAlbumI(mAlbumId);
+			String artistName = BansheeDatabase.getArtist(mArtistId).getName();
+			Album album = BansheeDatabase.getAlbum(mAlbumId);
 			
 			((TextView) headerAlbum.findViewById(R.id.artist_name)).setText(artistName);
 			((TextView) headerAlbum.findViewById(R.id.album_title)).setText(
@@ -151,7 +151,7 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 			}
 		} else if (mArtistId > 0) {
 			((TextView) headerArtist.findViewById(R.id.artist_name)).setText(
-					BansheeDatabase.getArtistI(mArtistId).getName()
+					BansheeDatabase.getArtist(mArtistId).getName()
 							+ " (" + mTrackEntries.length + ")");
 			
 			if (mTrackEntries.length > 25) {
@@ -297,7 +297,7 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 			}
 			
 			ViewHolder holder = (ViewHolder) convertView.getTag();
-			TrackI i = mTrackEntries[position];
+			Track i = mTrackEntries[position];
 			holder.track.setText(i.getTitle());
 			
 			if (type == 0) {

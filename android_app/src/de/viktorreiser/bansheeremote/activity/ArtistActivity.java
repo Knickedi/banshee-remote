@@ -25,8 +25,8 @@ import de.viktorreiser.bansheeremote.data.App;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandle;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase;
-import de.viktorreiser.bansheeremote.data.BansheeDatabase.AlbumI;
-import de.viktorreiser.bansheeremote.data.BansheeDatabase.ArtistI;
+import de.viktorreiser.bansheeremote.data.BansheeDatabase.Album;
+import de.viktorreiser.bansheeremote.data.BansheeDatabase.Artist;
 import de.viktorreiser.bansheeremote.data.CoverCache;
 import de.viktorreiser.toolbox.content.NetworkStateBroadcast;
 import de.viktorreiser.toolbox.widget.HiddenQuickActionSetup;
@@ -75,7 +75,7 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle, 
 			mAdapterSections = (Object []) data[2];
 		} else {
 			if (getIntent().hasExtra(EXTRA_ARITST_ID)) {
-				ArtistI info = BansheeDatabase.getArtistI(
+				Artist info = BansheeDatabase.getArtist(
 						getIntent().getLongExtra(EXTRA_ARITST_ID, -1));
 				mArtistCount = 1;
 				mArtistEntries = new ArrayList<ArtistEntry>(info.getAlbumCount() + 1);
@@ -205,7 +205,7 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle, 
 	// PRIVATE ====================================================================================
 	
 	private void setupAllArtistsInfo() {
-		ArtistI [] artistInfo = BansheeDatabase.getOrderedArtistI();
+		Artist [] artistInfo = BansheeDatabase.getOrderedArtists();
 		List<SectionEntry> sections = new LinkedList<SectionEntry>();
 		Set<String> characters = new TreeSet<String>();
 		mArtistEntries = new ArrayList<ArtistEntry>();
@@ -240,9 +240,9 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle, 
 	
 	
 	private static class ArtistEntry {
-		public ArtistI artist;
+		public Artist artist;
 		public boolean isAlbum = false;
-		public AlbumI album;
+		public Album album;
 	}
 	
 	private static class SectionEntry {
@@ -314,7 +314,7 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle, 
 			
 			if (entry.isAlbum) {
 				if (entry.album == null) {
-					AlbumI [] info = BansheeDatabase.getOrderedAlbumI(entry.artist.getId());
+					Album [] info = BansheeDatabase.getOrderedAlbumsOfArtist(entry.artist.getId());
 					ArtistEntry tmpEntry = entry;
 					int i = position;
 					

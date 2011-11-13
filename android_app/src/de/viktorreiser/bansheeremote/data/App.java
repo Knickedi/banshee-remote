@@ -31,15 +31,18 @@ public class App extends Application {
 	
 	// PUBLIC =====================================================================================
 	
+	// IDs of list quick actions
 	public static final int QUICK_ACTION_ADD = 1;
 	public static final int QUICK_ACTION_REMOVE = 2;
 	public static final int QUICK_ACTION_ENQUEUE = 3;
 	public static final int QUICK_ACTION_ARTIST = 4;
-	public static final int QUICK_ACTION_REMOVE_QUEUE = 6;
+	public static final int QUICK_ACTION_REMOVE_QUEUE = 5;
 	
-	
+	/** Path to banshee cache folder on SD card. */
 	public static final String BANSHEE_PATH = Environment.getExternalStorageDirectory()
 			.getAbsolutePath() + "/BansheeRemote/";
+	
+	/** Extension of synchronized database file. */
 	public static final String DB_EXT = ".sqlite";
 	
 	
@@ -206,6 +209,7 @@ public class App extends Application {
 		
 		int imageSize = AndroidUtils.dipToPixel(context, 25);
 		
+		// fix nasty android tiled background bug by manually setting tile option
 		Drawable background = App.getContext().getResources().getDrawable(
 				R.drawable.quickaction_background);
 		((BitmapDrawable) ((LayerDrawable) background).getDrawable(0)).setTileModeXY(
