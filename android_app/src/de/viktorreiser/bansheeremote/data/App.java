@@ -9,6 +9,7 @@ import android.graphics.drawable.LayerDrawable;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.view.animation.Interpolator;
+import android.widget.Toast;
 import de.viktorreiser.bansheeremote.R;
 import de.viktorreiser.toolbox.content.NetworkStateBroadcast;
 import de.viktorreiser.toolbox.util.AndroidUtils;
@@ -28,6 +29,7 @@ public class App extends Application {
 	
 	private static Context mContext;
 	private static int mCacheSize;
+	private static Toast mGlobalToast;
 	
 	// PUBLIC =====================================================================================
 	
@@ -240,6 +242,32 @@ public class App extends Application {
 		return mCacheSize;
 	}
 	
+	/**
+	 * Show global short toast.
+	 * 
+	 * @param resId
+	 *            text of toast message
+	 */
+	public static void shortToast(int resId) {
+		mGlobalToast.cancel();
+		mGlobalToast.setDuration(Toast.LENGTH_SHORT);
+		mGlobalToast.setText(resId);
+		mGlobalToast.show();
+	}
+	
+	/**
+	 * Show global long toast.
+	 * 
+	 * @param resId
+	 *            text of toast message
+	 */
+	public static void longToast(int resId) {
+		mGlobalToast.cancel();
+		mGlobalToast.setDuration(Toast.LENGTH_LONG);
+		mGlobalToast.setText(resId);
+		mGlobalToast.show();
+	}
+	
 	// OVERRIDDEN =================================================================================
 	
 	/**
@@ -248,6 +276,7 @@ public class App extends Application {
 	@Override
 	public void onCreate() {
 		mContext = getApplicationContext();
+		mGlobalToast = Toast.makeText(mContext, "", 0);
 		NetworkStateBroadcast.initialCheck(mContext);
 		
 		L.setGlobalTag("Banshee Remote");

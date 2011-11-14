@@ -16,8 +16,8 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 import de.viktorreiser.bansheeremote.R;
+import de.viktorreiser.bansheeremote.data.App;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase;
 import de.viktorreiser.bansheeremote.data.BansheeServer;
 import de.viktorreiser.bansheeremote.data.BansheeServerCheckTask;
@@ -165,9 +165,9 @@ public class ServerListActivity extends Activity implements OnItemClickListener,
 			setResult(RESULT_OK);
 			finish();
 		} else if (success == 0) {
-			Toast.makeText(this, R.string.host_denied_password, Toast.LENGTH_LONG).show();
+			App.longToast(R.string.host_denied_password);
 		} else {
-			Toast.makeText(this, R.string.host_not_reachable, Toast.LENGTH_LONG).show();
+			App.longToast(R.string.host_not_reachable);
 		}
 	}
 	

@@ -20,7 +20,6 @@ import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
-import android.widget.Toast;
 import de.viktorreiser.bansheeremote.R;
 import de.viktorreiser.bansheeremote.data.App;
 import de.viktorreiser.bansheeremote.data.BansheeConnection;
@@ -489,9 +488,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			setupServerConnection(server);
 			return;
 		} else if (success == 0) {
-			Toast.makeText(this, R.string.host_denied_password, Toast.LENGTH_LONG).show();
+			App.longToast(R.string.host_denied_password);
 		} else {
-			Toast.makeText(this, R.string.host_not_reachable, Toast.LENGTH_LONG).show();
+			App.longToast(R.string.host_not_reachable);
 		}
 		
 		// check failed, force user to choose a valid server (or leave on back press)
@@ -627,8 +626,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 					startActivityForResult(new Intent(CurrentSongActivity.this,
 							TrackActivity.class), REQUEST_OTHER_ACTIVITY);
 				} else {
-					Toast.makeText(CurrentSongActivity.this, R.string.need_sync_db,
-							Toast.LENGTH_SHORT).show();
+					App.shortToast(R.string.need_sync_db);
 				}
 			}
 		});
@@ -640,8 +638,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 					startActivityForResult(new Intent(CurrentSongActivity.this,
 							ArtistActivity.class), REQUEST_OTHER_ACTIVITY);
 				} else {
-					Toast.makeText(CurrentSongActivity.this, R.string.need_sync_db,
-							Toast.LENGTH_SHORT).show();
+					App.shortToast(R.string.need_sync_db);
 				}
 			}
 		});
@@ -654,8 +651,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 							new Intent(CurrentSongActivity.this, PlaylistOverviewActivity.class),
 							REQUEST_OTHER_ACTIVITY);
 				} else {
-					Toast.makeText(CurrentSongActivity.this, R.string.need_sync_db,
-							Toast.LENGTH_SHORT).show();
+					App.shortToast(R.string.need_sync_db);
 				}
 			}
 		});
@@ -668,8 +664,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 							new Intent(CurrentSongActivity.this, AlbumActivity.class),
 							REQUEST_OTHER_ACTIVITY);
 				} else {
-					Toast.makeText(CurrentSongActivity.this, R.string.need_sync_db,
-							Toast.LENGTH_SHORT).show();
+					App.shortToast(R.string.need_sync_db);
 				}
 			}
 		});
@@ -904,8 +899,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			mStatusPollHandler.stop();
 			mConnection = null;
 			mConnection = null;
-			Toast.makeText(CurrentSongActivity.this, R.string.host_offline_or_banshee_closed,
-					Toast.LENGTH_LONG).show();
+			App.longToast(R.string.host_offline_or_banshee_closed);
 			
 			finishActivity(REQUEST_OTHER_ACTIVITY);
 			Intent intent = new Intent(CurrentSongActivity.this, ServerListActivity.class);
@@ -947,8 +941,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				} else {
 					if (mData.currentSongId > 0 && BansheeDatabase.isOpen()
 							&& App.isShowDbOutOfDateHint()) {
-						Toast.makeText(CurrentSongActivity.this, R.string.out_of_data_hint_db,
-								Toast.LENGTH_SHORT).show();
+						App.shortToast(R.string.out_of_data_hint_db);
 					}
 					
 					mConnection.sendCommand(Command.SONG_INFO, null);
@@ -1001,22 +994,18 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			mDatabaseSyncRunning = false;
 			
 			if (response == null) {
-				Toast.makeText(CurrentSongActivity.this, R.string.error_fetching_sync_db,
-						Toast.LENGTH_LONG).show();
+				App.longToast(R.string.error_fetching_sync_db);
 				return;
 			}
 			
 			mDbTimestamp = Command.SyncDatabase.decodeFileTimestamp(response);
 			
 			if (mDbTimestamp == 0) {
-				Toast.makeText(CurrentSongActivity.this, R.string.no_sync_db,
-						Toast.LENGTH_LONG).show();
+				App.longToast(R.string.no_sync_db);
 			} else if (BansheeDatabase.isDatabaseUpToDate(mConnection.getServer(), mDbTimestamp)) {
-				Toast.makeText(CurrentSongActivity.this, R.string.up_to_date_sync_db,
-						Toast.LENGTH_SHORT).show();
+				App.longToast(R.string.up_to_date_sync_db);
 			} else {
-				Toast.makeText(CurrentSongActivity.this, R.string.fetching_sync_db,
-						Toast.LENGTH_SHORT).show();
+				App.longToast(R.string.fetching_sync_db);
 				mDatabaseSyncRunning = true;
 				mConnection.sendCommand(Command.SYNC_DATABASE,
 						Command.SyncDatabase.encodeFile());
@@ -1027,15 +1016,12 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			mDatabaseSyncRunning = false;
 			
 			if (response == null || response.length < 2) {
-				Toast.makeText(CurrentSongActivity.this, R.string.error_fetching_sync_db,
-						Toast.LENGTH_LONG).show();
+				App.longToast(R.string.error_fetching_sync_db);
 			} else if (!BansheeDatabase.updateDatabase(mConnection.getServer(), response,
 					mDbTimestamp)) {
-				Toast.makeText(CurrentSongActivity.this, R.string.error_writing_sync_db,
-						Toast.LENGTH_LONG).show();
+				App.longToast(R.string.error_writing_sync_db);
 			} else {
-				Toast.makeText(CurrentSongActivity.this, R.string.updated_sync_db,
-						Toast.LENGTH_LONG).show();
+				App.longToast(R.string.updated_sync_db);
 			}
 			
 			mDbTimestamp = 0;

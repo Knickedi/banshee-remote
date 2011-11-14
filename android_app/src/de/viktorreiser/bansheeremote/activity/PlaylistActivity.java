@@ -751,8 +751,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 				if (entry.trackInfo == null && !mDbOutOfDateHintShown && entry.id > 0
 						&& App.isShowDbOutOfDateHint()) {
 					mDbOutOfDateHintShown = true;
-					Toast.makeText(PlaylistActivity.this, R.string.out_of_data_hint_db,
-							Toast.LENGTH_SHORT).show();
+					App.shortToast(R.string.out_of_data_hint_db);
 				}
 			}
 		}
