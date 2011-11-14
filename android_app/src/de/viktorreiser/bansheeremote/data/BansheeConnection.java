@@ -613,6 +613,20 @@ public class BansheeConnection {
 				}
 			}
 			
+			/**
+			 * Add track, artist or album to playlist.
+			 * 
+			 * @param playlistId
+			 *           ID of playlist
+			 * @param mod
+			 *           {@link Modification#ADD_TRACK}, {@link Modification#ADD_ARTIST}
+			 *           or {@link Modification#ADD_ALBUM}
+			 * @param id
+			 *           ID of track, artist or album
+			 * @param allowTwice
+			 *           is it allowed that tracks which already are in the playlist are added
+			 *           twice
+			 */
 			public static byte [] encodeAdd(int playlistId, Modification mod, long id,
 					boolean allowTwice) {
 				if (mod != Modification.ADD_TRACK && mod != Modification.ADD_ARTIST
@@ -628,6 +642,17 @@ public class BansheeConnection {
 				return result;
 			}
 			
+			/**
+			 * Remove track, artist or album from playlist.
+			 * 
+			 * @param playlistId
+			 *           ID of playlist
+			 * @param mod
+			 *           {@link Modification#REMOVE_TRACK}, {@link Modification#REMOVE_ARTIST}
+			 *           or {@link Modification#REMOVE_ALBUM}
+			 * @param id
+			 *           ID of track, artist or album
+			 */
 			public static byte [] encodeRemove(int playlistId, Modification mod, long id) {
 				if (mod != Modification.REMOVE_TRACK && mod != Modification.REMOVE_ARTIST
 						&& mod != Modification.REMOVE_ALBUM) {
@@ -641,10 +666,18 @@ public class BansheeConnection {
 				return result;
 			}
 			
+			/**
+			 * Were we requesting add or remove from playlist?
+			 */
 			public static boolean isAddOrRemove(byte [] params) {
 				return params[0] >= 4 && params[0] <= 9;
 			}
 			
+			/**
+			 * Get type of add or remove request.
+			 * 
+			 * @return {@code null} if request was not a add or remove request
+			 */
 			public static Modification getAddOrRemove(byte [] params) {
 				for (Modification m : Modification.values()) {
 					if (m.request == params[0]) {
@@ -655,6 +688,9 @@ public class BansheeConnection {
 				return null;
 			}
 			
+			/**
+			 * Get ID of playlist specified in the add or remove request.
+			 */
 			public static int getAddOrRemovePlaylist(byte [] params) {
 				switch (getAddOrRemove(params)) {
 				case REMOVE_TRACK:
@@ -667,6 +703,26 @@ public class BansheeConnection {
 				}
 			}
 			
+			/**
+			 * Get specified ID in add or remove request.
+			 */
+			public static long getAddOrRemoveId(byte [] params) {
+				switch (getAddOrRemove(params)) {
+				case REMOVE_ALBUM:
+				case REMOVE_ARTIST:
+				case REMOVE_TRACK:
+					return decodeInt(params, 3);
+				
+				default:
+					return decodeInt(params, 4);
+				}
+			}
+			
+			/**
+			 * Get amount of added or removed tracks.
+			 * 
+			 * @return negative if tracks were removed
+			 */
 			public static int decodeAddOrRemoveCount(byte [] response, byte [] params) {
 				int count = decodeShort(response, 0);
 				
