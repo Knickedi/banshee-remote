@@ -25,6 +25,7 @@ import android.widget.Toast;
 import de.viktorreiser.bansheeremote.R;
 import de.viktorreiser.bansheeremote.data.App;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
+import de.viktorreiser.bansheeremote.data.BansheeConnection.Command.Playlist.Modification;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandle;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase.Track;
@@ -45,8 +46,6 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 	// PRIVATE ====================================================================================
 	
 	private static final int REQUEST_ACTIVITY = 1;
-	
-	private static PlaylistActivity mInstance;
 	
 	private OnBansheeCommandHandle mOldCommandHandler;
 	private boolean mLoadingDismissed;
@@ -69,19 +68,11 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 	public static final String EXTRA_PLAYLIST_ID = "plid";
 	public static final String EXTRA_PLAYLIST_NAME = "plname";
 	
-	public static void updatePlaylist() {
-		if (mInstance == null) {
-			return;
-		}
-	}
-	
 	// OVERRIDDEN =================================================================================
 	
 	@Override
 	public void onCreate(Bundle bundle) {
 		super.onCreate(bundle);
-		
-		mInstance = this;
 		
 		if (CurrentSongActivity.getConnection() == null) {
 			finish();
@@ -111,28 +102,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		mPlaylistPositionText = (TextView) findViewById(R.id.playlist_position);
 		mPositionPopup = new PositionPopup();
 		
-		mQuickActionSetup = App.getDefaultHiddenViewSetup(this);
-		mQuickActionSetup.setOnQuickActionListener(this);
-		
-		if (mPlaylistId != 2) {
-			mQuickActionSetup.addAction(
-					App.QUICK_ACTION_ENQUEUE, R.string.quick_enqueue, R.drawable.enqueue);
-		}
-		
-		if (mPlaylistId != 1) {
-			mQuickActionSetup.addAction(
-					App.QUICK_ACTION_ADD, R.string.quick_add, R.drawable.add);
-		}
-		
-		if (mPlaylistId == 1 || mPlaylistId == 2) {
-			mQuickActionSetup.addAction(
-					App.QUICK_ACTION_REMOVE,
-					mPlaylistId == 1 ? R.string.quick_remove : R.string.quick_remove_queue,
-					R.drawable.remove);
-		}
-		
-		mQuickActionSetup.addAction(
-				App.QUICK_ACTION_ARTIST, R.string.quick_artist, R.drawable.quick_artist);
+		setupQuickActionSetup();
 		
 		mAdapter = new PlaylistAdapter();
 		mList.setAdapter(mAdapter);
@@ -156,8 +126,6 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		if (CurrentSongActivity.getConnection() != null) {
 			CurrentSongActivity.getConnection().updateHandleCallback(mOldCommandHandler);
 		}
-		
-		mInstance = null;
 	}
 	
 	@Override
@@ -236,20 +204,8 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 								.sendCommand(Command.PLAYER_STATUS, null);
 					}
 				}
-			} else if (Command.Playlist.isPlaylistTracks(params)) {
+			} else if (Command.Playlist.isTracks(params)) {
 				handlePlaylistTracksResponse(params, result);
-			} else if (Command.Playlist.isPlaylistAddTrack(params)
-					|| Command.Playlist.isPlaylistRemoveTrack(params)) {
-				if (result != null) {
-					int count = Command.Playlist.decodeAddOrRemoveCount(result, params);
-					int playlistId = Command.Playlist.getAddOrRemovePlaylist(params);
-					
-					if (count != 0) {
-						Toast.makeText(this, Command.Playlist.isPlaylistAddTrack(params)
-								? "" : "", Toast.LENGTH_SHORT).show();
-						PlaylistOverviewActivity.updatePlaylistTrackCount(playlistId, count, false);
-					}
-				}
 			}
 			break;
 		}
@@ -260,20 +216,20 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		switch (quickActionId) {
 		case App.QUICK_ACTION_ENQUEUE: {
 			CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
-					Command.Playlist.encodeEnqueue(
+					Command.Playlist.encodeAdd(App.PLAYLIST_QUEUE, Modification.ADD_TRACK,
 							mPlaylist.get(position).trackInfo.getId(), App.isQueueAddTwice()));
 			break;
 		}
 		case App.QUICK_ACTION_ADD: {
 			CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
-					Command.Playlist.encodeAddTrack(
+					Command.Playlist.encodeAdd(App.PLAYLIST_REMOTE, Modification.ADD_TRACK,
 							mPlaylist.get(position).trackInfo.getId(), App.isPlaylistAddTwice()));
 			break;
 		}
 		case App.QUICK_ACTION_REMOVE: {
 			CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
-					Command.Playlist.encodeRemove(
-							mPlaylistId, mPlaylist.get(position).trackInfo.getId()));
+					Command.Playlist.encodeRemove(mPlaylistId, Modification.REMOVE_TRACK,
+							mPlaylist.get(position).trackInfo.getId()));
 			break;
 		}
 		case App.QUICK_ACTION_ARTIST: {
@@ -316,10 +272,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		});
 		
 		if (intialRequest) {
-			mPlaylistRequested = true;
-			CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
-					Command.Playlist.encodePlaylistTracksOnStart(
-							mPlaylistId, 0, App.getPlaylistPreloadCount()));
+			initialRequest();
 		}
 	}
 	
@@ -360,18 +313,54 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 							&& firstVisibleItem + visibleItemCount + 5 >= mPlaylist.size()) {
 						mPlaylistRequested = true;
 						CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
-								Command.Playlist.encodePlaylistTracks(
+								Command.Playlist.encodeTracks(
 										mPlaylistId, mPlaylistEnd, App.getPlaylistPreloadCount()));
 					} else if (mPlaylistStart > 0 && firstVisibleItem <= 4) {
 						mPlaylistRequested = true;
 						int start = Math.max(0, mPlaylistStart - App.getPlaylistPreloadCount());
 						CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
-								Command.Playlist.encodePlaylistTracks(
+								Command.Playlist.encodeTracks(
 										mPlaylistId, start, mPlaylistStart - start));
 					}
 				}
 			}
 		});
+	}
+	
+	private void setupQuickActionSetup() {
+		mQuickActionSetup = App.getDefaultHiddenViewSetup(this);
+		mQuickActionSetup.setOnQuickActionListener(this);
+		
+		if (mPlaylistId != 2) {
+			mQuickActionSetup.addAction(
+					App.QUICK_ACTION_ENQUEUE, R.string.quick_enqueue, R.drawable.enqueue);
+		}
+		
+		if (mPlaylistId != 1) {
+			mQuickActionSetup.addAction(
+					App.QUICK_ACTION_ADD, R.string.quick_add, R.drawable.add);
+		}
+		
+		if (mPlaylistId == 1 || mPlaylistId == 2) {
+			mQuickActionSetup.addAction(
+					App.QUICK_ACTION_REMOVE,
+					mPlaylistId == 1 ? R.string.quick_remove : R.string.quick_remove_queue,
+					R.drawable.remove);
+		}
+		
+		mQuickActionSetup.addAction(
+				App.QUICK_ACTION_ARTIST, R.string.quick_artist, R.drawable.quick_artist);
+	}
+	
+	private void initialRequest() {
+		mPlaylistCount = -1;
+		mPlaylistStart = -1;
+		mPlaylistEnd = -1;
+		mPlaylistRequested = true;
+		
+		CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
+				Command.Playlist.encodeTracksOnStart(
+						mPlaylistId, 0, App.getPlaylistPreloadCount()));
 	}
 	
 	private void handlePlaylistTracksResponse(byte [] params, byte [] result) {
@@ -432,15 +421,15 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 			
 			if (mPlaylistCount == 0) {
 				CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
-						Command.Playlist.encodePlaylistTracksOnStart(
+						Command.Playlist.encodeTracksOnStart(
 								mPlaylistId, 0, App.getPlaylistPreloadCount()));
-			} else if (Command.Playlist.getPlaylistTrackStartPosition(params) == mPlaylistEnd) {
+			} else if (Command.Playlist.getTrackStartPosition(params) == mPlaylistEnd) {
 				CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
-						Command.Playlist.encodePlaylistTracks(
+						Command.Playlist.encodeTracks(
 								mPlaylistId, mPlaylistEnd, App.getPlaylistPreloadCount()));
-			} else if (Command.Playlist.getPlaylistTrackStartPosition(params) == start) {
+			} else if (Command.Playlist.getTrackStartPosition(params) == start) {
 				CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
-						Command.Playlist.encodePlaylistTracks(
+						Command.Playlist.encodeTracks(
 								mPlaylistId, start, mPlaylistStart - start));
 			} else {
 				mPlaylistRequested = false;

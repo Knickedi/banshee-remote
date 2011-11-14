@@ -38,6 +38,9 @@ public class App extends Application {
 	public static final int QUICK_ACTION_ARTIST = 4;
 	public static final int QUICK_ACTION_REMOVE_QUEUE = 5;
 	
+	public static final int PLAYLIST_REMOTE = 1;
+	public static final int PLAYLIST_QUEUE = 2;
+	
 	/** Path to banshee cache folder on SD card. */
 	public static final String BANSHEE_PATH = Environment.getExternalStorageDirectory()
 			.getAbsolutePath() + "/BansheeRemote/";

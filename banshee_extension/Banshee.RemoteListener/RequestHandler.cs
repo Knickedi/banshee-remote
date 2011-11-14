@@ -8,6 +8,7 @@ using Hyena;
 using Banshee.Base;
 using Banshee.Collection;
 using Banshee.Collection.Database;
+using Banshee.PlayQueue;
 using Banshee.ServiceStack;
 using Banshee.SmartPlaylist;
 using Banshee.Sources;
@@ -254,6 +255,7 @@ namespace Banshee.RemoteListener
 				// requested playlist names
 				Source remotePlaylist = Helper.RemotePlaylist;
 				((DatabaseSource) remotePlaylist).Reload();
+				Source musicLibrary = ServiceManager.SourceManager.MusicLibrary;
 				
 				ushort count = 0;
 				bool remotePlaylistAdded = false;
@@ -266,7 +268,8 @@ namespace Banshee.RemoteListener
 				// - the remote playlist won't be listed if it's fresh created, so we do that manually
 				//   we just fit it into position where the source enumaration would contain it 
 				foreach (Source s in ServiceManager.SourceManager.Sources) {
-					if (s is DatabaseSource && s != remotePlaylist && s.Parent == ServiceManager.SourceManager.MusicLibrary) {
+					if (s is DatabaseSource && s != remotePlaylist && s.Parent == musicLibrary
+					    || s == musicLibrary || s is PlayQueueSource) {
 						DatabaseSource so = s as DatabaseSource;
 						Helper.ClearSourceFilters(so);
 						

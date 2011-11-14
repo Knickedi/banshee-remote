@@ -432,14 +432,14 @@ public class BansheeConnection {
 			/**
 			 * Request current playlist names.
 			 */
-			public static byte [] encodePlaylistNames() {
+			public static byte [] encodeNames() {
 				return new byte [] {1};
 			}
 			
 			/**
 			 * Were we requesting the playlist names.
 			 */
-			public static boolean isPlaylistNames(byte [] params) {
+			public static boolean isNames(byte [] params) {
 				return params[0] == 1;
 			}
 			
@@ -461,7 +461,7 @@ public class BansheeConnection {
 			 * <li>2 - name of playlist as given on the server</li>
 			 * </ul>
 			 */
-			public static Object [][] decodePlaylistNames(byte [] response) {
+			public static Object [][] decodeNames(byte [] response) {
 				int count = decodeShort(response, 2);
 				Object [][] playlists = new Object [count][];
 				int index = 4;
@@ -480,10 +480,18 @@ public class BansheeConnection {
 				return playlists;
 			}
 			
+			
 			/**
 			 * Request tracks from a playlist.
+			 * 
+			 * @param playlistId
+			 *          ID of playlist to request the tracks
+			 * @param startPosition
+			 *          position from which the track should be returned
+			 * @param maxReturns
+			 *          amount of tracks to return
 			 */
-			public static byte [] encodePlaylistTracks(
+			public static byte [] encodeTracks(
 					int playlistId, long startPosition, long maxReturns) {
 				byte [] params = new byte [11];
 				params[0] = 2;
@@ -495,20 +503,30 @@ public class BansheeConnection {
 			
 			/**
 			 * Request tracks from a playlist (try to get it from the current played track).
+			 * 
+			 * @param playlistId
+			 *          ID of playlist to request the tracks
+			 * @param startOffset
+			 *          how much tracks should be returned before the currently played track
+			 * @param maxReturns
+			 *          amount of tracks to return
 			 */
-			public static byte [] encodePlaylistTracksOnStart(
+			public static byte [] encodeTracksOnStart(
 					int playlistId, long startOffset, long maxReturns) {
-				return encodePlaylistTracks(playlistId, startOffset | 0x80000000, maxReturns);
+				return encodeTracks(playlistId, startOffset | 0x80000000, maxReturns);
 			}
 			
-			public static boolean isPlaylistTracks(byte [] params) {
+			/**
+			 * Where we requesting tracks from a playlist.
+			 */
+			public static boolean isTracks(byte [] params) {
 				return params[0] == 2;
 			}
 			
 			/**
-			 * Get the start position we were requesting for.
+			 * Get the start position we were requesting for the tracks.
 			 */
-			public static long getPlaylistTrackStartPosition(byte [] params) {
+			public static long getTrackStartPosition(byte [] params) {
 				return decodeInt(params, 7) & 0x7fffffff;
 			}
 			
@@ -544,11 +562,19 @@ public class BansheeConnection {
 				return (int) decodeInt(response, 8);
 			}
 			
+			
 			/**
 			 * Request to play a certain track.
 			 */
 			public static byte [] encodePlayTrack(long trackId) {
 				return encodePlayTrack(0, trackId);
+			}
+			
+			/**
+			 * Were we requesting to play a track?
+			 */
+			public static boolean isPlayTrack(byte [] params) {
+				return params[0] == 3;
 			}
 			
 			/**
@@ -572,66 +598,86 @@ public class BansheeConnection {
 				return response[0];
 			}
 			
-			/**
-			 * Was request type play track?
-			 */
-			public static boolean isPlayTrack(byte [] params) {
-				return params[0] == 3;
+			public static enum Modification {
+				ADD_TRACK(4),
+				ADD_ARTIST(6),
+				ADD_ALBUM(8),
+				REMOVE_TRACK(5),
+				REMOVE_ARTIST(7),
+				REMOVE_ALBUM(9);
+				
+				private final byte request;
+				
+				Modification(int request) {
+					this.request = (byte) request;
+				}
 			}
 			
-			public static byte [] encodeEnqueue(long trackId, boolean allowTwice) {
+			public static byte [] encodeAdd(int playlistId, Modification mod, long id,
+					boolean allowTwice) {
+				if (mod != Modification.ADD_TRACK && mod != Modification.ADD_ARTIST
+						&& mod != Modification.ADD_ALBUM) {
+					throw new IllegalArgumentException("modification is not an add constant");
+				}
+				
 				byte [] result = new byte [8];
-				result[0] = 4;
+				result[0] = mod.request;
 				result[1] = (byte) (allowTwice ? 1 : 0);
-				System.arraycopy(encodeShort(2), 0, result, 2, 2);
-				System.arraycopy(encodeInt(trackId), 0, result, 4, 4);
+				System.arraycopy(encodeShort(playlistId), 0, result, 2, 2);
+				System.arraycopy(encodeInt(id), 0, result, 4, 4);
 				return result;
 			}
 			
-			public static byte [] encodeAddTrack(long trackId, boolean allowTwice) {
-				byte [] result = new byte [8];
-				result[0] = 4;
-				result[1] = (byte) (allowTwice ? 1 : 0);
-				System.arraycopy(encodeShort(1), 0, result, 2, 2);
-				System.arraycopy(encodeInt(trackId), 0, result, 4, 4);
-				return result;
-			}
-			
-			public static boolean isPlaylistAddTrack(byte [] params) {
-				return params[0] == 4;
-			}
-			
-			public static byte [] encodeRemove(int playlistId, long trackId) {
+			public static byte [] encodeRemove(int playlistId, Modification mod, long id) {
+				if (mod != Modification.REMOVE_TRACK && mod != Modification.REMOVE_ARTIST
+						&& mod != Modification.REMOVE_ALBUM) {
+					throw new IllegalArgumentException("modification is not an remove constant");
+				}
+				
 				byte [] result = new byte [7];
-				result[0] = 5;
+				result[0] = mod.request;
 				System.arraycopy(encodeShort(playlistId), 0, result, 1, 2);
-				System.arraycopy(encodeInt(trackId), 0, result, 3, 4);
+				System.arraycopy(encodeInt(id), 0, result, 3, 4);
 				return result;
 			}
 			
-			public static boolean isPlaylistRemoveTrack(byte [] params) {
-				return params[0] == 5;
+			public static boolean isAddOrRemove(byte [] params) {
+				return params[0] >= 4 && params[0] <= 9;
+			}
+			
+			public static Modification getAddOrRemove(byte [] params) {
+				for (Modification m : Modification.values()) {
+					if (m.request == params[0]) {
+						return m;
+					}
+				}
+				
+				return null;
+			}
+			
+			public static int getAddOrRemovePlaylist(byte [] params) {
+				switch (getAddOrRemove(params)) {
+				case REMOVE_TRACK:
+				case REMOVE_ARTIST:
+				case REMOVE_ALBUM:
+					return decodeShort(params, 1);
+				
+				default:
+					return decodeShort(params, 2);
+				}
 			}
 			
 			public static int decodeAddOrRemoveCount(byte [] response, byte [] params) {
 				int count = decodeShort(response, 0);
 				
-				switch (params[0]) {
-				case 5:
+				switch (getAddOrRemove(params)) {
+				case REMOVE_TRACK:
+				case REMOVE_ARTIST:
+				case REMOVE_ALBUM:
 					return -count;
 				
 				default:
 					return count;
-				}
-			}
-			
-			public static int getAddOrRemovePlaylist(byte [] params) {
-				switch (params[0]) {
-				case 5:
-					return decodeShort(params, 1);
-				
-				default:
-					return decodeShort(params, 2);
 				}
 			}
 		}
@@ -1101,15 +1147,13 @@ public class BansheeConnection {
 		private void handleFail(final CommandQueue queue) {
 			logRequest(queue, false, null);
 			
-			if (queue.command == Command.SYNC_DATABASE || queue.command == Command.PLAYLIST) {
-				mCommandHandler.post(new Runnable() {
-					@Override
-					public void run() {
-						mHandleCallback.onBansheeCommandHandled(
-								queue.command, queue.params, null);
-					}
-				});
-			}
+			mCommandHandler.post(new Runnable() {
+				@Override
+				public void run() {
+					mHandleCallback.onBansheeCommandHandled(
+							queue.command, queue.params, null);
+				}
+			});
 			
 			mFailCount++;
 			

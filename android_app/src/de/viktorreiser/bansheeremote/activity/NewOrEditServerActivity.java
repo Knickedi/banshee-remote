@@ -55,57 +55,8 @@ public class NewOrEditServerActivity extends Activity implements OnBansheeServer
 		mSameHost = (Spinner) findViewById(R.id.same_host);
 		mPassword = (EditText) findViewById(R.id.password_id);
 		
-		mSameHost.setOnItemSelectedListener(new OnItemSelectedListener() {
-			@Override
-			public void onItemSelected(AdapterView<?> a, View v, int p, long id) {
-				mPassword.setEnabled(p == 0);
-				mPassword.setFocusable(p == 0);
-				mPassword.setFocusableInTouchMode(p == 0);
-				mPort.setEnabled(p == 0);
-				mPort.setFocusable(p == 0);
-				mPort.setFocusableInTouchMode(p == 0);
-				
-				if (p != 0) {
-					mPassword.setText(mServer.get(p).getPasswordId() + "");
-					mPort.setText(mServer.get(p).getPort() + "");
-				}
-			}
-			
-			@Override
-			public void onNothingSelected(AdapterView<?> arg0) {
-				
-			}
-		});
-		
-		findViewById(R.id.create).setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				int port = 8484;
-				int passwordId = 0;
-				String host = mHost.getText().toString();
-				long sameId = ((BansheeServer) mSameHost.getSelectedItem()).getId();
-				
-				try {
-					port = Integer.parseInt(mPort.getText().toString());
-				} catch (NumberFormatException e) {
-				}
-				
-				try {
-					passwordId = Integer.parseInt(mPassword.getText().toString());
-				} catch (NumberFormatException e) {
-				}
-				
-				BansheeServer server;
-				
-				if (sameId > 0) {
-					server = new BansheeServer(host, sameId);
-				} else {
-					server = new BansheeServer(host, port, passwordId);
-				}
-				
-				mCheckTask = new BansheeServerCheckTask(server, NewOrEditServerActivity.this);
-			}
-		});
+		setupSameHostChangeListener();
+		setupFinishButtonListener();
 		
 		setResult(RESULT_CANCELED);
 		
@@ -122,35 +73,7 @@ public class NewOrEditServerActivity extends Activity implements OnBansheeServer
 		a.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		mSameHost.setAdapter(a);
 		
-		BansheeServer server = BansheeServer.getServer(mEditId);
-		
-		if (server == null) {
-			mEditId = -1;
-		} else {
-			((Button) findViewById(R.id.create)).setText(R.string.save_changes);
-			((TextView) findViewById(R.id.title)).setText(R.string.edit_server);
-			mHost.setText(server.getHost());
-			mPort.setText(server.getPort() + "");
-			mPassword.setText(server.getPasswordId() + "");
-			
-			for (int i = 0; i < mServer.size(); i++) {
-				long id = mServer.get(i).getId();
-				
-				if (server.getId() == id || mServer.get(i).getSameHostId() > 0) {
-					mServer.remove(i);
-					i--;
-				} else if (server.getSameHostId() == id) {
-					mSameHost.setSelection(i);
-					mHost.setImeOptions(EditorInfo.IME_ACTION_DONE);
-					mPassword.setEnabled(i == 0);
-					mPassword.setFocusable(i == 0);
-					mPassword.setFocusableInTouchMode(i == 0);
-					mPort.setEnabled(i == 0);
-					mPort.setFocusable(i == 0);
-					mPort.setFocusableInTouchMode(i == 0);
-				}
-			}
-		}
+		setupEditIfPossible();
 		
 		if (mServer.size() == 1) {
 			mSameHost.setVisibility(View.GONE);
@@ -184,6 +107,96 @@ public class NewOrEditServerActivity extends Activity implements OnBansheeServer
 			Toast.makeText(this, R.string.host_denied_password, Toast.LENGTH_LONG).show();
 		} else {
 			Toast.makeText(this, R.string.host_not_reachable, Toast.LENGTH_LONG).show();
+		}
+	}
+	
+	// PRIVATE ====================================================================================
+	
+	private void setupSameHostChangeListener() {
+		mSameHost.setOnItemSelectedListener(new OnItemSelectedListener() {
+			@Override
+			public void onItemSelected(AdapterView<?> a, View v, int p, long id) {
+				mPassword.setEnabled(p == 0);
+				mPassword.setFocusable(p == 0);
+				mPassword.setFocusableInTouchMode(p == 0);
+				mPort.setEnabled(p == 0);
+				mPort.setFocusable(p == 0);
+				mPort.setFocusableInTouchMode(p == 0);
+				
+				if (p != 0) {
+					mPassword.setText(mServer.get(p).getPasswordId() + "");
+					mPort.setText(mServer.get(p).getPort() + "");
+				}
+			}
+			
+			@Override
+			public void onNothingSelected(AdapterView<?> arg0) {
+				
+			}
+		});
+	}
+	
+	private void setupFinishButtonListener() {
+		findViewById(R.id.create).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				int port = 8484;
+				int passwordId = 0;
+				String host = mHost.getText().toString();
+				long sameId = ((BansheeServer) mSameHost.getSelectedItem()).getId();
+				
+				try {
+					port = Integer.parseInt(mPort.getText().toString());
+				} catch (NumberFormatException e) {
+				}
+				
+				try {
+					passwordId = Integer.parseInt(mPassword.getText().toString());
+				} catch (NumberFormatException e) {
+				}
+				
+				BansheeServer server;
+				
+				if (sameId > 0) {
+					server = new BansheeServer(host, sameId);
+				} else {
+					server = new BansheeServer(host, port, passwordId);
+				}
+				
+				mCheckTask = new BansheeServerCheckTask(server, NewOrEditServerActivity.this);
+			}
+		});
+	}
+	
+	private void setupEditIfPossible() {
+		BansheeServer server = BansheeServer.getServer(mEditId);
+		
+		if (server == null) {
+			mEditId = -1;
+		} else {
+			((Button) findViewById(R.id.create)).setText(R.string.save_changes);
+			((TextView) findViewById(R.id.title)).setText(R.string.edit_server);
+			mHost.setText(server.getHost());
+			mPort.setText(server.getPort() + "");
+			mPassword.setText(server.getPasswordId() + "");
+			
+			for (int i = 0; i < mServer.size(); i++) {
+				long id = mServer.get(i).getId();
+				
+				if (server.getId() == id || mServer.get(i).getSameHostId() > 0) {
+					mServer.remove(i);
+					i--;
+				} else if (server.getSameHostId() == id) {
+					mSameHost.setSelection(i);
+					mHost.setImeOptions(EditorInfo.IME_ACTION_DONE);
+					mPassword.setEnabled(i == 0);
+					mPassword.setFocusable(i == 0);
+					mPassword.setFocusableInTouchMode(i == 0);
+					mPort.setEnabled(i == 0);
+					mPort.setFocusable(i == 0);
+					mPort.setFocusableInTouchMode(i == 0);
+				}
+			}
 		}
 	}
 }

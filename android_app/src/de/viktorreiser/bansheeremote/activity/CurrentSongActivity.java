@@ -41,7 +41,10 @@ import de.viktorreiser.toolbox.content.NetworkStateBroadcast;
  * <br>
  * This class does the main work by delegating the requests triggered by the UI, handling the
  * results and poll data periodically. It's also reacting on network changes and connection failure.
- * So there's a lot of action going on here therefore you will find the most tricky code here.
+ * So there's a lot of action going on here therefore you will find the most tricky code here.<br>
+ * <br>
+ * This activity is also performing the central communication. So it provides some static methods
+ * which are used by other activities. The can't even exist without an instance of this activity.
  * 
  * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
  */
@@ -102,17 +105,29 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		private long mmSeekUpdateStart = 0;
 		
 		
+		/**
+		 * Start polling.
+		 */
 		public void start() {
 			mmRunning = true;
 			sendEmptyMessage(MESSAGE_GET_STATUS);
 		}
 		
+		/**
+		 * Stop polling.
+		 */
 		public void stop() {
 			mmRunning = false;
 			removeMessages(MESSAGE_GET_STATUS);
 			removeMessages(MESSAGE_UPDATE_POSITION);
 		}
 		
+		/**
+		 * Trigger a pseudo poll in on second.<br>
+		 * <br>
+		 * Because the actual poll request might be send e.g. every 10 seconds we need to simulate a
+		 * poll an keep progressing the track seek bar position.
+		 */
 		public void updatePseudoPoll() {
 			removeMessages(MESSAGE_UPDATE_POSITION);
 			
@@ -144,6 +159,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 					mData.currentTime += (System.currentTimeMillis() - mmSeekUpdateStart);
 					
 					if (mData.totalTime > 0 && mData.currentTime > mData.totalTime) {
+						// pseudo poll has detected track end, we need to request more now
 						mConnection.sendCommand(Command.PLAYER_STATUS, null);
 					} else {
 						mCommandHandler.updateSeekData(false);
@@ -155,19 +171,36 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		}
 	}
 	
-	
+	/**
+	 * Get current track data.
+	 * 
+	 * @return track data ({@code null} when Activity is not running)
+	 */
 	static BansheeData getData() {
 		return mInstance == null ? null : mInstance.mData;
 	}
 	
+	/**
+	 * Get track data of previous request.
+	 * 
+	 * @return track data ({@code null} when Activity is not running)
+	 */
 	static BansheeData getPreviousData() {
 		return mInstance == null ? null : mInstance.mPreviousData;
 	}
 	
+	/**
+	 * Get (global) banshee connection.
+	 * 
+	 * @return banshee connection ({@code null} when Activity is not running)
+	 */
 	static BansheeConnection getConnection() {
 		return mInstance == null ? null : mInstance.mConnection;
 	}
 	
+	/**
+	 * Tell activity to close an open connection.
+	 */
 	static void resetConnection() {
 		if (mInstance != null && mInstance.mConnection != null) {
 			mInstance.mConnection.close();
@@ -175,10 +208,23 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		}
 	}
 	
+	/**
+	 * Get poll handler of activity.
+	 * 
+	 * @return poll handler ({@code null} when Activity is not running)
+	 */
 	static StatusPollHandler getPollHandler() {
 		return mInstance == null ? null : mInstance.mStatusPollHandler;
 	}
 	
+	/**
+	 * Handle a key event (global action).
+	 * 
+	 * @param event
+	 *            key event
+	 * 
+	 * @return {@code true} if key event handled.
+	 */
 	static boolean handleKeyEvent(KeyEvent event) {
 		return mInstance == null ? false : mInstance.handleVolumeKey(event);
 	}
@@ -441,15 +487,15 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		
 		if (success == 1) {
 			setupServerConnection(server);
+			return;
 		} else if (success == 0) {
-			// check failed, force user to choose a valid server (or leave on back press)
 			Toast.makeText(this, R.string.host_denied_password, Toast.LENGTH_LONG).show();
-			startActivityForResult(new Intent(this, ServerListActivity.class), REQUEST_SERVER_LIST);
 		} else {
-			// check failed, force user to choose a valid server (or leave on back press)
 			Toast.makeText(this, R.string.host_not_reachable, Toast.LENGTH_LONG).show();
-			startActivityForResult(new Intent(this, ServerListActivity.class), REQUEST_SERVER_LIST);
 		}
+		
+		// check failed, force user to choose a valid server (or leave on back press)
+		startActivityForResult(new Intent(this, ServerListActivity.class), REQUEST_SERVER_LIST);
 	}
 	
 	// PRIVATE ====================================================================================
@@ -648,6 +694,14 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		}
 	}
 	
+	/**
+	 * Handle key event if it's a volume button
+	 * 
+	 * @param e
+	 *            key event
+	 * 
+	 * @return {@code true} if handled
+	 */
 	private boolean handleVolumeKey(KeyEvent e) {
 		if (App.isVolumeKeyControl()) {
 			switch (e.getKeyCode()) {
@@ -676,6 +730,13 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	 */
 	private class CommandHandler implements OnBansheeCommandHandle {
 		
+		/**
+		 * Update complete UI.
+		 * 
+		 * @param force
+		 *            {@code true} if updated should be forced (regardless whether values haven't
+		 *            changed)
+		 */
 		public void updateComplete(boolean force) {
 			updateVolume(force);
 			updateSongData(force);
@@ -685,12 +746,26 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			updatePlayStatus(force);
 		}
 		
+		/**
+		 * Update volume UI.
+		 * 
+		 * @param force
+		 *            {@code true} if updated should be forced (regardless whether values haven't
+		 *            changed)
+		 */
 		public void updateVolume(boolean force) {
 			if (force || mPreviousData.volume != mData.volume) {
 				mVolume.setText(mData.volume < 0 ? "" : "Vol: " + mData.volume + "%");
 			}
 		}
 		
+		/**
+		 * Update shuffle UI.
+		 * 
+		 * @param force
+		 *            {@code true} if updated should be forced (regardless whether values haven't
+		 *            changed)
+		 */
 		public void updateShuffle(boolean force) {
 			if (force || mPreviousData.shuffle != mData.shuffle) {
 				if (mShuffle2 != null) {
@@ -701,6 +776,13 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			}
 		}
 		
+		/**
+		 * Update repeat UI.
+		 * 
+		 * @param force
+		 *            {@code true} if updated should be forced (regardless whether values haven't
+		 *            changed)
+		 */
 		public void updateRepeat(boolean force) {
 			if (force || mPreviousData.repeat != mData.repeat) {
 				if (mRepeat2 != null) {
@@ -711,6 +793,13 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			}
 		}
 		
+		/**
+		 * Update track title, artist and album UI.
+		 * 
+		 * @param force
+		 *            {@code true} if updated should be forced (regardless whether values haven't
+		 *            changed)
+		 */
 		public void updateSongData(boolean force) {
 			if (force || !mData.song.equals(mPreviousData.song)
 					|| (App.isDisplaySongGenre() && !mData.genre.equals(mPreviousData.genre))) {
@@ -739,6 +828,13 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			}
 		}
 		
+		/**
+		 * Update track seek position and total time UI.
+		 * 
+		 * @param force
+		 *            {@code true} if updated should be forced (regardless whether values haven't
+		 *            changed)
+		 */
 		public void updateSeekData(boolean force) {
 			if (force || mPreviousData.currentTime != mData.currentTime
 					|| mPreviousData.totalTime != mData.totalTime) {
@@ -751,6 +847,13 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			}
 		}
 		
+		/**
+		 * Update play / pause icon.
+		 * 
+		 * @param force
+		 *            {@code true} if updated should be forced (regardless whether values haven't
+		 *            changed)
+		 */
 		public void updatePlayStatus(boolean force) {
 			if (force || mPreviousData.playing != mData.playing) {
 				mPlay.setVisibility(!mData.playing ? View.VISIBLE : View.INVISIBLE);
@@ -794,6 +897,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			}
 		}
 		
+		/**
+		 * Finish all activities and start server choose activity.
+		 */
 		private void handleFail() {
 			mStatusPollHandler.stop();
 			mConnection = null;
@@ -808,6 +914,12 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		}
 		
 		private void handlePlayerStatus(byte [] response) {
+			if (response == null) {
+				// request failed, try again
+				mConnection.sendCommand(Command.PLAYER_STATUS, null);
+				return;
+			}
+			
 			mData.playing = Command.PlayerStatus.decodePlaying(response);
 			mData.currentTime = Command.PlayerStatus.decodeSeekPosition(response);
 			mData.repeat = Command.PlayerStatus.decodeRepeatMode(response);
@@ -816,7 +928,6 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			mData.changeFlag = Command.PlayerStatus.decodeChangeFlag(response);
 			mData.currentSongId = Command.PlayerStatus.decodeSongId(response);
 			
-			mStatusPollHandler.updatePseudoPoll();
 			updateComplete(false);
 			
 			if (mData.changeFlag != mPreviousData.changeFlag) {
@@ -845,6 +956,12 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		}
 		
 		private void handleSongInfo(byte [] response) {
+			if (response == null) {
+				// request failed, try again
+				mConnection.sendCommand(Command.SONG_INFO, null);
+				return;
+			}
+			
 			Object [] d = Command.SongInfo.decode(response);
 			
 			if (d != null) {
@@ -871,7 +988,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 						&& !App.isMobileNetworkCoverFetch()) {
 					mCoverAnimator.setDefaultCover();
 				} else {
-					mCoverAnimator.discardCover();
+					mCoverAnimator.hide();
 					mConnection.sendCommand(Command.COVER, Command.Cover.encode(mData.artId));
 				}
 			} else {
@@ -883,6 +1000,8 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			mDatabaseSyncRunning = false;
 			
 			if (response == null) {
+				Toast.makeText(CurrentSongActivity.this, R.string.error_fetching_sync_db,
+						Toast.LENGTH_LONG).show();
 				return;
 			}
 			
@@ -978,6 +1097,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			hideImmediately();
 		}
 		
+		/**
+		 * Hide the cover immediately.
+		 */
 		public void hideImmediately() {
 			mmDiscard = true;
 			mmHasCover = false;
@@ -986,7 +1108,10 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			mCover2.setAlpha(0);
 		}
 		
-		public void discardCover() {
+		/**
+		 * Start fade out of currently displayed cover.
+		 */
+		public void hide() {
 			mmNextCover = null;
 			mmDiscard = true;
 			mmHasCover = false;
@@ -995,10 +1120,19 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			mmAnimationHandler.postDelayed(this, FADE_STEP);
 		}
 		
+		/**
+		 * Load (animate) default cover.
+		 */
 		public void setDefaultCover() {
 			setCover(mmDefaultCover);
 		}
 		
+		/**
+		 * Load (animate) given cover.
+		 * 
+		 * @param cover
+		 *            cover to display
+		 */
 		public void setCover(Bitmap cover) {
 			mmNextCover = cover;
 			mmDiscard = true;

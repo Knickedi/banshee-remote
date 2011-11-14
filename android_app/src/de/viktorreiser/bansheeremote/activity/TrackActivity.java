@@ -21,6 +21,7 @@ import android.widget.TextView;
 import de.viktorreiser.bansheeremote.R;
 import de.viktorreiser.bansheeremote.data.App;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
+import de.viktorreiser.bansheeremote.data.BansheeConnection.Command.Playlist.Modification;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandle;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase.Album;
@@ -191,17 +192,16 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 	
 	@Override
 	public void onQuickAction(AdapterView<?> parent, View view, int position, int quickActionId) {
-		// TODO implement quick action on playlist
 		switch (quickActionId) {
 		case App.QUICK_ACTION_ENQUEUE: {
 			CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
-					Command.Playlist.encodeEnqueue(
+					Command.Playlist.encodeAdd(App.PLAYLIST_QUEUE, Modification.ADD_TRACK,
 							mTrackEntries[position].getId(), App.isQueueAddTwice()));
 			break;
 		}
 		case App.QUICK_ACTION_ADD: {
 			CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
-					Command.Playlist.encodeAddTrack(
+					Command.Playlist.encodeAdd(App.PLAYLIST_REMOTE, Modification.ADD_TRACK,
 							mTrackEntries[position].getId(), App.isPlaylistAddTwice()));
 			break;
 		}
@@ -212,17 +212,19 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 	public void onBansheeCommandHandled(Command command, byte [] params, byte [] result) {
 		switch (command) {
 		case COVER:
-			String artId = Command.Cover.getId(params);
-			Bitmap cover = CoverCache.getThumbnailedCover(artId);
-			
-			if (cover != null) {
-				int childCount = mList.getChildCount();
+			if (result != null) {
+				String artId = Command.Cover.getId(params);
+				Bitmap cover = CoverCache.getThumbnailedCover(artId);
 				
-				for (int i = 0; i < childCount; i++) {
-					ViewHolder holder = (ViewHolder) mList.getChildAt(i).getTag();
+				if (cover != null) {
+					int childCount = mList.getChildCount();
 					
-					if (artId.equals(holder.cover.getTag())) {
-						holder.cover.setImageBitmap(cover);
+					for (int i = 0; i < childCount; i++) {
+						ViewHolder holder = (ViewHolder) mList.getChildAt(i).getTag();
+						
+						if (artId.equals(holder.cover.getTag())) {
+							holder.cover.setImageBitmap(cover);
+						}
 					}
 				}
 			}

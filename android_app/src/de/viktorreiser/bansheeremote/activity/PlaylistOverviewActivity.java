@@ -18,7 +18,6 @@ import android.widget.TextView;
 import de.viktorreiser.bansheeremote.R;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandle;
-import de.viktorreiser.toolbox.util.L;
 
 /**
  * This will load all available playlists on the server.
@@ -35,36 +34,11 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 	
 	private static final int REQUEST_PLAYLIST = 1;
 	
-	private static PlaylistOverviewActivity mInstance;
-	
 	private OnBansheeCommandHandle mOldCommandHandler;
 	private List<PlaylistEntry> mPlaylists = new ArrayList<PlaylistEntry>();
 	private int mActivePlaylistId;
 	private boolean mLoadingDismissed;
 	private PlaylistsAdapter mAdapter;
-	
-	// PUBLIC =====================================================================================
-	
-	public static void updatePlaylistTrackCount(int playlistId, int trackChange,
-			boolean updatePlaylist) {
-		if (mInstance == null && trackChange != 0) {
-			return;
-		}
-		
-		for (PlaylistEntry e : mInstance.mPlaylists) {
-			if (e.id == playlistId) {
-				e.count += trackChange;
-				
-				if (mInstance.mAdapter != null) {
-					mInstance.mAdapter.notifyDataSetChanged();
-					L.d("hier " +  e.count + " " + trackChange + " " + playlistId);
-				}
-				
-				PlaylistActivity.updatePlaylist();
-				break;
-			}
-		}
-	}
 	
 	// OVERRIDDEN =================================================================================
 	
@@ -72,8 +46,6 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 	@Override
 	public void onCreate(Bundle bundle) {
 		super.onCreate(bundle);
-		
-		mInstance = this;
 		
 		if (CurrentSongActivity.getConnection() == null) {
 			finish();
@@ -84,7 +56,7 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 		
 		if (dataBefore == null) {
 			CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
-					Command.Playlist.encodePlaylistNames());
+					Command.Playlist.encodeNames());
 		} else {
 			mPlaylists = (List<PlaylistEntry>) dataBefore[0];
 			mActivePlaylistId = (Integer) dataBefore[1];
@@ -150,8 +122,6 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 		if (isFinishing()) {
 			finishActivity(REQUEST_PLAYLIST);
 		}
-		
-		mInstance = null;
 	}
 	
 	@Override
@@ -168,7 +138,7 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 	public void onBansheeCommandHandled(Command command, byte [] params, byte [] result) {
 		switch (command) {
 		case PLAYER_STATUS:
-			if ((CurrentSongActivity.getData().playing
+			if (result != null && (CurrentSongActivity.getData().playing
 						!= CurrentSongActivity.getPreviousData().playing
 					|| mActivePlaylistId != mActivePlaylistIdChange) && mAdapter != null) {
 				mActivePlaylistId = mActivePlaylistIdChange;
@@ -177,12 +147,12 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 			break;
 		
 		case PLAYLIST:
-			if (Command.Playlist.isPlaylistNames(params)) {
+			if (Command.Playlist.isNames(params)) {
 				if (result == null) {
 					CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
-							Command.Playlist.encodePlaylistNames());
+							Command.Playlist.encodeNames());
 				} else {
-					Object [][] playlists = Command.Playlist.decodePlaylistNames(result);
+					Object [][] playlists = Command.Playlist.decodeNames(result);
 					mActivePlaylistId = Command.Playlist.decodeActivePlaylist(result);
 					mActivePlaylistIdChange = mActivePlaylistId;
 					
@@ -196,6 +166,25 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 					
 					mLoadingDismissed = true;
 					refreshLoading();
+				}
+			} else if (Command.Playlist.isAddOrRemove(params)) {
+				if (result != null) {
+					int playlistId = Command.Playlist.getAddOrRemovePlaylist(params);
+					int trackChange = Command.Playlist.decodeAddOrRemoveCount(result, params);
+					
+					if (trackChange != 0) {
+						for (PlaylistEntry e : mPlaylists) {
+							if (e.id == playlistId) {
+								e.count += trackChange;
+								
+								if (mAdapter != null) {
+									mAdapter.notifyDataSetChanged();
+								}
+								
+								break;
+							}
+						}
+					}
 				}
 			}
 			break;
