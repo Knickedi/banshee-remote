@@ -929,6 +929,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			mData.currentSongId = Command.PlayerStatus.decodeSongId(response);
 			
 			updateComplete(false);
+			mStatusPollHandler.updatePseudoPoll();
 			
 			if (mData.changeFlag != mPreviousData.changeFlag) {
 				Track info = BansheeDatabase.getUncachedTrack(mData.currentSongId);
