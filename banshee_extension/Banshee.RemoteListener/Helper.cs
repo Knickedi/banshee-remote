@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -1042,45 +1043,126 @@ namespace Banshee.RemoteListener
 			return false;
 		}
 		
-		public static int AddArtistToPlayList(int playlistId, int artistId, bool allowTwice) {
+		public static int AddArtistOrAlbumToPlayList(int playlistId, int id, bool allowTwice, bool isAlbum) {
 			if (playlistId != 1 && playlistId != 2) {
 				return 0;
 			}
 			
 			int count = 0;
+			MusicLibrarySource lib = MusicLibrary;
+			DatabaseSource dest = playlistId == 1 ? RemotePlaylist : PlayQueuePlaylist;
+			TrackListModel model = lib.TrackModel;
+			Selection selection = new Selection();
 			
+			if (allowTwice) {
+				for (int i = 0; i < model.Count; i++) {
+					object t = model.GetItem(i);
+					
+					if (t is DatabaseTrackInfo && (isAlbum && ((DatabaseTrackInfo) t).AlbumId == id
+				                               || !isAlbum && ((DatabaseTrackInfo) t).ArtistId == id)) {
+						selection.Select(i);
+						count++;
+					}
+				}
+			} else {
+				List<SortEntry> ids = new List<SortEntry>();
+				List<int> doubleIds = new List<int>();
+				
+				for (int i = 0; i < model.Count; i++) {
+					object t = model.GetItem(i);
+					
+					if (t is DatabaseTrackInfo && (isAlbum && ((DatabaseTrackInfo) t).AlbumId == id
+				                               || !isAlbum && ((DatabaseTrackInfo) t).ArtistId == id)) {
+						SortEntry e = new SortEntry();
+						e.pos = i;
+						e.selected = true;
+						e.id = (t as DatabaseTrackInfo).TrackId;
+						ids.Add(e);
+					}
+				}
+				
+				ids.Sort();
+				dest.Reload();
+				model = dest.TrackModel;
+				
+				for (int i = 0; i < model.Count; i++) {
+					object t = model.GetItem(i);
+					
+					if (t is DatabaseTrackInfo && (isAlbum && ((DatabaseTrackInfo) t).AlbumId == id
+				                               || !isAlbum && ((DatabaseTrackInfo) t).ArtistId == id)) {
+						doubleIds.Add((t as DatabaseTrackInfo).TrackId);
+					}
+				}
+				
+				doubleIds.Sort();
+				
+				int si = 0, di = 0;
+				
+				while (si < ids.Count && di < doubleIds.Count) {
+					if (ids[si].id == doubleIds[di]) {
+						ids[si].selected = false;
+						si++;
+					} else if (ids[si].id < doubleIds[di]) {
+						si++;
+					} else {
+						di++;
+					}
+				}
+				
+				for (int i = 0; i < ids.Count; i++) {
+					if (ids[i].selected) {
+						selection.Select(ids[i].pos);
+						count++;
+					}
+				}
+			}
+			
+			if (count != 0) {
+				if (dest != PlayQueuePlaylist) {
+					dest.AddSelectedTracks(lib, selection);
+				} else {
+					foreach (int s in selection) {
+						((PlayQueueSource) dest).EnqueueTrack(lib.TrackModel.GetItem(s) as TrackInfo, false);
+					}
+				}
+			}
 			
 			return count;
 		}
 		
-		public static int RemoveArtistFromPlaylist(int playlistId, int artistId) {
-			if (playlistId != 1 && playlistId != 2) {
-				return 0;
-			}
-			
-			return 0;
-		}
-		
-		public static int AddAlbumToPlayList(int playlistId, int artistId, bool allowTwice) {
+		public static int RemoveArtistOrAlbumFromPlaylist(int playlistId, int id, bool isAlbum) {
 			if (playlistId != 1 && playlistId != 2) {
 				return 0;
 			}
 			
 			int count = 0;
+			PlaylistSource source = playlistId == 1 ? RemotePlaylist : PlayQueuePlaylist;
 			
-			
-			return count;
-		}
-		
-		public static int RemoveAlbumFromPlaylist(int playlistId, int artistId) {
-			if (playlistId != 1 && playlistId != 2) {
-				return 0;
+			for (int i = 0; i < source.TrackModel.Count; i++) {
+				object t = source.TrackModel.GetItem(i);
+				
+				if (t is DatabaseTrackInfo && (isAlbum && ((DatabaseTrackInfo) t).AlbumId == id
+				                               || !isAlbum && ((DatabaseTrackInfo) t).ArtistId == id)) {
+					source.RemoveTrack(i);
+					i--;
+					count++;
+				}
 			}
 			
-			return 0;
+			return count;
 		}
 		
 		#endregion
+	}
+	
+	public class SortEntry : IComparable<SortEntry> {
+		public int pos;
+		public int id;
+		public bool selected;
+		
+		int IComparable<SortEntry>.CompareTo(SortEntry e) {
+			return id - e.id;
+		}
 	}
 }
 

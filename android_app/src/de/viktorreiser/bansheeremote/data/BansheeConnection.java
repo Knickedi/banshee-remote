@@ -85,10 +85,10 @@ public class BansheeConnection {
 	public static enum Command {
 		
 		PLAYER_STATUS(1, 1000),
-		SONG_INFO(2, 2000),
+		SONG_INFO(2, 3000),
 		SYNC_DATABASE(3, 10000),
 		COVER(4, 5000),
-		PLAYLIST(5, 5000);
+		PLAYLIST(5, 10000);
 		
 		private final int mCode;
 		private final int mTimeout;
@@ -600,10 +600,10 @@ public class BansheeConnection {
 			
 			public static enum Modification {
 				ADD_TRACK(4),
-				ADD_ARTIST(6),
-				ADD_ALBUM(8),
-				REMOVE_TRACK(5),
-				REMOVE_ARTIST(7),
+				ADD_ARTIST(5),
+				ADD_ALBUM(6),
+				REMOVE_TRACK(7),
+				REMOVE_ARTIST(8),
 				REMOVE_ALBUM(9);
 				
 				private final byte request;
