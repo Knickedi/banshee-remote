@@ -190,6 +190,8 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle,
 			break;
 		}
 		}
+		
+		App.shortToast(R.string.request_sent);
 	}
 	
 	@Override

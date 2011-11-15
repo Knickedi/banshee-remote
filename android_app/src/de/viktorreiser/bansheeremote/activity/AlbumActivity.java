@@ -172,6 +172,8 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle, O
 							mAlbumEntries[position].getId()));
 			break;
 		}
+
+		App.shortToast(R.string.request_sent);
 	}
 	
 	@Override

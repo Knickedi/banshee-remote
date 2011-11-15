@@ -49,6 +49,7 @@
 	<string name="artist">Artist</string>
 	<string name="all_albums">All albums</string>
 	<string name="all_tracks">All tracks</string>
+	<string name="request_sent">Request sent, waiting for response...</string>
 	<string name="request_failed">Request failed, try again...</string>
 	<string name="added_to_playlist_zero">No tracks added to playlist</string>
 	<plurals name="added_to_playlist">
