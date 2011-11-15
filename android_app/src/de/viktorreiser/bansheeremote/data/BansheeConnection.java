@@ -84,18 +84,20 @@ public class BansheeConnection {
 	 */
 	public static enum Command {
 		
-		PLAYER_STATUS(1, 1000),
-		SONG_INFO(2, 3000),
-		SYNC_DATABASE(3, 10000),
-		COVER(4, 5000),
-		PLAYLIST(5, 10000);
+		PLAYER_STATUS(1, 1000, 3000),
+		SONG_INFO(2, 3000, 6000),
+		SYNC_DATABASE(3, 10000, 15000),
+		COVER(4, 5000, 10000),
+		PLAYLIST(5, 10000, 15000);
 		
 		private final int mCode;
-		private final int mTimeout;
+		private final int mTimeoutWifi;
+		private final int mTimeoutMobile;
 		
-		Command(int code, int timeout) {
+		Command(int code, int timeoutWifi, int timeoutMobile) {
 			mCode = code;
-			mTimeout = timeout;
+			mTimeoutWifi = timeoutWifi;
+			mTimeoutMobile = timeoutMobile;
 		}
 		
 		/**
@@ -1173,8 +1175,8 @@ public class BansheeConnection {
 					}
 				} else {
 					byte [] result = sendRequest(mServer, queue.command.mCode, queue.params,
-							queue.command.mTimeout
-								* (NetworkStateBroadcast.isMobileConnected() ? 2 : 1));
+							NetworkStateBroadcast.isMobileConnected()
+								? queue.command.mTimeoutWifi : queue.command.mTimeoutMobile);
 					
 					if (result == null || result.length == 0) {
 						handleFail(queue);
