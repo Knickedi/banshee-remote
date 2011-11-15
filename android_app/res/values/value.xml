@@ -49,6 +49,17 @@
 	<string name="artist">Artist</string>
 	<string name="all_albums">All albums</string>
 	<string name="all_tracks">All tracks</string>
+	<string name="request_failed">Request failed, try again...</string>
+	<string name="added_to_playlist_zero">No tracks added to playlist</string>
+	<plurals name="added_to_playlist">
+	    <item quantity="one">One track added to playlist</item>
+	    <item quantity="other">%d tracks added to playlist</item>
+	</plurals>
+	<string name="removed_from_playlist_zero">No tracks removed from playlist</string>
+	<plurals name="removed_from_playlist">
+	    <item quantity="one">One track removed from playlist</item>
+	    <item quantity="other">%d tracks removed from playlist</item>
+	</plurals>
 	
 	<!-- settings -->
 	

@@ -889,6 +889,10 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			case COVER:
 				handleCover(response, params);
 				break;
+			
+			case PLAYLIST:
+				handlePlaylist(response, params);
+				break;
 			}
 		}
 		
@@ -1043,6 +1047,28 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 							mCoverAnimator.setCover(cover);
 						}
 					}
+				}
+			}
+		}
+		
+		private void handlePlaylist(byte [] response, byte [] params) {
+			if (!Command.Playlist.isAddOrRemove(params)) {
+				return;
+			}
+			
+			if (response == null) {
+				App.shortToast(R.string.request_failed);
+			} else {
+				int count = Command.Playlist.decodeAddOrRemoveCount(response);
+				
+				if (count != 0) {
+					int resId = Command.Playlist.isAdd(params)
+							? R.plurals.added_to_playlist : R.plurals.removed_from_playlist;
+					App.shortToast(App.getContext().getResources().getQuantityString(
+							resId, count, count));
+				} else {
+					App.shortToast(Command.Playlist.isAdd(params)
+							? R.string.added_to_playlist_zero : R.string.removed_from_playlist_zero);
 				}
 			}
 		}

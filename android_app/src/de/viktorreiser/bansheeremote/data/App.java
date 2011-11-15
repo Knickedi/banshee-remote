@@ -268,6 +268,32 @@ public class App extends Application {
 		mGlobalToast.show();
 	}
 	
+	/**
+	 * Show global short toast.
+	 * 
+	 * @param text
+	 *            text of toast message
+	 */
+	public static void shortToast(CharSequence text) {
+		mGlobalToast.cancel();
+		mGlobalToast.setDuration(Toast.LENGTH_SHORT);
+		mGlobalToast.setText(text);
+		mGlobalToast.show();
+	}
+	
+	/**
+	 * Show global long toast.
+	 * 
+	 * @param text
+	 *            text of toast message
+	 */
+	public static void longToast(CharSequence text) {
+		mGlobalToast.cancel();
+		mGlobalToast.setDuration(Toast.LENGTH_LONG);
+		mGlobalToast.setText(text);
+		mGlobalToast.show();
+	}
+	
 	// OVERRIDDEN =================================================================================
 	
 	/**

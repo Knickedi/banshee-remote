@@ -170,7 +170,11 @@ public class PlaylistOverviewActivity extends Activity implements OnBansheeComma
 			} else if (Command.Playlist.isAddOrRemove(params)) {
 				if (result != null) {
 					int playlistId = Command.Playlist.getAddOrRemovePlaylist(params);
-					int trackChange = Command.Playlist.decodeAddOrRemoveCount(result, params);
+					int trackChange = Command.Playlist.decodeAddOrRemoveCount(result);
+					
+					if (!Command.Playlist.isAdd(params)) {
+						trackChange = -trackChange;
+					}
 					
 					if (trackChange != 0) {
 						for (PlaylistEntry e : mPlaylists) {

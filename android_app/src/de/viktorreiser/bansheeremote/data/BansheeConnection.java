@@ -689,33 +689,32 @@ public class BansheeConnection {
 			}
 			
 			/**
-			 * Get ID of playlist specified in the add or remove request.
+			 * Were we requesting to add a track, artist or album?
 			 */
-			public static int getAddOrRemovePlaylist(byte [] params) {
+			public static boolean isAdd(byte [] params) {
 				switch (getAddOrRemove(params)) {
 				case REMOVE_TRACK:
 				case REMOVE_ARTIST:
 				case REMOVE_ALBUM:
-					return decodeShort(params, 1);
+					return false;
 				
 				default:
-					return decodeShort(params, 2);
+					return true;
 				}
+			}
+			
+			/**
+			 * Get ID of playlist specified in the add or remove request.
+			 */
+			public static int getAddOrRemovePlaylist(byte [] params) {
+				return decodeShort(params, isAdd(params) ? 2 : 1);
 			}
 			
 			/**
 			 * Get specified ID in add or remove request.
 			 */
 			public static long getAddOrRemoveId(byte [] params) {
-				switch (getAddOrRemove(params)) {
-				case REMOVE_ALBUM:
-				case REMOVE_ARTIST:
-				case REMOVE_TRACK:
-					return decodeInt(params, 3);
-				
-				default:
-					return decodeInt(params, 4);
-				}
+				return decodeInt(params, isAdd(params) ? 4 : 3);
 			}
 			
 			/**
@@ -723,18 +722,8 @@ public class BansheeConnection {
 			 * 
 			 * @return negative if tracks were removed
 			 */
-			public static int decodeAddOrRemoveCount(byte [] response, byte [] params) {
-				int count = decodeShort(response, 0);
-				
-				switch (getAddOrRemove(params)) {
-				case REMOVE_TRACK:
-				case REMOVE_ARTIST:
-				case REMOVE_ALBUM:
-					return -count;
-				
-				default:
-					return count;
-				}
+			public static int decodeAddOrRemoveCount(byte [] response) {
+				return decodeShort(response, 0);
 			}
 		}
 		
