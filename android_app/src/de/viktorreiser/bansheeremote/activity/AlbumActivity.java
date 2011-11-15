@@ -22,22 +22,25 @@ import android.widget.TextView;
 import de.viktorreiser.bansheeremote.R;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandle;
+import de.viktorreiser.bansheeremote.data.BansheeConnection.Command.Playlist.Modification;
 import de.viktorreiser.bansheeremote.data.App;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase.Album;
 import de.viktorreiser.bansheeremote.data.CoverCache;
 import de.viktorreiser.toolbox.widget.HiddenQuickActionSetup;
 import de.viktorreiser.toolbox.widget.SwipeableHiddenView;
+import de.viktorreiser.toolbox.widget.HiddenQuickActionSetup.OnQuickActionListener;
 
 /**
  * Browse albums from synchronized database.
  * 
  * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
  */
-public class AlbumActivity extends Activity implements OnBansheeCommandHandle, OnItemClickListener {
+public class AlbumActivity extends Activity implements OnBansheeCommandHandle, OnItemClickListener,
+		OnQuickActionListener {
 	
 	// PRIVATE ====================================================================================
-
+	
 	private static final int REQUEST_ACTIVITY = 1;
 	
 	private OnBansheeCommandHandle mOldCommandHandler;
@@ -78,7 +81,7 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle, O
 					characters.add(c);
 				}
 			}
-
+			
 			mAdapterSections = sections.toArray();
 		}
 		
@@ -95,6 +98,7 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle, O
 		});
 		
 		mQuickActionSetup = App.getDefaultHiddenViewSetup(this);
+		mQuickActionSetup.setOnQuickActionListener(this);
 		
 		mQuickActionSetup.addAction(App.QUICK_ACTION_ENQUEUE,
 				R.string.quick_enqueue_album, R.drawable.enqueue);
@@ -146,7 +150,30 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle, O
 		intent.putExtra(TrackActivity.EXTRA_ARTIST_ID, mAlbumEntries[p].getArtistId());
 		startActivityForResult(intent, REQUEST_ACTIVITY);
 	}
-
+	
+	@Override
+	public void onQuickAction(AdapterView<?> parent, View view, int position, int quickActionId) {
+		int playlistId = quickActionId == App.QUICK_ACTION_REMOVE
+				|| quickActionId == App.QUICK_ACTION_ADD
+				? App.PLAYLIST_REMOTE : App.PLAYLIST_QUEUE;
+		
+		switch (quickActionId) {
+		case App.QUICK_ACTION_ADD:
+		case App.QUICK_ACTION_ENQUEUE:
+			CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
+					Command.Playlist.encodeAdd(playlistId, Modification.ADD_ALBUM,
+							mAlbumEntries[position].getId(), App.isPlaylistAddTwice()));
+			break;
+		
+		case App.QUICK_ACTION_REMOVE:
+		case App.QUICK_ACTION_REMOVE_QUEUE:
+			CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
+					Command.Playlist.encodeRemove(playlistId, Modification.REMOVE_ALBUM,
+							mAlbumEntries[position].getId()));
+			break;
+		}
+	}
+	
 	@Override
 	public void onBansheeCommandHandled(Command command, byte [] params, byte [] result) {
 		switch (command) {
@@ -189,22 +216,22 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle, O
 	}
 	
 	private class AlbumAdapter extends BaseAdapter implements SectionIndexer {
-
+		
 		@Override
 		public int getCount() {
 			return mAlbumEntries.length;
 		}
-
+		
 		@Override
 		public Object getItem(int position) {
 			return null;
 		}
-
+		
 		@Override
 		public long getItemId(int position) {
 			return 0;
 		}
-
+		
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 			if (convertView == null) {

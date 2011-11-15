@@ -1040,6 +1040,44 @@ namespace Banshee.RemoteListener
 			return false;
 		}
 		
+		public static int AddArtistToPlayList(int playlistId, int artistId, bool allowTwice) {
+			if (playlistId != 1 && playlistId != 2) {
+				return 0;
+			}
+			
+			int count = 0;
+			
+			
+			return count;
+		}
+		
+		public static int RemoveArtistFromPlaylist(int playlistId, int artistId) {
+			if (playlistId != 1 && playlistId != 2) {
+				return 0;
+			}
+			
+			return 0;
+		}
+		
+		public static int AddAlbumToPlayList(int playlistId, int artistId, bool allowTwice) {
+			if (playlistId != 1 && playlistId != 2) {
+				return 0;
+			}
+			
+			int count = 0;
+			
+			
+			return count;
+		}
+		
+		public static int RemoveAlbumFromPlaylist(int playlistId, int artistId) {
+			if (playlistId != 1 && playlistId != 2) {
+				return 0;
+			}
+			
+			return 0;
+		}
+		
 		#endregion
 	}
 }

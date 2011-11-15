@@ -24,6 +24,7 @@ import de.viktorreiser.bansheeremote.R;
 import de.viktorreiser.bansheeremote.data.App;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.Command;
 import de.viktorreiser.bansheeremote.data.BansheeConnection.OnBansheeCommandHandle;
+import de.viktorreiser.bansheeremote.data.BansheeConnection.Command.Playlist.Modification;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase.Album;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase.Artist;
@@ -31,16 +32,19 @@ import de.viktorreiser.bansheeremote.data.CoverCache;
 import de.viktorreiser.toolbox.content.NetworkStateBroadcast;
 import de.viktorreiser.toolbox.widget.HiddenQuickActionSetup;
 import de.viktorreiser.toolbox.widget.SwipeableHiddenView;
+import de.viktorreiser.toolbox.widget.HiddenQuickActionSetup.OnQuickActionListener;
 
 /**
  * Browse artists from synchronized database.
  * 
  * @author Viktor Reiser &lt;<a href="mailto:viktorreiser@gmx.de">viktorreiser@gmx.de</a>&gt;
  */
-public class ArtistActivity extends Activity implements OnBansheeCommandHandle, OnItemClickListener {
+public class ArtistActivity extends Activity implements OnBansheeCommandHandle,
+		OnItemClickListener,
+		OnQuickActionListener {
 	
 	// PRIVATE ====================================================================================
-
+	
 	private static final int REQUEST_ACTIVITY = 1;
 	
 	private OnBansheeCommandHandle mOldCommandHandler;
@@ -107,26 +111,7 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle, 
 			}
 		});
 		
-		mQuickActionSetupAlbum = App.getDefaultHiddenViewSetup(this);
-		mQuickActionSetupArtist = App.getDefaultHiddenViewSetup(this);
-		
-		mQuickActionSetupAlbum.addAction(App.QUICK_ACTION_ENQUEUE,
-				R.string.quick_enqueue_album, R.drawable.enqueue);
-		mQuickActionSetupAlbum.addAction(App.QUICK_ACTION_REMOVE_QUEUE,
-				R.string.quick_remove_queue_album, R.drawable.queue_remove);
-		mQuickActionSetupAlbum.addAction(App.QUICK_ACTION_ADD,
-				R.string.quick_add_album, R.drawable.add);
-		mQuickActionSetupAlbum.addAction(App.QUICK_ACTION_REMOVE,
-				R.string.quick_remove_album, R.drawable.remove);
-		
-		mQuickActionSetupArtist.addAction(App.QUICK_ACTION_ENQUEUE,
-				R.string.quick_enqueue_artist, R.drawable.enqueue);
-		mQuickActionSetupArtist.addAction(App.QUICK_ACTION_REMOVE_QUEUE,
-				R.string.quick_remove_queue_artist, R.drawable.queue_remove);
-		mQuickActionSetupArtist.addAction(App.QUICK_ACTION_ADD,
-				R.string.quick_add_artist, R.drawable.add);
-		mQuickActionSetupArtist.addAction(App.QUICK_ACTION_REMOVE,
-				R.string.quick_remove_artist, R.drawable.remove);
+		setupQuickActionSetup();
 		
 		setContentView(R.layout.artist);
 		
@@ -180,6 +165,34 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle, 
 	}
 	
 	@Override
+	public void onQuickAction(AdapterView<?> parent, View view, int position, int quickActionId) {
+		ArtistEntry entry = mArtistEntries.get(position);
+		boolean isAlbum = entry.isAlbum;
+		long id = isAlbum ? entry.album.getId() : entry.artist.getId();
+		int playlistId = quickActionId == App.QUICK_ACTION_REMOVE
+				|| quickActionId == App.QUICK_ACTION_ADD
+				? App.PLAYLIST_REMOTE : App.PLAYLIST_QUEUE;
+		
+		
+		switch (quickActionId) {
+		case App.QUICK_ACTION_ADD:
+		case App.QUICK_ACTION_ENQUEUE: {
+			Modification mod = isAlbum ? Modification.ADD_ALBUM : Modification.ADD_ARTIST;
+			CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
+					Command.Playlist.encodeAdd(playlistId, mod, id, App.isPlaylistAddTwice()));
+			break;
+		}
+		case App.QUICK_ACTION_REMOVE:
+		case App.QUICK_ACTION_REMOVE_QUEUE: {
+			Modification mod = isAlbum ? Modification.REMOVE_ALBUM : Modification.REMOVE_ARTIST;
+			CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
+					Command.Playlist.encodeRemove(playlistId, mod, id));
+			break;
+		}
+		}
+	}
+	
+	@Override
 	public void onBansheeCommandHandled(Command command, byte [] params, byte [] result) {
 		switch (command) {
 		case COVER:
@@ -203,6 +216,31 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle, 
 	}
 	
 	// PRIVATE ====================================================================================
+	
+	private void setupQuickActionSetup() {
+		mQuickActionSetupAlbum = App.getDefaultHiddenViewSetup(this);
+		mQuickActionSetupAlbum.setOnQuickActionListener(this);
+		mQuickActionSetupArtist = App.getDefaultHiddenViewSetup(this);
+		mQuickActionSetupArtist.setOnQuickActionListener(this);
+		
+		mQuickActionSetupAlbum.addAction(App.QUICK_ACTION_ENQUEUE,
+				R.string.quick_enqueue_album, R.drawable.enqueue);
+		mQuickActionSetupAlbum.addAction(App.QUICK_ACTION_REMOVE_QUEUE,
+				R.string.quick_remove_queue_album, R.drawable.queue_remove);
+		mQuickActionSetupAlbum.addAction(App.QUICK_ACTION_ADD,
+				R.string.quick_add_album, R.drawable.add);
+		mQuickActionSetupAlbum.addAction(App.QUICK_ACTION_REMOVE,
+				R.string.quick_remove_album, R.drawable.remove);
+		
+		mQuickActionSetupArtist.addAction(App.QUICK_ACTION_ENQUEUE,
+				R.string.quick_enqueue_artist, R.drawable.enqueue);
+		mQuickActionSetupArtist.addAction(App.QUICK_ACTION_REMOVE_QUEUE,
+				R.string.quick_remove_queue_artist, R.drawable.queue_remove);
+		mQuickActionSetupArtist.addAction(App.QUICK_ACTION_ADD,
+				R.string.quick_add_artist, R.drawable.add);
+		mQuickActionSetupArtist.addAction(App.QUICK_ACTION_REMOVE,
+				R.string.quick_remove_artist, R.drawable.remove);
+	}
 	
 	private void setupAllArtistsInfo() {
 		Artist [] artistInfo = BansheeDatabase.getOrderedArtists();
@@ -340,7 +378,8 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle, 
 				holder.count.setText("(" + entry.album.getTrackCount() + ")");
 				
 				if (CoverCache.coverExists(entry.album.getArtId())) {
-					holder.cover.setImageBitmap(CoverCache.getThumbnailedCover(entry.album.getArtId()));
+					holder.cover.setImageBitmap(CoverCache.getThumbnailedCover(entry.album
+							.getArtId()));
 					holder.cover.setTag(null);
 				} else {
 					holder.cover.setImageResource(R.drawable.no_cover);

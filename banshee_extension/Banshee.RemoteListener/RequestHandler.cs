@@ -414,16 +414,41 @@ namespace Banshee.RemoteListener
 				return Helper.ShortToByte(0);
 				
 			case 6:
+				if (readBytes > 7) {
+					return Helper.ShortToByte((ushort) Helper.AddArtistToPlayList(
+						Helper.ShortFromBuffer(2),
+						(int) Helper.IntFromBuffer(4),
+				    	(Helper.Buffer[1] & 0x1) != 0));
+				}
+				
 				return Helper.ShortToByte(0);
 				
 			case 7:
+				if (readBytes > 6) {
+					return Helper.ShortToByte((ushort) Helper.RemoveArtistFromPlaylist(
+						Helper.ShortFromBuffer(1), (int) Helper.IntFromBuffer(3)));
+				}
+				
 				return Helper.ShortToByte(0);
 				
 			case 8:
+				if (readBytes > 7) {
+					return Helper.ShortToByte((ushort) Helper.AddAlbumToPlayList(
+						Helper.ShortFromBuffer(2),
+						(int) Helper.IntFromBuffer(4),
+				    	(Helper.Buffer[1] & 0x1) != 0));
+				}
+				
 				return Helper.ShortToByte(0);
 				
 			case 9:
+				if (readBytes > 6) {
+					return Helper.ShortToByte((ushort) Helper.RemoveAlbumFromPlaylist(
+						Helper.ShortFromBuffer(1), (int) Helper.IntFromBuffer(3)));
+				}
+				
 				return Helper.ShortToByte(0);
+				
 			}
 			
 			return new byte [] {0};
