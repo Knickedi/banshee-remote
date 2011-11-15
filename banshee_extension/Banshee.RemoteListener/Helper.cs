@@ -722,6 +722,7 @@ namespace Banshee.RemoteListener
 				playing = true;
 				paused = false;
 				resetSeekPosition = true;
+				_playTimeout = Timestamp();
 				break;
 				
 			case 5:
@@ -734,6 +735,7 @@ namespace Banshee.RemoteListener
 				playing = true;
 				paused = false;
 				resetSeekPosition = true;
+				_playTimeout = Timestamp();
 				break;
 			}
 		}
