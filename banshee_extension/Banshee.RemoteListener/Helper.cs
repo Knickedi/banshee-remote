@@ -1021,25 +1021,23 @@ namespace Banshee.RemoteListener
 		/// <returns>
 		/// Amount of removed tracks.
 		/// </returns>
-		public static int RemoveTrackFromPlaylist(int playlistId, int trackId) {
+		public static bool RemoveTrackFromPlaylist(int playlistId, int trackId) {
 			if (playlistId != 1 && playlistId != 2) {
-				return 0;
+				return false;
 			}
 			
 			PlaylistSource source = playlistId == 1 ? RemotePlaylist : PlayQueuePlaylist;
-			int removed = 0;
 			
 			for (int i = 0; i < source.TrackModel.Count; i++) {
 				object t = source.TrackModel.GetItem(i);
 				
 				if (t is DatabaseTrackInfo && ((DatabaseTrackInfo) t).TrackId == trackId) {
 					source.RemoveTrack(i);
-					i--;
-					removed++;
+					return true;
 				}
 			}
 			
-			return removed;
+			return false;
 		}
 		
 		#endregion

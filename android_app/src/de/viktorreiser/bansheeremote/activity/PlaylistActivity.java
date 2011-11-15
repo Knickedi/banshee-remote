@@ -215,7 +215,8 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 						if (mPlaylist.get(i).id == id) {
 							mPlaylist.remove(i);
 							mPlaylistCount--;
-							i--;
+							mPlaylistEnd--;
+							break;
 						}
 					}
 					
