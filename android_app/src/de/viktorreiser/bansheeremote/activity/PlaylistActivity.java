@@ -206,23 +206,39 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 				}
 			} else if (Command.Playlist.isTracks(params)) {
 				handlePlaylistTracksResponse(params, result);
-			} else if (Command.Playlist.getAddOrRemove(params) == Modification.REMOVE_TRACK) {
-				if (result != null && Command.Playlist.decodeAddOrRemoveCount(result) != 0
-						&& Command.Playlist.getAddOrRemovePlaylist(params) == mPlaylistId) {
-					long id = Command.Playlist.getAddOrRemoveId(params);
-					
-					for (int i = 0; i < mPlaylist.size(); i++) {
-						if (mPlaylist.get(i).id == id) {
-							mPlaylist.remove(i);
-							mPlaylistCount--;
-							mPlaylistEnd--;
-							break;
+			} else if (Command.Playlist.isAddOrRemove(params)) {
+				switch (Command.Playlist.getAddOrRemove(params)) {
+				case REMOVE_TRACK:
+					if (result != null && Command.Playlist.decodeAddOrRemoveCount(result) != 0
+							&& Command.Playlist.getAddOrRemovePlaylist(params) == mPlaylistId) {
+						long id = Command.Playlist.getAddOrRemoveId(params);
+						
+						for (int i = 0; i < mPlaylist.size(); i++) {
+							if (mPlaylist.get(i).id == id) {
+								mPlaylist.remove(i);
+								mPlaylistCount--;
+								mPlaylistEnd--;
+								break;
+							}
 						}
+						
+						mAdapter.notifyDataSetChanged();
+						refreshLoading();
 					}
 					
-					mAdapter.notifyDataSetChanged();
-					refreshLoading();
+					break;
+				
+				case ADD_ARTIST:
+				case ADD_ALBUM:
+				case REMOVE_ARTIST:
+				case REMOVE_ALBUM:
+					if (result != null && Command.Playlist.decodeAddOrRemoveCount(result) != 0
+							&& Command.Playlist.getAddOrRemovePlaylist(params) == mPlaylistId) {
+						initialRequest();
+					}
+					break;
 				}
+				
 			}
 			break;
 		}
