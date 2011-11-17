@@ -302,7 +302,7 @@ public class BansheeDatabase {
 	 */
 	public static Track getUncachedTrack(long id) {
 		if (!isOpen()) {
-			return null;
+			return Track.createUnknown();
 		}
 		
 		if (mOrderedTrackInfo != null) {
