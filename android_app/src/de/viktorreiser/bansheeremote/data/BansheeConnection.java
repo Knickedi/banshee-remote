@@ -573,13 +573,6 @@ public class BansheeConnection {
 			}
 			
 			/**
-			 * Were we requesting to play a track?
-			 */
-			public static boolean isPlayTrack(byte [] params) {
-				return params[0] == 3;
-			}
-			
-			/**
 			 * Request to play a certain track from a playlist
 			 * (will be played anyway if playlist is not valid).
 			 */
@@ -589,6 +582,13 @@ public class BansheeConnection {
 				System.arraycopy(encodeShort(playlist), 0, result, 1, 2);
 				System.arraycopy(encodeInt(trackId), 0, result, 3, 4);
 				return result;
+			}
+
+			/**
+			 * Were we requesting to play a track?
+			 */
+			public static boolean isPlayTrack(byte [] params) {
+				return params[0] == 3;
 			}
 			
 			/**

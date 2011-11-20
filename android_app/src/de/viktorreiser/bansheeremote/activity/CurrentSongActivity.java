@@ -1052,23 +1052,26 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		}
 		
 		private void handlePlaylist(byte [] response, byte [] params) {
-			if (!Command.Playlist.isAddOrRemove(params)) {
-				return;
-			}
-			
-			if (response == null) {
-				App.shortToast(R.string.request_failed);
-			} else {
-				int count = Command.Playlist.decodeAddOrRemoveCount(response);
-				
-				if (count != 0) {
-					int resId = Command.Playlist.isAdd(params)
-							? R.plurals.added_to_playlist : R.plurals.removed_from_playlist;
-					App.shortToast(App.getContext().getResources().getQuantityString(
-							resId, count, count));
+			if (Command.Playlist.isAddOrRemove(params)) {
+				if (response == null) {
+					App.shortToast(R.string.request_failed);
 				} else {
-					App.shortToast(Command.Playlist.isAdd(params)
-							? R.string.added_to_playlist_zero : R.string.removed_from_playlist_zero);
+					int count = Command.Playlist.decodeAddOrRemoveCount(response);
+					
+					if (count != 0) {
+						int resId = Command.Playlist.isAdd(params)
+								? R.plurals.added_to_playlist : R.plurals.removed_from_playlist;
+						App.shortToast(App.getContext().getResources().getQuantityString(
+								resId, count, count));
+					} else {
+						App.shortToast(Command.Playlist.isAdd(params)
+								? R.string.added_to_playlist_zero
+								: R.string.removed_from_playlist_zero);
+					}
+				}
+			} else if (Command.Playlist.isPlayTrack(params)) {
+				if (response != null && Command.Playlist.decodePlayTrackStatus(response) != 0) {
+					finishActivity(REQUEST_OTHER_ACTIVITY);
 				}
 			}
 		}
