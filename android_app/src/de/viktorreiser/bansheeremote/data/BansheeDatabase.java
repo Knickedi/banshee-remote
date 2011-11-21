@@ -152,7 +152,7 @@ public class BansheeDatabase {
 			return trackCount;
 		}
 		
-		public Artist getArtistI() {
+		public Artist getArtist() {
 			if (artist == null) {
 				artist = BansheeDatabase.getArtist(artistId);
 			}
@@ -580,15 +580,15 @@ public class BansheeDatabase {
 		}
 		
 		c.close();
+		
 		c = mBansheeDatabase.query(
 				DB.TABLE_TRACKS,
-				new String [] {DB.ARTIST_ID, "COUNT(*), COUNT(DISTINCT " + DB.ALBUM_ID + ")"},
+				new String [] {DB.ARTIST_ID, "COUNT(*)"},
 				null, null, DB.ARTIST_ID, null, null);
 		
 		while (c.moveToNext()) {
 			Artist i = mArtistInfo.get(c.getLong(0));
 			i.trackCount = c.getInt(1);
-			i.albumCount = c.getInt(2);
 		}
 		
 		c.close();
@@ -599,6 +599,14 @@ public class BansheeDatabase {
 		
 		while (c.moveToNext()) {
 			mAlbumInfo.get(c.getLong(0)).trackCount = c.getInt(1);
+		}
+		
+		for (Album album : mOrderedAlbumInfo) {
+			Artist artist = mArtistInfo.get(album.getArtistId());
+			
+			if (artist != null) {
+				artist.albumCount++;
+			}
 		}
 		
 		c.close();

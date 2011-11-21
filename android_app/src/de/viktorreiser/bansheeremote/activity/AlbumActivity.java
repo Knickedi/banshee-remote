@@ -255,7 +255,7 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle, O
 			Album info = mAlbumEntries[position];
 			
 			holder.album.setText(info.getTitle());
-			holder.artist.setText(info.getArtistI().getName());
+			holder.artist.setText(info.getArtist().getName());
 			holder.count.setText("(" + info.getTrackCount() + ")");
 			
 			if (CoverCache.coverExists(info.getArtId())) {
