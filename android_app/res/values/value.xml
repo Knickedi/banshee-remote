@@ -103,4 +103,7 @@
 	<string name="fetch_cover_on_mobile">Mobile network cover</string>
 	<string name="fetch_cover_on_mobile_on">If cover is not cached it will be loaded from server</string>
 	<string name="fetch_cover_on_mobile_off">Cover will be tried to load from the cache only (if it was loaded with WiFi before)</string>
+	<string name="reset_on_play">Reset on play</string>
+	<string name="reset_on_play_on">When song is clicked and played then the app will reset to the main activity</string>
+	<string name="reset_on_play_off">When song is clicked and played nothing will happen</string>
 </resources>

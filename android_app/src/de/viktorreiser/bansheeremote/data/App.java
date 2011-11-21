@@ -187,6 +187,16 @@ public class App extends Application {
 	}
 	
 	/**
+	 * Should app reset to main activity when song was clicked to play.
+	 * 
+	 * @return {@code true} if it should be reset
+	 */
+	public static boolean isResetOnPlay() {
+		return PreferenceManager.getDefaultSharedPreferences(mContext)
+				.getBoolean("resetonplay", true);
+	}
+	
+	/**
 	 * Default and global setup for a quick action (to keep it similar everywhere).
 	 * 
 	 * @param context

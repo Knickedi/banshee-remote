@@ -72,6 +72,13 @@
 		    android:title="@string/queue_twice"
 		    android:summaryOn="@string/queue_twice_on"
 		    android:summaryOff="@string/queue_twice_off" />
+		
+		<CheckBoxPreference 
+		    android:key="resetonplay"
+		    android:defaultValue="true"
+		    android:title="@string/reset_on_play"
+		    android:summaryOn="@string/reset_on_play_on"
+		    android:summaryOff="@string/reset_on_play_off" />
 
 	</PreferenceCategory>
 

@@ -1070,7 +1070,8 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 					}
 				}
 			} else if (Command.Playlist.isPlayTrack(params)) {
-				if (response != null && Command.Playlist.decodePlayTrackStatus(response) != 0) {
+				if (response != null && App.isResetOnPlay()
+						&& Command.Playlist.decodePlayTrackStatus(response) != 0) {
 					finishActivity(REQUEST_OTHER_ACTIVITY);
 				}
 			}
