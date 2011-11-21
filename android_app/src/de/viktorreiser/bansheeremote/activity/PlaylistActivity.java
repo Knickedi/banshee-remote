@@ -690,18 +690,17 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 				
 				String artId = entry.trackInfo.getAlbum().getArtId();
 				
-				if (!"".equals(artId)) {
+				if (CoverCache.coverExists(artId)) {
 					holder.cover.setImageBitmap(CoverCache.getThumbnailedCover(artId));
 					holder.cover.setTag(null);
 				} else {
-					holder.cover.setImageResource(R.drawable.no_cover);
-					
 					if (NetworkStateBroadcast.isWifiConnected()
 							|| App.isMobileNetworkCoverFetch()) {
 						CurrentSongActivity.getConnection().sendCommand(Command.COVER,
 								Command.Cover.encode(artId));
 					}
-					
+
+					holder.cover.setImageResource(R.drawable.no_cover);
 					holder.cover.setTag(artId);
 				}
 				

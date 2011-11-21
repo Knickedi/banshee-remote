@@ -27,6 +27,7 @@ import de.viktorreiser.bansheeremote.data.BansheeDatabase;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase.Album;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase.Track;
 import de.viktorreiser.bansheeremote.data.CoverCache;
+import de.viktorreiser.toolbox.content.NetworkStateBroadcast;
 import de.viktorreiser.toolbox.widget.HiddenQuickActionSetup;
 import de.viktorreiser.toolbox.widget.HiddenQuickActionSetup.OnQuickActionListener;
 import de.viktorreiser.toolbox.widget.SwipeableHiddenView;
@@ -315,8 +316,12 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 					holder.cover.setImageBitmap(CoverCache.getThumbnailedCover(artId));
 					holder.cover.setTag(null);
 				} else {
-					CurrentSongActivity.getConnection().sendCommand(
-							Command.COVER, Command.Cover.encode(artId), false);
+					if (NetworkStateBroadcast.isWifiConnected()
+							|| App.isMobileNetworkCoverFetch()) {
+						CurrentSongActivity.getConnection().sendCommand(Command.COVER,
+								Command.Cover.encode(artId), false);
+					}
+					
 					holder.cover.setImageResource(R.drawable.no_cover);
 					holder.cover.setTag(artId);
 				}

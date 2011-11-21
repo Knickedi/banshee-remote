@@ -384,14 +384,13 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle,
 							.getArtId()));
 					holder.cover.setTag(null);
 				} else {
-					holder.cover.setImageResource(R.drawable.no_cover);
-					
 					if (NetworkStateBroadcast.isWifiConnected()
 							|| App.isMobileNetworkCoverFetch()) {
 						CurrentSongActivity.getConnection().sendCommand(Command.COVER,
 								Command.Cover.encode(entry.album.getArtId()), false);
 					}
-					
+
+					holder.cover.setImageResource(R.drawable.no_cover);
 					holder.cover.setTag(entry.album.getArtId());
 				}
 			} else {
