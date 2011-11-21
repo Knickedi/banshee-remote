@@ -145,17 +145,16 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 	private boolean mLongClicked = false;
 	private boolean mStartedTwice = false;
 	
-	private View [] mOverlayChild = new View [] {null};
-	private View [] mHiddenChild = new View [] {null};
+	private View [] mCurrentChildren = new View [] {null, null};
 	
 	private static Field mChildren;
 	private static Field mChildrenCount;
 	
 	static {
 		try {
-			mChildren = ViewGroup.class.getField("mChildren");
+			mChildren = ViewGroup.class.getDeclaredField("mChildren");
 			mChildren.setAccessible(true);
-			mChildrenCount = ViewGroup.class.getField("mChildrenCount");
+			mChildrenCount = ViewGroup.class.getDeclaredField("mChildrenCount");
 			mChildrenCount.setAccessible(true);
 		} catch (Exception e) {
 			mChildren = null;
@@ -902,19 +901,43 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 		
 		try {
 			// FIXME we need a better way than reflection
+			
 			// a rewrite of this method leads to bugs or crashes, so I decided for reflection
-			final Object oldChildren = mChildren.get(this);
-			final Object oldChildrenCount = mChildrenCount.get(this);
-			
-			mChildren.set(this, isHiddenViewCovered() ? mOverlayChild : mHiddenChild);
-			mChildrenCount.set(this, 1);
-			
-			boolean result = super.dispatchTouchEvent(ev);
-			
-			mChildren.set(this, oldChildren);
-			mChildrenCount.set(this, oldChildrenCount);
-			
-			return result;
+			// basically we want to avoid that dispatching on down action is requesting touch
+			// on the wrong view, so we hide the children by reflection and restor afterwards
+			if (ev.getAction() == MotionEvent.ACTION_DOWN) {
+				mCurrentChildren[0] = isHiddenViewCovered() ? mOverlayView : mHiddenView;
+				mChildren.set(this, mCurrentChildren);
+				mChildrenCount.set(this, 1);
+				
+				boolean result = super.dispatchTouchEvent(ev);
+				
+				if (mHiddenView != null) {
+					mCurrentChildren[0] = mHiddenView;
+					
+					if (mOverlayView != null) {
+						mCurrentChildren[1] = mOverlayView;
+						mChildrenCount.set(this, 2);
+					} else {
+						mCurrentChildren[1] = null;
+						mChildrenCount.set(this, 1);
+					}
+				} else if (mOverlayView != null) {
+					mCurrentChildren[0] = mOverlayView;
+					mCurrentChildren[1] = null;
+					mChildrenCount.set(this, 1);
+				} else {
+					mCurrentChildren[0] = null;
+					mCurrentChildren[1] = null;
+					mChildrenCount.set(this, 0);
+				}
+				
+				mChildren.set(this, mCurrentChildren);
+				
+				return result;
+			} else {
+				return super.dispatchTouchEvent(ev);
+			}
 		} catch (Exception e) {
 			return super.dispatchTouchEvent(ev);
 		}
@@ -988,7 +1011,7 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 	 */
 	@Override
 	public void addView(View child) {
-		addView(child, -1);
+		addView(child, -1, null);
 	}
 	
 	/**
@@ -996,10 +1019,7 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 	 */
 	@Override
 	public void addView(View child, int index) {
-		checkAddView();
-		mOverlayView = child;
-		mOverlayChild[0] = child;
-		super.addView(child, -1);
+		super.addView(child, -1, null);
 	}
 	
 	/**
@@ -1007,7 +1027,7 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 	 */
 	@Override
 	public void addView(View child, ViewGroup.LayoutParams params) {
-		addView(child, -1, params);
+		addView(child, -1, null);
 	}
 	
 	/**
@@ -1017,8 +1037,8 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 	public void addView(View child, int index, ViewGroup.LayoutParams params) {
 		checkAddView();
 		mOverlayView = child;
-		mOverlayChild[0] = child;
-		super.addView(child, -1, params);
+		super.addView(child, -1, new LayoutParams(
+				LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
 	}
 	
 	/**
@@ -1037,12 +1057,10 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 				mHiddenView.setDrawingCacheEnabled(false);
 				mHiddenViewCache.getLayoutParams().height = mHiddenView.getHeight();
 				mHiddenView = null;
-				mHiddenChild[0] = null;
 			}
 			
 			if (mOverlayView == view) {
 				mOverlayView = null;
-				mOverlayChild[0] = null;
 			}
 			
 			super.removeView(view);
@@ -1056,7 +1074,6 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 	public void removeViewAt(int index) {
 		if (index != 0 && (mHiddenView == null || index > 1)) {
 			mOverlayView = null;
-			mOverlayChild[0] = null;
 			super.removeViewAt(index);
 		}
 	}
@@ -1068,9 +1085,9 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 	public void removeAllViews() {
 		int count = getChildCount();
 		
-		if (mHiddenView != null && count > 2 || mHiddenView == null && count > 1) {
+		if (mHiddenView != null && count > 1 || mHiddenView == null && count > 0) {
 			mOverlayView = null;
-			mOverlayChild[0] = null;
+			
 			super.removeViewAt(count - 1);
 		}
 	}
@@ -1240,14 +1257,12 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 				throw new NullPointerException("getHiddenView() did return null");
 			}
 			
-			mHiddenChild[0] = mHiddenView;
-			
 			if (mHiddenView.getParent() != null) {
 				((ViewGroup) mHiddenView.getParent()).removeView(mHiddenView);
 			}
 			
 			super.addView(mHiddenView, 1, new LayoutParams(
-					LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT));
+					LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
 		}
 	}
 	
