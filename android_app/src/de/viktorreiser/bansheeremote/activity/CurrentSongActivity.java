@@ -1,5 +1,7 @@
 package de.viktorreiser.bansheeremote.activity;
 
+import com.bugsense.trace.BugSenseHandler;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -276,6 +278,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	protected void onCreate(Bundle bundle) {
 		mInstance = this;
 		super.onCreate(bundle);
+		
+		BugSenseHandler.setup(this, "8edaa907");
+		
 		setContentView(R.layout.current_song);
 		
 		mStatusPollHandler = new StatusPollHandler();
