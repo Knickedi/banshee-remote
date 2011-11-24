@@ -130,8 +130,7 @@ namespace Banshee.RemoteListener
 
 
 		public static readonly SchemaEntry<int> RemotePortSchema = new SchemaEntry<int>(
-			"remServiceManager.SourceManager.SourceRemoved += OnSourceRemoved;ote_control",
-			"remote_control_port", 8484, 1024, 49151, "", ""
+			"remote_control", "remote_control_port", 8484, 1024, 49151, "", ""
 		);
 		
 		public static readonly SchemaEntry<int> RemotePassIdSchema = new SchemaEntry<int>(
