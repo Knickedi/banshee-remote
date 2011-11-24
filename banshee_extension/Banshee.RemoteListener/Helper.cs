@@ -5,6 +5,7 @@ using System.Text;
 
 using Mono.Unix;
 
+using Banshee.Base;
 using Banshee.Collection;
 using Banshee.Collection.Database;
 using Banshee.Configuration;
@@ -520,7 +521,6 @@ namespace Banshee.RemoteListener
 				        + "SELECT TrackID, ArtistID, AlbumId, "
 				        + "Title, TrackNumber, Duration, Year, Genre "
 				        + "FROM CoreTracks;");
-				db.Execute("DROP TABLE CoreTracks;");
 				
 				// remove unecessary columns from artist table
 				db.Execute("CREATE TABLE artists (\n"
@@ -529,7 +529,7 @@ namespace Banshee.RemoteListener
 						+ ");");
 				db.Execute("INSERT INTO artists(_id, name) "
 				        + "SELECT ArtistID, Name FROM CoreArtists;");
-				db.Execute("DROP TABLE CoreArtists;");
+				
 				
 				// remove unecessary columns from album table
 				db.Execute("CREATE TABLE albums (\n"
@@ -538,8 +538,44 @@ namespace Banshee.RemoteListener
 				        + " title TEXT,\n"
 				        + " artId TEXT\n"
 						+ ");");
-				db.Execute("INSERT INTO albums(_id, artistId, title, artId) "
-				        + "SELECT AlbumID, ArtistID, Title, ArtworkID FROM CoreAlbums;");
+				
+				if (db.ColumnExists("CoreAlbums", "ArtworkID")) {
+					db.Execute("INSERT INTO albums(_id, artistId, title, artId) "
+					        + "SELECT AlbumID, ArtistID, Title, ArtworkID FROM CoreAlbums;");
+				} else {
+					// old banshee versions don't cache the cover ID - fix that manually
+					
+					Dictionary<int, string> artists = new Dictionary<int, string>();
+					IDataReader r = db.Query("SELECT ArtistId, Name FROM CoreArtists;");
+					
+					while (r.Read()) {
+						artists.Add(r.Get<int>(0), r.Get<string>(1));
+					}
+					
+					r.Dispose();
+					r = db.Query("SELECT AlbumID, ArtistID, Title FROM CoreAlbums;");
+					
+					while (r.Read()) {
+						int artistId = r.Get<int>(1);
+						string album = r.Get<string>(2);
+						string artId = "";
+						string artist = null;
+						
+						if (artists.TryGetValue(artistId, out artist)) {
+							artId = CoverArtSpec.CreateArtistAlbumId(artist, album).Replace ("'", "''");
+						}
+						
+						db.Execute("INSERT INTO albums(_id, artistId, title, artId) VALUES ("
+						           + r.Get<int>(0) + "," + artistId + ","
+						           + "'" + album.Replace ("'", "''") + "', "
+						           + "'" + artId + "');");
+					}
+					
+					r.Dispose();
+				}
+				
+				db.Execute("DROP TABLE CoreTracks;");
+				db.Execute("DROP TABLE CoreArtists;");
 				db.Execute("DROP TABLE CoreAlbums;");
 				
 				db.CommitTransaction();
