@@ -34,14 +34,14 @@ abstract class GeneralPool<T> {
 	// PRIVATE ====================================================================================
 	
 	/**
-	 * Value of {@link #mReqeustCount} until old (garbage collected) references will be cleared from
+	 * Value of {@link #mRequestCount} until old (garbage collected) references will be cleared from
 	 * pool.
 	 */
 	private static final int CLEAN_REQUEST_COUNT = 100;
 	
 	
 	/** Count of requests to {@link #put(int, Object)} and {@link #get(int)}. */
-	private int mReqeustCount = 0;
+	private int mRequestCount = 0;
 	
 	/** Pooled objects. */
 	private Map<Integer, Reference<T>> mObjectPool = new HashMap<Integer, Reference<T>>();
@@ -135,7 +135,7 @@ abstract class GeneralPool<T> {
 	 * After that the pool object will be like fresh created.
 	 */
 	public void clear() {
-		mReqeustCount = 0;
+		mRequestCount = 0;
 		mQueue = new ReferenceQueue<T>();
 		mObjectPool.clear();
 		mReferencePool.clear();
@@ -147,14 +147,16 @@ abstract class GeneralPool<T> {
 	 * Clean pool from all dead references from reference queue.
 	 */
 	private void clean() {
-		mReqeustCount++;
+		mRequestCount++;
 		
-		if (mReqeustCount == CLEAN_REQUEST_COUNT) {
+		if (mRequestCount == CLEAN_REQUEST_COUNT) {
 			Reference<?> ref = null;
 			
 			while ((ref = mQueue.poll()) != null) {
 				mObjectPool.remove(mReferencePool.remove(ref));
 			}
+			
+			mRequestCount = 0;
 		}
 	}
 }
