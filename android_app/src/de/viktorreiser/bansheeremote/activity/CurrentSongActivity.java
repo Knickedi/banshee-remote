@@ -804,10 +804,10 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			if (force || !mData.song.equals(mPreviousData.song)
 					|| (App.isDisplaySongGenre() && !mData.genre.equals(mPreviousData.genre))) {
 				if (App.isDisplaySongGenre() && !mData.genre.equals("")) {
-					mAlbum.setEllipsize(TruncateAt.MIDDLE);
+					mSong.setEllipsize(TruncateAt.MIDDLE);
 					mSong.setText(mData.song + " [" + mData.genre + "]");
 				} else {
-					mAlbum.setEllipsize(TruncateAt.END);
+					mSong.setEllipsize(TruncateAt.END);
 					mSong.setText(mData.song);
 				}
 			}
