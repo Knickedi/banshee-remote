@@ -3,11 +3,9 @@
     android:layout_width="fill_parent"
     android:layout_height="wrap_content" >
 
-    <LinearLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
+    <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:gravity="center_vertical"
         android:paddingBottom="5dip"
         android:paddingLeft="10dip"
         android:paddingRight="10dip"
@@ -18,23 +16,29 @@
             android:layout_width="30dip"
             android:layout_height="30dip"
             android:layout_marginRight="10dip"
+            android:layout_centerVertical="true"
             android:scaleType="fitCenter"
             android:src="@drawable/no_cover" />
-
-        <TextView
-            android:id="@+id/title"
-            android:layout_width="0dip"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Album title"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
-
+        
         <TextView
             android:id="@+id/count"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
             android:text="(12)"
             android:textAppearance="?android:attr/textAppearanceSmall" />
-    </LinearLayout>
+
+        <TextView
+            android:id="@+id/title"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_toLeftOf="@+id/count"
+            android:layout_toRightOf="@+id/cover1"
+            android:text="Album title"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+        
+    </RelativeLayout>
 
 </de.viktorreiser.toolbox.widget.SwipeableHiddenView>
