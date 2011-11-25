@@ -562,12 +562,12 @@ namespace Banshee.RemoteListener
 						string artist = null;
 						
 						if (artists.TryGetValue(artistId, out artist)) {
-							artId = CoverArtSpec.CreateArtistAlbumId(artist, album).Replace ("'", "''");
+							artId = CoverArtSpec.CreateArtistAlbumId(artist ?? "", album ?? "").Replace ("'", "''");
 						}
 						
 						db.Execute("INSERT INTO albums(_id, artistId, title, artId) VALUES ("
 						           + r.Get<int>(0) + "," + artistId + ","
-						           + "'" + album.Replace ("'", "''") + "', "
+						           + "'" + (album ?? "").Replace ("'", "''") + "', "
 						           + "'" + artId + "');");
 					}
 					
