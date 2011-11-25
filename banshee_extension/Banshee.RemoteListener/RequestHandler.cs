@@ -266,23 +266,31 @@ namespace Banshee.RemoteListener
 				// - we're going to fill the buffer with all playlists which are not empty (expect remote playlist)
 				// - we'll use the request buffer because it's big enough and we don't know the final size
 				// - the remote playlist won't be listed if it's fresh created, so we do that manually
-				//   we just fit it into position where the source enumaration would contain it 
+				//   we just fit it into position where the source enumaration would contain it
+				List<DatabaseSource> sources = new List<DatabaseSource>();
+				
+				// we have to catch the sources first because we refresh the while iterating and this crashes on
+				// in older banshee versions
 				foreach (Source s in ServiceManager.SourceManager.Sources) {
 					if (s is DatabaseSource && s != remotePlaylist && s.Parent == musicLibrary
 					    || s == musicLibrary || s is PlayQueueSource) {
-						DatabaseSource so = s as DatabaseSource;
-						Helper.ClearSourceFilters(so);
-						
-						if (so.TrackModel.Count > 0 || s == Helper.PlayQueuePlaylist) {
-							if (!remotePlaylistAdded && String.Compare(s.Name, remotePlaylist.Name) >= 0) {
-								count++;
-								index = Helper.SourceAsPlaylistToBuffer(index, remotePlaylist);
-								remotePlaylistAdded = true;
-							}
-							
+						sources.Add(s as DatabaseSource);
+					}
+				}
+				
+				foreach (Source s in sources) {
+					DatabaseSource so = s as DatabaseSource;
+					Helper.ClearSourceFilters(so);
+					
+					if (so.TrackModel.Count > 0 || s == Helper.PlayQueuePlaylist) {
+						if (!remotePlaylistAdded && String.Compare(s.Name, remotePlaylist.Name) >= 0) {
 							count++;
-							index = Helper.SourceAsPlaylistToBuffer(index, s);
+							index = Helper.SourceAsPlaylistToBuffer(index, remotePlaylist);
+							remotePlaylistAdded = true;
 						}
+						
+						count++;
+						index = Helper.SourceAsPlaylistToBuffer(index, s);
 					}
 				}
 				

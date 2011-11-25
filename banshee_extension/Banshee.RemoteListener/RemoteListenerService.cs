@@ -227,7 +227,13 @@ namespace Banshee.RemoteListener
 				}
 			} catch (Exception e) {
 				if (!_disposed)  {
-					Log.Error("remote listener request error", e.StackTrace);
+					if (e.InnerException == null) {
+						Log.Error("remote listener request error: ", e.Message ?? "no message");
+						Log.Error("Stack: ", e.StackTrace);
+					} else {
+						Log.Error("remote listener request error: ", e.InnerException.Message ?? "no message");
+						Log.Error("Stack: ", e.InnerException.StackTrace);
+					}
 					
 					if (!isListenerAccepting) {
 						try {
