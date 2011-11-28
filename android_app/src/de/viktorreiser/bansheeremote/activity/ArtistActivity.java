@@ -378,7 +378,7 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle,
 				holder.count.setText("(" + entry.album.getTrackCount() + ")");
 				
 				if (CoverCache.coverExists(entry.album.getArtId())) {
-					holder.cover.setImageBitmap(CoverCache.getThumbCover(entry.album .getArtId()));
+					holder.cover.setImageBitmap(CoverCache.getThumbCover(entry.album.getArtId()));
 					holder.cover.setTag(null);
 				} else {
 					if (NetworkStateBroadcast.isWifiConnected()

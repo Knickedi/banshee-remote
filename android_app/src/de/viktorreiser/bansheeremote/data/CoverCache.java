@@ -127,6 +127,7 @@ public class CoverCache {
 		
 		thumb = Bitmap.createBitmap(original, 0, 0,
 				original.getWidth(), original.getHeight(), matrix, true);
+		mCache.put(thumbId, thumb);
 		original.recycle();
 		
 		try {
