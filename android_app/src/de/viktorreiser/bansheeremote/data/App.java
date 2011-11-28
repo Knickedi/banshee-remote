@@ -44,7 +44,7 @@ public class App extends Application {
 	public static final int PLAYLIST_QUEUE = 2;
 	
 	/** Path to banshee cache folder on SD card. */
-	public static final String BANSHEE_PATH = Environment.getExternalStorageDirectory()
+	public static final String CACHE_PATH = Environment.getExternalStorageDirectory()
 			.getAbsolutePath() + "/BansheeRemote/";
 	
 	/** Extension of synchronized database file. */

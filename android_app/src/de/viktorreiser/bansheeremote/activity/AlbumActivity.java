@@ -173,7 +173,7 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle, O
 							mAlbumEntries[position].getId()));
 			break;
 		}
-
+		
 		App.shortToast(R.string.request_sent);
 	}
 	
@@ -182,17 +182,15 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle, O
 		switch (command) {
 		case COVER:
 			String artId = Command.Cover.getId(params);
-			Bitmap cover = CoverCache.getThumbnailedCover(artId);
+			Bitmap cover = CoverCache.getThumbCover(artId);
 			
-			if (cover != null) {
-				int childCount = mList.getChildCount();
+			int childCount = mList.getChildCount();
+			
+			for (int i = 0; i < childCount; i++) {
+				ViewHolder holder = (ViewHolder) mList.getChildAt(i).getTag();
 				
-				for (int i = 0; i < childCount; i++) {
-					ViewHolder holder = (ViewHolder) mList.getChildAt(i).getTag();
-					
-					if (artId.equals(holder.cover.getTag())) {
-						holder.cover.setImageBitmap(cover);
-					}
+				if (artId.equals(holder.cover.getTag())) {
+					holder.cover.setImageBitmap(cover);
 				}
 			}
 			break;
@@ -259,7 +257,7 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle, O
 			holder.count.setText("(" + info.getTrackCount() + ")");
 			
 			if (CoverCache.coverExists(info.getArtId())) {
-				holder.cover.setImageBitmap(CoverCache.getThumbnailedCover(info.getArtId()));
+				holder.cover.setImageBitmap(CoverCache.getThumbCover(info.getArtId()));
 				holder.cover.setTag(null);
 			} else {
 				if (NetworkStateBroadcast.isWifiConnected()
@@ -268,7 +266,7 @@ public class AlbumActivity extends Activity implements OnBansheeCommandHandle, O
 							Command.Cover.encode(info.getArtId()), false);
 				}
 				
-				holder.cover.setImageResource(R.drawable.no_cover);
+				holder.cover.setImageBitmap(CoverCache.getThumbCover(""));
 				holder.cover.setTag(info.getArtId());
 			}
 			

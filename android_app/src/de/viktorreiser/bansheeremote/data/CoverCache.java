@@ -6,8 +6,11 @@ import java.io.FileOutputStream;
 
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.BitmapFactory;
-import de.viktorreiser.toolbox.os.SoftPool;
+import android.graphics.Matrix;
+import de.viktorreiser.bansheeremote.R;
+import de.viktorreiser.toolbox.os.LruCache;
 
 /**
  * Global cover cache pool.<br>
@@ -20,7 +23,12 @@ public class CoverCache {
 	
 	// PRIVATE ====================================================================================
 	
-	private static SoftPool<Bitmap> mCoverCache = new SoftPool<Bitmap>();
+	private static LruCache<String, Bitmap> mCache = new LruCache<String, Bitmap>(1024 * 1024 * 2) {
+		@Override
+		public int sizeOf(String key, Bitmap value) {
+			return value.getRowBytes() * value.getHeight();
+		}
+	};
 	
 	// PUBLIC =====================================================================================
 	
@@ -33,8 +41,7 @@ public class CoverCache {
 	 * @return {@code true} if cover is available locally
 	 */
 	public static boolean coverExists(String id) {
-		return mCoverCache.get(id.hashCode()) != null
-				|| new File(App.BANSHEE_PATH + id + ".jpg").exists();
+		return "".equals(id) || new File(App.CACHE_PATH + id + ".jpg").exists();
 	}
 	
 	/**
@@ -48,63 +55,81 @@ public class CoverCache {
 	 * @return cover as bitmap or {@code null} when there is no cover for given ID
 	 */
 	public static Bitmap getUnscaledCover(String id) {
-		File file = new File(App.BANSHEE_PATH + id + ".jpg");
+		File file = new File(App.CACHE_PATH + id + ".jpg");
 		
-		if (file.exists()) {
-			return BitmapFactory.decodeFile(file.getAbsolutePath());
-		} else {
-			return null;
-		}
+		return file.exists() ? BitmapFactory.decodeFile(file.getAbsolutePath()) : null;
 	}
 	
 	/**
-	 * Get (scaled) cover.<br>
-	 * <br>
-	 * Returned cover will be held as soft reference in memory for next request.<br>
-	 * The scale factor is taken from {@link App#getCacheSize()} and narrowed down so it matches a
-	 * quadratic size.
+	 * Get (scaled) cover ({@link App#getCacheSize()}).
 	 * 
 	 * @param id
 	 *            cover ID returned by server or stored in database
 	 * 
 	 * @return cover as bitmap or {@code null} when there is no cover for given ID
 	 */
-	public static Bitmap getThumbnailedCover(String id) {
-		int hash = id.hashCode();
-		Bitmap cover = mCoverCache.get(hash);
+	public static Bitmap getThumbCover(String id) {
+		return getThumbCover(id, App.getCacheSize());
+	}
+	
+	/**
+	 * Get (scaled) cover ({@link App#getCacheSize()}).
+	 * 
+	 * @param id
+	 *            cover ID returned by server or stored in database
+	 * @param size
+	 *            size of thumbnail in pixel
+	 * 
+	 * @return cover as bitmap or {@code null} when there is no cover for given ID
+	 */
+	public static Bitmap getThumbCover(String id, int size) {
+		String thumbId = ("".equals(id) ? "__nocover_" : id) + "_" + size;
 		
-		if (cover != null) {
-			return cover;
+		Bitmap thumb = mCache.get(thumbId);
+		
+		if (thumb != null) {
+			return thumb;
 		}
 		
-		File file = new File(App.BANSHEE_PATH + id + ".jpg");
+		File thumbFile = new File(App.CACHE_PATH + thumbId + ".jpg");
 		
-		if (file.exists()) {
-			BitmapFactory.Options o = new BitmapFactory.Options();
-			o.inJustDecodeBounds = true;
-			BitmapFactory.decodeFile(file.getAbsolutePath(), o);
-			
-			int width = o.outWidth;
-			int height = o.outHeight;
-			int required = App.getCacheSize();
-			int scale = 1;
-			
-			while (width / 2 > required || height / 2 > required) {
-				width /= 2;
-				height /= 2;
-				scale *= 2;
-			}
-			
-			BitmapFactory.Options o2 = new BitmapFactory.Options();
-			o2.inSampleSize = scale;
-			cover = BitmapFactory.decodeFile(file.getAbsolutePath(), o2);
-			
-			if (cover != null) {
-				mCoverCache.put(hash, cover);
-			}
+		if (thumbFile.exists()) {
+			thumb = BitmapFactory.decodeFile(thumbFile.getAbsolutePath());
+			mCache.put(thumbId, thumb);
+			return thumb;
 		}
 		
-		return cover;
+		if (thumbFile.exists()) {
+			return BitmapFactory.decodeFile(thumbFile.getAbsolutePath());
+		}
+		
+		File originalFile = new File(App.CACHE_PATH + id + ".jpg");
+		Bitmap original = null;
+		
+		if ("".equals(id)) {
+			original = ((BitmapDrawable) App.getContext().getResources()
+					.getDrawable(R.drawable.no_cover)).getBitmap();
+		} else if (!originalFile.exists()) {
+			return getThumbCover("", size);
+		} else {
+			original = BitmapFactory.decodeFile(originalFile.getAbsolutePath());
+		}
+		
+		float scale = Math.min((float) size / original.getWidth(),
+				(float) size / original.getHeight());
+		Matrix matrix = new Matrix();
+		matrix.postScale(scale, scale);
+		
+		thumb = Bitmap.createBitmap(original, 0, 0,
+				original.getWidth(), original.getHeight(), matrix, true);
+		original.recycle();
+		
+		try {
+			thumb.compress(CompressFormat.JPEG, 80, new FileOutputStream(thumbFile));
+		} catch (FileNotFoundException e) {
+		}
+		
+		return thumb;
 	}
 	
 	/**
@@ -121,11 +146,9 @@ public class CoverCache {
 		Bitmap cover = BitmapFactory.decodeByteArray(bitmapData, 0, bitmapData.length);
 		
 		if (cover != null) {
-			mCoverCache.put(id.hashCode(), cover);
-			
 			try {
-				File file = new File(App.BANSHEE_PATH + id + ".jpg");
-				file.getParentFile().mkdir();
+				File file = new File(App.CACHE_PATH + id + ".jpg");
+				file.getParentFile().mkdirs();
 				file.delete();
 				cover.compress(CompressFormat.JPEG, 80, new FileOutputStream(file));
 				

@@ -16,7 +16,6 @@ import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ListView;
-import de.viktorreiser.toolbox.util.L;
 import de.viktorreiser.toolbox.widget.SwipeableHiddenView.HiddenViewSetup.SwipeDirection;
 
 /**
@@ -810,7 +809,6 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 		int height = mOverlayView.getMeasuredHeight();
 		
 		if (mHiddenView != null && !isHiddenViewCovered()) {
-			L.d("bla 1");
 			mHiddenView.measure(widthMeasureSpec, 0);
 			
 			if (mHiddenView.getMeasuredHeight() > mOverlayView.getMeasuredHeight()) {
@@ -821,7 +819,6 @@ public class SwipeableHiddenView extends FrameLayout implements SwipeableListIte
 						mOverlayView.getMeasuredHeight() | MeasureSpec.EXACTLY);
 			}
 		} else if (!isHiddenViewCovered() && mHiddenViewCache.getLayoutParams().height != 0) {
-			L.d("bla 2");
 			mHiddenViewCache.measure(
 					widthMeasureSpec, mHiddenViewCache.getLayoutParams().height);
 			

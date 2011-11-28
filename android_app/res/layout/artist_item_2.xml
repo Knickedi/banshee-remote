@@ -13,8 +13,8 @@
 
         <ImageView
             android:id="@+id/cover1"
-            android:layout_width="30dip"
-            android:layout_height="30dip"
+            android:layout_width="40dip"
+            android:layout_height="40dip"
             android:layout_marginRight="10dip"
             android:layout_centerVertical="true"
             android:scaleType="fitCenter"

@@ -175,18 +175,16 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 		
 		case COVER:
 			String artId = Command.Cover.getId(params);
-			Bitmap cover = CoverCache.getThumbnailedCover(artId);
+			Bitmap cover = CoverCache.getThumbCover(artId);
 			
-			if (cover != null) {
-				int childCount = mList.getChildCount();
+			int childCount = mList.getChildCount();
+			
+			for (int i = 0; i < childCount; i++) {
+				ViewHolder holder = (ViewHolder) mList.getChildAt(i).getTag();
 				
-				for (int i = 0; i < childCount; i++) {
-					ViewHolder holder = (ViewHolder) mList.getChildAt(i).getTag();
-					
-					if (holder != null && holder.cover != null
-							&& artId.equals(holder.cover.getTag())) {
-						holder.cover.setImageBitmap(cover);
-					}
+				if (holder != null && holder.cover != null
+						&& artId.equals(holder.cover.getTag())) {
+					holder.cover.setImageBitmap(cover);
 				}
 			}
 			break;
@@ -691,7 +689,7 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 				String artId = entry.trackInfo.getAlbum().getArtId();
 				
 				if (CoverCache.coverExists(artId)) {
-					holder.cover.setImageBitmap(CoverCache.getThumbnailedCover(artId));
+					holder.cover.setImageBitmap(CoverCache.getThumbCover(artId));
 					holder.cover.setTag(null);
 				} else {
 					if (NetworkStateBroadcast.isWifiConnected()
@@ -699,8 +697,8 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 						CurrentSongActivity.getConnection().sendCommand(Command.COVER,
 								Command.Cover.encode(artId));
 					}
-
-					holder.cover.setImageResource(R.drawable.no_cover);
+					
+					holder.cover.setImageBitmap(CoverCache.getThumbCover(""));
 					holder.cover.setTag(artId);
 				}
 				

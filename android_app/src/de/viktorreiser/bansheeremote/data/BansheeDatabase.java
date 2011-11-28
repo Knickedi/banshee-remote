@@ -637,7 +637,7 @@ public class BansheeDatabase {
 			id = server.getId();
 		}
 		
-		if (!new File(App.BANSHEE_PATH + id + App.DB_EXT).exists()) {
+		if (!new File(App.CACHE_PATH + id + App.DB_EXT).exists()) {
 			return false;
 		} else {
 			return timestamp <= server.mDbTimestamp;
@@ -680,9 +680,9 @@ public class BansheeDatabase {
 		try {
 			close();
 			
-			File file = new File(App.BANSHEE_PATH + id + App.DB_EXT);
+			File file = new File(App.CACHE_PATH + id + App.DB_EXT);
 			
-			file.getParentFile().mkdir();
+			file.getParentFile().mkdirs();
 			file.delete();
 			
 			OutputStream os = new FileOutputStream(file);
@@ -739,7 +739,7 @@ public class BansheeDatabase {
 		
 		close();
 		
-		File file = new File(App.BANSHEE_PATH + id + App.DB_EXT);
+		File file = new File(App.CACHE_PATH + id + App.DB_EXT);
 		
 		if (file.exists()) {
 			try {

@@ -28,6 +28,7 @@ import de.viktorreiser.bansheeremote.data.BansheeDatabase.Album;
 import de.viktorreiser.bansheeremote.data.BansheeDatabase.Track;
 import de.viktorreiser.bansheeremote.data.CoverCache;
 import de.viktorreiser.toolbox.content.NetworkStateBroadcast;
+import de.viktorreiser.toolbox.util.AndroidUtils;
 import de.viktorreiser.toolbox.widget.HiddenQuickActionSetup;
 import de.viktorreiser.toolbox.widget.HiddenQuickActionSetup.OnQuickActionListener;
 import de.viktorreiser.toolbox.widget.SwipeableHiddenView;
@@ -147,10 +148,8 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 			((TextView) headerAlbum.findViewById(R.id.album_title)).setText(
 					album.getTitle() + " (" + album.getTrackCount() + ")");
 			
-			if (CoverCache.coverExists(album.getArtId())) {
-				((ImageView) headerAlbum.findViewById(R.id.cover1)).setImageBitmap(
-						CoverCache.getThumbnailedCover(album.getArtId()));
-			}
+			((ImageView) headerAlbum.findViewById(R.id.cover1)).setImageBitmap(
+					CoverCache.getThumbCover(album.getArtId()));
 		} else if (mArtistId > 0) {
 			((TextView) headerArtist.findViewById(R.id.artist_name)).setText(
 					BansheeDatabase.getArtist(mArtistId).getName()
@@ -215,17 +214,15 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 		case COVER:
 			if (result != null) {
 				String artId = Command.Cover.getId(params);
-				Bitmap cover = CoverCache.getThumbnailedCover(artId);
+				Bitmap cover = CoverCache.getThumbCover(artId);
 				
-				if (cover != null) {
-					int childCount = mList.getChildCount();
+				int childCount = mList.getChildCount();
+				
+				for (int i = 0; i < childCount; i++) {
+					ViewHolder holder = (ViewHolder) mList.getChildAt(i).getTag();
 					
-					for (int i = 0; i < childCount; i++) {
-						ViewHolder holder = (ViewHolder) mList.getChildAt(i).getTag();
-						
-						if (artId.equals(holder.cover.getTag())) {
-							holder.cover.setImageBitmap(cover);
-						}
+					if (artId.equals(holder.cover.getTag())) {
+						holder.cover.setImageBitmap(cover);
 					}
 				}
 			}
@@ -313,7 +310,8 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 				String artId = i.getAlbum().getArtId();
 				
 				if (CoverCache.coverExists(artId)) {
-					holder.cover.setImageBitmap(CoverCache.getThumbnailedCover(artId));
+					holder.cover.setImageBitmap(CoverCache.getThumbCover(
+							artId, AndroidUtils.dipToPixel(TrackActivity.this, 40)));
 					holder.cover.setTag(null);
 				} else {
 					if (NetworkStateBroadcast.isWifiConnected()
@@ -322,7 +320,7 @@ public class TrackActivity extends Activity implements OnBansheeCommandHandle, O
 								Command.Cover.encode(artId), false);
 					}
 					
-					holder.cover.setImageResource(R.drawable.no_cover);
+					holder.cover.setImageBitmap(CoverCache.getThumbCover(""));
 					holder.cover.setTag(artId);
 				}
 			}

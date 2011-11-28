@@ -22,8 +22,7 @@ BR='/home/knickedi/Development/projects/banshee-remote'
 
 FILES=(
 	"content/NetworkStateBroadcast"
-	"os/GeneralPool"
-	"os/SoftPool"
+	"os/LruCache"
 	"util/AndroidUtils"
 	"util/L"
 	"util/StringUtils"
@@ -60,6 +59,7 @@ do
 		echo "File \"${f}\" not found in toolbox repository!"
 	else
 		rm -f "${BRP}/${f}.java"
+		mkdir `dirname "${BRP}/${f}"` &> /dev/null
 		ln "${fName}" "${BRP}/${f}.java"
 		echo "Create hard link for \"${f}\""
 	fi

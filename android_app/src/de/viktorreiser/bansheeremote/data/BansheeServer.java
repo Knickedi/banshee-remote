@@ -252,12 +252,12 @@ public class BansheeServer {
 				BansheeServer firstChild = childServers.get(0);
 				
 				if (dbServer.mSameHostId == server.mId) {
-					new File(App.BANSHEE_PATH + server.mId + App.DB_EXT).renameTo(
-							new File(App.BANSHEE_PATH + firstChild.mId + App.DB_EXT));
+					new File(App.CACHE_PATH + server.mId + App.DB_EXT).renameTo(
+							new File(App.CACHE_PATH + firstChild.mId + App.DB_EXT));
 				}
 				
 				if (dbServer.mId == server.mId) {
-					new File(App.BANSHEE_PATH + server.mId + App.DB_EXT).delete();
+					new File(App.CACHE_PATH + server.mId + App.DB_EXT).delete();
 				}
 				
 				for (int i = 0; i < childServers.size(); i++) {
@@ -270,7 +270,7 @@ public class BansheeServer {
 				}
 			}
 		} else {
-			new File(App.BANSHEE_PATH + server.mId + App.DB_EXT).delete();
+			new File(App.CACHE_PATH + server.mId + App.DB_EXT).delete();
 		}
 		
 		getDb().delete(DB.TABLE_NAME, DB.ID + "=" + server.mId + " OR "

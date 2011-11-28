@@ -199,18 +199,16 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle,
 		switch (command) {
 		case COVER:
 			String artId = Command.Cover.getId(params);
-			Bitmap cover = CoverCache.getThumbnailedCover(artId);
+			Bitmap cover = CoverCache.getThumbCover(artId);
 			
-			if (cover != null) {
-				int childCount = mList.getChildCount();
+			int childCount = mList.getChildCount();
+			
+			for (int i = 0; i < childCount; i++) {
+				ViewHolder holder = (ViewHolder) mList.getChildAt(i).getTag();
 				
-				for (int i = 0; i < childCount; i++) {
-					ViewHolder holder = (ViewHolder) mList.getChildAt(i).getTag();
-					
-					if (holder != null && holder.cover != null
-							&& artId.equals(holder.cover.getTag())) {
-						holder.cover.setImageBitmap(cover);
-					}
+				if (holder != null && holder.cover != null
+						&& artId.equals(holder.cover.getTag())) {
+					holder.cover.setImageBitmap(cover);
 				}
 			}
 			break;
@@ -380,8 +378,7 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle,
 				holder.count.setText("(" + entry.album.getTrackCount() + ")");
 				
 				if (CoverCache.coverExists(entry.album.getArtId())) {
-					holder.cover.setImageBitmap(CoverCache.getThumbnailedCover(entry.album
-							.getArtId()));
+					holder.cover.setImageBitmap(CoverCache.getThumbCover(entry.album .getArtId()));
 					holder.cover.setTag(null);
 				} else {
 					if (NetworkStateBroadcast.isWifiConnected()
@@ -389,8 +386,8 @@ public class ArtistActivity extends Activity implements OnBansheeCommandHandle,
 						CurrentSongActivity.getConnection().sendCommand(Command.COVER,
 								Command.Cover.encode(entry.album.getArtId()), false);
 					}
-
-					holder.cover.setImageResource(R.drawable.no_cover);
+					
+					holder.cover.setImageBitmap(CoverCache.getThumbCover(""));
 					holder.cover.setTag(entry.album.getArtId());
 				}
 			} else {

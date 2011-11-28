@@ -279,7 +279,16 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		mInstance = this;
 		super.onCreate(bundle);
 		
-		BugSenseHandler.setup(this, "8edaa907");
+		// release debug key
+		// Don't use this while working on code. It's there for release so we know that someone
+		// produced a crash on a released version. When modifying the code here use the testing key,
+		// we don't want bugs you produced your self.
+		// BugSenseHandler.setup(this, "8edaa907");
+		
+		// testing debug key
+		BugSenseHandler.setup(this, "590eb975");
+		
+		
 		
 		setContentView(R.layout.current_song);
 		
