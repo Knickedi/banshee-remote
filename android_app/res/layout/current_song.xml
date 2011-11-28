@@ -270,6 +270,8 @@
 		android:layout_margin="10dip"
 		android:layout_below="@id/song_album"
 		android:layout_above="@id/seek_position"
+		android:layout_alignParentLeft="true"
+		android:layout_alignParentRight="true"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:scaleType="fitCenter" />
@@ -280,6 +282,8 @@
 		android:layout_margin="10dip"
 		android:layout_below="@id/song_album"
 		android:layout_above="@id/seek_position"
+		android:layout_alignParentLeft="true"
+		android:layout_alignParentRight="true"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:scaleType="fitCenter" />
