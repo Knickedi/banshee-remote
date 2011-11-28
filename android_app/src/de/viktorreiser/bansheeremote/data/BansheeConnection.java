@@ -1231,8 +1231,11 @@ public class BansheeConnection {
 			mCommandHandler.post(new Runnable() {
 				@Override
 				public void run() {
-					mHandleCallback.onBansheeCommandHandled(
-							queue.command, queue.params, result);
+					// this is happening in some cases (bug report)
+					if (mHandleCallback != null) {
+						mHandleCallback.onBansheeCommandHandled(
+								queue.command, queue.params, result);
+					}
 				}
 			});
 		}
