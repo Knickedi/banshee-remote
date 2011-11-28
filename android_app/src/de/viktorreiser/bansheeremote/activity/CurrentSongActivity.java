@@ -289,7 +289,6 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		BugSenseHandler.setup(this, "590eb975");
 		
 		
-		
 		setContentView(R.layout.current_song);
 		
 		mStatusPollHandler = new StatusPollHandler();
@@ -440,10 +439,12 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
 		
-		menu.add(Menu.NONE, 1, Menu.NONE, R.string.choose_server)
-				.setIcon(R.drawable.server);
+		menu.add(Menu.NONE, 4, Menu.NONE, R.string.renew_cover)
+				.setIcon(R.drawable.cover);
 		menu.add(Menu.NONE, 2, Menu.NONE, R.string.sync_db)
 				.setIcon(R.drawable.sync);
+		menu.add(Menu.NONE, 1, Menu.NONE, R.string.choose_server)
+				.setIcon(R.drawable.server);
 		menu.add(Menu.NONE, 3, Menu.NONE, R.string.settings)
 				.setIcon(R.drawable.settings);
 		
@@ -471,6 +472,10 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			
 		case 3:
 			startActivityForResult(new Intent(this, SettingsActivity.class), REQUEST_SEETINGS);
+			return true;
+			
+		case 4:
+			mConnection.sendCommand(Command.COVER, Command.Cover.encode(mData.artId));
 			return true;
 			
 		default:

@@ -3,12 +3,13 @@ package de.viktorreiser.bansheeremote.data;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.graphics.drawable.BitmapDrawable;
 import de.viktorreiser.bansheeremote.R;
 import de.viktorreiser.toolbox.os.LruCache;
 
@@ -115,6 +116,10 @@ public class CoverCache {
 			original = BitmapFactory.decodeFile(originalFile.getAbsolutePath());
 		}
 		
+		if (original == null) {
+			return getThumbCover("", size); 
+		}
+		
 		float scale = Math.min((float) size / original.getWidth(),
 				(float) size / original.getHeight());
 		Matrix matrix = new Matrix();
@@ -142,14 +147,31 @@ public class CoverCache {
 	 * 
 	 * @return {@code false} if cover couldn't be persisted on SD card
 	 */
-	public static boolean addCover(String id, byte [] bitmapData) {
+	public static boolean addCover(final String id, byte [] bitmapData) {
 		Bitmap cover = BitmapFactory.decodeByteArray(bitmapData, 0, bitmapData.length);
 		
 		if (cover != null) {
 			try {
 				File file = new File(App.CACHE_PATH + id + ".jpg");
 				file.getParentFile().mkdirs();
-				file.delete();
+				
+				File [] oldCovers = new File(App.CACHE_PATH).listFiles(new FilenameFilter() {
+					@Override
+					public boolean accept(File dir, String filename) {
+						return filename.startsWith(id);
+					}
+				});
+				
+				for (int i = 0; i < oldCovers.length; i++) {
+					oldCovers[i].delete();
+				}
+				
+				for (String k : mCache.getAvailableKeys()) {
+					if (k.startsWith(id)) {
+						mCache.remove(k);
+					}
+				}
+				
 				cover.compress(CompressFormat.JPEG, 80, new FileOutputStream(file));
 				
 				return true;

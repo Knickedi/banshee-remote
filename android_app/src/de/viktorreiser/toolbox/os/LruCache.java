@@ -16,8 +16,10 @@
 
 package de.viktorreiser.toolbox.os;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Port of original LruCache from 3.0.<br>
@@ -277,6 +279,10 @@ public class LruCache<K, V> {
      */
     public synchronized final Map<K, V> snapshot() {
         return new LinkedHashMap<K, V>(map);
+    }
+    
+    public synchronized Set<K> getAvailableKeys() {
+    	return new HashSet<K>(map.keySet());
     }
 
     @Override
