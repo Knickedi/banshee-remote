@@ -287,5 +287,41 @@
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:scaleType="fitCenter" />
+	
+	<LinearLayout 
+	    android:id="@+id/rating"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_above="@id/seek_position"
+	    android:layout_marginBottom="20dip"
+	    android:layout_centerHorizontal="true"
+	    android:background="@drawable/rating_background">
+	    
+	    <ImageView 
+	        android:layout_width="15dip"
+	        android:layout_height="15dip"
+	        android:layout_margin="2dip"
+	        android:src="@drawable/rating" />
+	    <ImageView 
+	        android:layout_width="15dip"
+	        android:layout_height="15dip"
+	        android:layout_margin="2dip"
+	        android:src="@drawable/rating" />
+	    <ImageView 
+	        android:layout_width="15dip"
+	        android:layout_height="15dip"
+	        android:layout_margin="2dip"
+	        android:src="@drawable/rating" />
+	    <ImageView 
+	        android:layout_width="15dip"
+	        android:layout_height="15dip"
+	        android:layout_margin="2dip"
+	        android:src="@drawable/rating" />
+	    <ImageView 
+	        android:layout_width="15dip"
+	        android:layout_height="15dip"
+	        android:layout_margin="2dip"
+	        android:src="@drawable/rating" />
+	</LinearLayout>
 
 </RelativeLayout>

@@ -17,6 +17,7 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.View.OnClickListener;
 import android.widget.ImageView;
 import android.widget.SeekBar;
@@ -76,6 +77,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		long currentTime = -1;
 		long currentSongId = 0;
 		int changeFlag = 0;
+		byte rating = 0;
 		
 		public void copyFrom(BansheeData data) {
 			playing = data.playing;
@@ -92,6 +94,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			currentTime = data.currentTime;
 			currentSongId = data.currentSongId;
 			changeFlag = data.changeFlag;
+			rating = data.rating;
 		}
 	}
 	
@@ -262,6 +265,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	private TextView mArtist;
 	private TextView mAlbum;
 	private SeekBar mSeekBar;
+	private ViewGroup mRating;
 	
 	private BansheeServerCheckTask mCheckTask;
 	private CoverAnimator mCoverAnimator;
@@ -553,6 +557,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		mArtist = (TextView) findViewById(R.id.song_artist);
 		mAlbum = (TextView) findViewById(R.id.song_album);
 		mSeekBar = (SeekBar) findViewById(R.id.seekbar);
+		mRating = (ViewGroup) findViewById(R.id.rating);
 	}
 	
 	/**
@@ -856,6 +861,19 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 					mAlbum.setText(mData.album);
 				}
 			}
+			
+			if (force || mData.rating != mPreviousData.rating) {
+				if (mData.rating < 1) {
+					mRating.setVisibility(View.GONE);
+				} else {
+					mRating.setVisibility(View.VISIBLE);
+					
+					for (int i = 0; i < mRating.getChildCount(); i++) {
+						mRating.getChildAt(i).setVisibility(i < mData.rating
+								? View.VISIBLE : View.GONE);
+					}
+				}
+			}
 		}
 		
 		/**
@@ -968,7 +986,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			mData.changeFlag = Command.PlayerStatus.decodeChangeFlag(response);
 			mData.currentSongId = Command.PlayerStatus.decodeSongId(response);
 			
-			if (mData.currentTime > mData.totalTime) {
+			if (!mData.playing && mData.currentTime > mData.totalTime) {
 				mData.currentTime = mPreviousData.currentTime;
 			}
 			
@@ -986,6 +1004,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 					mData.genre = info.getGenre();
 					mData.year = info.getYear();
 					mData.artId = info.getAlbum().getArtId();
+					mData.rating = info.getRating();
 					updateComplete(false);
 					handleCoverStatus();
 				} else {
@@ -1018,6 +1037,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				mData.genre = (String) d[4];
 				mData.year = (Integer) d[5];
 				mData.artId = (String) d[6];
+				mData.rating = (Byte) d[7];
 				
 				updateComplete(false);
 				handleCoverStatus();

@@ -514,12 +514,13 @@ namespace Banshee.RemoteListener
 				        + " trackNumber INTEGER,\n"
 				        + "	duration INTEGER,\n"
 				        + "	year INTEGER,\n"
-				        + "	genre TEXT\n"
+				        + "	genre TEXT,\n"
+				        + " rating INTEGER\n"
 						+ ");");
 				db.Execute("INSERT INTO tracks(_id, artistId, albumId, "
-				        + "title, trackNumber, duration, year, genre) "
+				        + "title, trackNumber, duration, year, genre, rating) "
 				        + "SELECT TrackID, ArtistID, AlbumId, "
-				        + "Title, TrackNumber, Duration, Year, Genre "
+				        + "Title, TrackNumber, Duration, Year, Genre, Rating "
 				        + "FROM CoreTracks;");
 				
 				// remove unecessary columns from artist table

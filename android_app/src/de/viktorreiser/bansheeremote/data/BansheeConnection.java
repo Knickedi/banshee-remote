@@ -319,10 +319,11 @@ public class BansheeConnection {
 			 * 5 - album year - {@code Integer}<br>
 			 * 6 - cover ID - (e.g. {@code "album-823AB83..."} or empty if there's no cover) -
 			 * {@code String}
+			 * 7 - track rating - {@code Byte}
 			 */
 			public static Object [] decode(byte [] response) {
 				try {
-					Object [] decoded = new Object [7];
+					Object [] decoded = new Object [8];
 					int index = 0;
 					Object [] stringData;
 					
@@ -351,6 +352,8 @@ public class BansheeConnection {
 					stringData = decodeString(response, index);
 					index += (Integer) stringData[0];
 					decoded[6] = stringData[1];
+					
+					decoded[7] = response[index];
 					
 					return decoded;
 				} catch (ArrayIndexOutOfBoundsException e) {

@@ -57,8 +57,9 @@ public class BansheeDatabase {
 		private String title;
 		private int trackNumber;
 		private int duration;
-		private int year;
+		private short year;
 		private String genre;
+		private byte rating;
 		private Album album;
 		private Artist artist;
 		
@@ -86,12 +87,16 @@ public class BansheeDatabase {
 			return duration;
 		}
 		
-		public int getYear() {
+		public short getYear() {
 			return year;
 		}
 		
 		public String getGenre() {
 			return genre;
+		}
+		
+		public byte getRating() {
+			return rating;
 		}
 		
 		public Album getAlbum() {
@@ -316,7 +321,7 @@ public class BansheeDatabase {
 				+ "SELECT t." + DB.ID + ", t." + DB.ARTIST_ID + ", t." + DB.ALBUM_ID
 				+ ", t." + DB.TITLE + ", t." + DB.TRACK_NUMBER + ", t." + DB.DURATION
 				+ ", t." + DB.YEAR + ", t." + DB.GENRE + ", a." + DB.NAME
-				+ ", l." + DB.TITLE + ", l." + DB.ART_ID
+				+ ", l." + DB.TITLE + ", l." + DB.ART_ID + ", t." + DB.RATING
 				+ " FROM " + DB.TABLE_TRACKS + " AS t"
 				+ " JOIN " + DB.TABLE_ARTISTS + " AS a, " + DB.TABLE_ALBUMS + " AS l"
 				+ " ON a." + DB.ID + "=t." + DB.ARTIST_ID
@@ -337,8 +342,9 @@ public class BansheeDatabase {
 			i.title = "".equals(title) ? App.getContext().getString(R.string.unknown_track) : title;
 			i.trackNumber = cleanInt(c, 4);
 			i.duration = cleanInt(c, 5);
-			i.year = cleanInt(c, 6);
+			i.year = (short) cleanInt(c, 6);
 			i.genre = cleanString(c, 7);
+			i.rating = (byte) cleanInt(c, 11);
 			
 			i.artist = new Artist();
 			i.artist.id = i.artistId;
@@ -491,7 +497,7 @@ public class BansheeDatabase {
 				DB.TABLE_TRACKS,
 				new String [] {
 						DB.ID, DB.ARTIST_ID, DB.ALBUM_ID, DB.TITLE,
-						DB.TRACK_NUMBER, DB.DURATION, DB.YEAR, DB.GENRE},
+						DB.TRACK_NUMBER, DB.DURATION, DB.YEAR, DB.GENRE, DB.RATING},
 				null, null, null, null, null);
 		
 		while (c.moveToNext()) {
@@ -504,8 +510,9 @@ public class BansheeDatabase {
 			i.title = "".equals(title) ? App.getContext().getString(R.string.unknown_track) : title;
 			i.trackNumber = cleanInt(c, 4);
 			i.duration = cleanInt(c, 5);
-			i.year = cleanInt(c, 6);
+			i.year = (short) cleanInt(c, 6);
 			i.genre = cleanString(c, 7);
+			i.rating = (byte) cleanInt(c, 8);
 			
 			mOrderedTrackInfo.add(i);
 			mTrackInfo.put(i.id, i);
@@ -748,13 +755,22 @@ public class BansheeDatabase {
 		if (file.exists()) {
 			try {
 				mBansheeDatabase = SQLiteDatabase.openDatabase(file.getAbsolutePath(), null,
-						SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
+						SQLiteDatabase.NO_LOCALIZED_COLLATORS);
 			} catch (Exception e) {
 				mBansheeDatabase = null;
 				return false;
 			}
 		} else {
 			return false;
+		}
+		
+		try {
+			mBansheeDatabase.query(DB.TABLE_TRACKS, new String [] {DB.RATING},
+					null, null, null, null, null, "1");
+		} catch (Exception e) {
+			// upgrade - new column "rating" - add it if it is missing
+			mBansheeDatabase.execSQL("ALTER TABLE " + DB.TABLE_TRACKS
+					+ " ADD COLUMN " + DB.RATING + " INTEGER NOT NULL DEFAULT 0;");
 		}
 		
 		mServer = server;
@@ -845,6 +861,7 @@ public class BansheeDatabase {
 		public static final String DURATION = "duration";
 		public static final String YEAR = "year";
 		public static final String GENRE = "genre";
+		public static final String RATING = "rating";
 		public static final String NAME = "name";
 		public static final String ART_ID = "artId";
 		public static final String TRACK_NUMBER = "trackNumber";

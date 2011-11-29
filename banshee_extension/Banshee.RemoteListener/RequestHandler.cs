@@ -128,6 +128,7 @@ namespace Banshee.RemoteListener
 		public static byte [] SongInfo(int readBytes) {
 			TrackInfo track = ServiceManager.PlayerEngine.CurrentTrack;
 			byte [] totalTime, year, song, artist, album, genre, artId;
+			byte rating = 0;
 			
 			if (track != null) {
 				// track available - get the info
@@ -141,6 +142,7 @@ namespace Banshee.RemoteListener
 				genre = Helper.StringToByte(Helper.TrimString(track.Genre));
 				year = Helper.ShortToByte((ushort) track.Year);
 				artId = Helper.StringToByte(System.IO.File.Exists(coverPath) ? track.ArtworkId : "");
+				rating = (byte) track.Rating;
 			} else {
 				// no track set everything to zero (empty strings)
 				totalTime = year = song = artist = album = genre = artId = new byte [] {0, 0};
@@ -148,7 +150,7 @@ namespace Banshee.RemoteListener
 			
 			// copy collected information to a byte array
 			byte [] result = new byte [totalTime.Length + year.Length + genre.Length
-				+ song.Length + artist.Length + album.Length + artId.Length];
+				+ song.Length + artist.Length + album.Length + artId.Length + 1];
 			
 			int index = 0;
 			Array.Copy(totalTime, 0, result, index, totalTime.Length);
@@ -165,6 +167,7 @@ namespace Banshee.RemoteListener
 			index += year.Length;
 			Array.Copy(artId, 0, result, index, artId.Length);
 			index += artId.Length;
+			result[index] = rating;
 			
 			return result;
 		}

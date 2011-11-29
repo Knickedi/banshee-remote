@@ -341,12 +341,12 @@ public class PlaylistActivity extends Activity implements OnBansheeCommandHandle
 				
 				if (!mPlaylistRequested && mPlaylistCount != mPlaylist.size()) {
 					if (mPlaylistEnd < mPlaylistCount
-							&& firstVisibleItem + visibleItemCount + 5 >= mPlaylist.size()) {
+							&& firstVisibleItem + visibleItemCount + 10 >= mPlaylist.size()) {
 						mPlaylistRequested = true;
 						CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
 								Command.Playlist.encodeTracks(
 										mPlaylistId, mPlaylistEnd, App.getPlaylistPreloadCount()));
-					} else if (mPlaylistStart > 0 && firstVisibleItem <= 4) {
+					} else if (mPlaylistStart > 0 && firstVisibleItem <= 9) {
 						mPlaylistRequested = true;
 						int start = Math.max(0, mPlaylistStart - App.getPlaylistPreloadCount());
 						CurrentSongActivity.getConnection().sendCommand(Command.PLAYLIST,
