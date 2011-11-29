@@ -22,8 +22,8 @@
 	<string name="renew_cover">Renew cover</string>
 	<string name="poll_info">Poll info</string>
 	<string name="poll_info_message">A higher value will lower the needed request amount to keep the UI up to date. This saves battery and traffic so is great for mobile network remote. But external(!) player status changes will be reported delayed.</string>
-	<string name="no_sync_db">Remote server doesn\'t provide a database!</string>
-	<string name="up_to_date_sync_db">Current database is already up to date...</string>
+	<string name="no_sync_db">Remote server doesn\'t provide a database. Try to compress?</string>
+	<string name="up_to_date_sync_db">Current database is already up to date. Try to re-compress?</string>
 	<string name="fetching_sync_db">Fetching database from server...</string>
 	<string name="error_fetching_sync_db">Database fetch from server failed!</string>
 	<string name="error_writing_sync_db">Failed to write database to SD card or it is corrupted!</string>

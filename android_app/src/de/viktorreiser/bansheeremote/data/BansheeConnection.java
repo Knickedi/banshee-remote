@@ -380,6 +380,13 @@ public class BansheeConnection {
 			}
 			
 			/**
+			 * Request database re-compression.
+			 */
+			public static byte [] encodeCompress() {
+				return new byte [] {3};
+			}
+			
+			/**
 			 * Were we requesting the timestamp with these parameters?
 			 */
 			public static boolean isFileTimestamp(byte [] params) {
@@ -391,6 +398,13 @@ public class BansheeConnection {
 			 */
 			public static boolean isFileRequest(byte [] params) {
 				return params[0] == 2;
+			}
+			
+			/**
+			 * Were we requesting database re-compression?
+			 */
+			public static boolean isCompression(byte [] params) {
+				return params[0] == 3;
 			}
 			
 			/**

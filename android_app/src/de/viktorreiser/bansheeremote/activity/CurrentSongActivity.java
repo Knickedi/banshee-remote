@@ -1,9 +1,9 @@
 package de.viktorreiser.bansheeremote.activity;
 
-import com.bugsense.trace.BugSenseHandler;
-
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
@@ -22,6 +22,9 @@ import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
+
+import com.bugsense.trace.BugSenseHandler;
+
 import de.viktorreiser.bansheeremote.R;
 import de.viktorreiser.bansheeremote.data.App;
 import de.viktorreiser.bansheeremote.data.BansheeConnection;
@@ -915,6 +918,13 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 					handleSyncDatabaseFileSize(response);
 				} else if (Command.SyncDatabase.isFileRequest(params)) {
 					handleSyncDatabaseFile(response);
+				} else if (Command.SyncDatabase.isCompression(params)) {
+					if (response == null) {
+						App.longToast(R.string.request_failed);
+					} else {
+						mConnection.sendCommand(Command.SYNC_DATABASE,
+								Command.SyncDatabase.encodeFileTimestamp());
+					}
 				}
 				break;
 			
@@ -1035,16 +1045,36 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			}
 			
 			mDbTimestamp = Command.SyncDatabase.decodeFileTimestamp(response);
+			String message = null;
 			
 			if (mDbTimestamp == 0) {
-				App.longToast(R.string.no_sync_db);
+				message = App.getContext().getString(R.string.no_sync_db);
 			} else if (BansheeDatabase.isDatabaseUpToDate(mConnection.getServer(), mDbTimestamp)) {
-				App.longToast(R.string.up_to_date_sync_db);
+				message = App.getContext().getString(R.string.up_to_date_sync_db);
 			} else {
 				App.longToast(R.string.fetching_sync_db);
 				mDatabaseSyncRunning = true;
 				mConnection.sendCommand(Command.SYNC_DATABASE,
 						Command.SyncDatabase.encodeFile());
+			}
+			
+			if (message != null) {
+				DialogInterface.OnClickListener c = new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						if (mConnection != null) {
+							mConnection.sendCommand(Command.SYNC_DATABASE,
+									Command.SyncDatabase.encodeCompress());
+							App.longToast(R.string.request_sent);
+						}
+					}
+				};
+				
+				new AlertDialog.Builder(CurrentSongActivity.this)
+						.setMessage(message)
+						.setNegativeButton(android.R.string.cancel, null)
+						.setPositiveButton(android.R.string.ok, c)
+						.show();
 			}
 		}
 		
