@@ -298,28 +298,28 @@
 	    android:background="@drawable/rating_background">
 	    
 	    <ImageView 
-	        android:layout_width="15dip"
-	        android:layout_height="15dip"
+	        android:layout_width="20dip"
+	        android:layout_height="20dip"
 	        android:layout_margin="2dip"
 	        android:src="@drawable/rating" />
 	    <ImageView 
-	        android:layout_width="15dip"
-	        android:layout_height="15dip"
+	        android:layout_width="20dip"
+	        android:layout_height="20dip"
 	        android:layout_margin="2dip"
 	        android:src="@drawable/rating" />
 	    <ImageView 
-	        android:layout_width="15dip"
-	        android:layout_height="15dip"
+	        android:layout_width="20dip"
+	        android:layout_height="20dip"
 	        android:layout_margin="2dip"
 	        android:src="@drawable/rating" />
 	    <ImageView 
-	        android:layout_width="15dip"
-	        android:layout_height="15dip"
+	        android:layout_width="20dip"
+	        android:layout_height="20dip"
 	        android:layout_margin="2dip"
 	        android:src="@drawable/rating" />
 	    <ImageView 
-	        android:layout_width="15dip"
-	        android:layout_height="15dip"
+	        android:layout_width="20dip"
+	        android:layout_height="20dip"
 	        android:layout_margin="2dip"
 	        android:src="@drawable/rating" />
 	</LinearLayout>

@@ -558,6 +558,10 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		mAlbum = (TextView) findViewById(R.id.song_album);
 		mSeekBar = (SeekBar) findViewById(R.id.seekbar);
 		mRating = (ViewGroup) findViewById(R.id.rating);
+		
+		for (int i = 0; i < mRating.getChildCount(); i++) {
+			((ImageView) mRating.getChildAt(i)).setAlpha(0xa0);
+		}
 	}
 	
 	/**
@@ -985,10 +989,6 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			mData.volume = Command.PlayerStatus.decodeVolume(response);
 			mData.changeFlag = Command.PlayerStatus.decodeChangeFlag(response);
 			mData.currentSongId = Command.PlayerStatus.decodeSongId(response);
-			
-			if (!mData.playing && mData.currentTime > mData.totalTime) {
-				mData.currentTime = mPreviousData.currentTime;
-			}
 			
 			updateComplete(false);
 			mStatusPollHandler.updatePseudoPoll();
