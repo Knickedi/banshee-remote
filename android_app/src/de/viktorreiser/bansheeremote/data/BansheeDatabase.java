@@ -120,7 +120,7 @@ public class BansheeDatabase {
 		
 		private static Album createUnknown() {
 			Album i = new Album();
-			i.title = App.getContext().getString(R.string.all_albums);
+			i.title = App.getContext().getString(R.string.unknown_album);
 			i.artId = "";
 			return i;
 		}
@@ -352,11 +352,15 @@ public class BansheeDatabase {
 			i.album.title = "".equals(album)
 					? App.getContext().getString(R.string.unknown_album) : album;
 			i.album.artId = cleanString(c, 10);
+		} else {
+			i = Track.createUnknown();
+			i.album = Album.createUnknown();
+			i.artist = Artist.createUnknown();
 		}
 		
 		c.close();
 		
-		return i == null ? Track.createUnknown() : i;
+		return i;
 	}
 	
 	/**

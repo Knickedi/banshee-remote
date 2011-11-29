@@ -439,14 +439,27 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
 		
-		menu.add(Menu.NONE, 4, Menu.NONE, R.string.renew_cover)
-				.setIcon(R.drawable.cover);
-		menu.add(Menu.NONE, 2, Menu.NONE, R.string.sync_db)
+		menu.add(Menu.NONE, 2, 1, R.string.sync_db)
 				.setIcon(R.drawable.sync);
-		menu.add(Menu.NONE, 1, Menu.NONE, R.string.choose_server)
+		menu.add(Menu.NONE, 1, 1, R.string.choose_server)
 				.setIcon(R.drawable.server);
-		menu.add(Menu.NONE, 3, Menu.NONE, R.string.settings)
+		menu.add(Menu.NONE, 3, 1, R.string.settings)
 				.setIcon(R.drawable.settings);
+		
+		return true;
+	}
+	
+	/**
+	 * Create a options menu.
+	 */
+	@Override
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		if ("".equals(mData.artId)) {
+			menu.removeItem(4);
+		} else {
+			menu.add(Menu.NONE, 4, 0, R.string.renew_cover)
+					.setIcon(R.drawable.cover);
+		}
 		
 		return true;
 	}
