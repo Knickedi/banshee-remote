@@ -457,9 +457,9 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 	 */
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu) {
-		if ("".equals(mData.artId)) {
-			menu.removeItem(4);
-		} else {
+		menu.removeItem(4);
+		
+		if (!"".equals(mData.artId)) {
 			menu.add(Menu.NONE, 4, 0, R.string.renew_cover)
 					.setIcon(R.drawable.cover);
 		}
