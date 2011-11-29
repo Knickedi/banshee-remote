@@ -968,6 +968,10 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			mData.changeFlag = Command.PlayerStatus.decodeChangeFlag(response);
 			mData.currentSongId = Command.PlayerStatus.decodeSongId(response);
 			
+			if (mData.currentTime > mData.totalTime) {
+				mData.currentTime = mPreviousData.currentTime;
+			}
+			
 			updateComplete(false);
 			mStatusPollHandler.updatePseudoPoll();
 			
