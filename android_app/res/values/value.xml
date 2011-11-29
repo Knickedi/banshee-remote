@@ -90,11 +90,14 @@
 	<string name="db_out_of_date_hint_on">When a unknown track is detected you will get a hint that your database might be outdated</string>
 	<string name="db_out_of_date_hint_off">Hints of a possibly outdated database will be suppressed (not recommended)</string>
 	<string name="display_song_genre">Show song genre</string>
-	<string name="display_song_genre_on">Genre of song (if available) will be shown after song title</string>
+	<string name="display_song_genre_on">Genre of song (if available) will be shown behind song title</string>
 	<string name="display_song_genre_off">Genre will never be shown</string>
 	<string name="display_album_year">Show album year</string>
-	<string name="display_album_year_on">Year of album (if available) will be shown after album title</string>
+	<string name="display_album_year_on">Year of album (if available) will be shown behind album title</string>
 	<string name="display_album_year_off">Year will never be shown</string>
+	<string name="display_rating">Show rating</string>
+	<string name="display_rating_on">Track rating will be shown as stars which overlay the cover image</string>
+	<string name="display_rating_off">Track rating won\'t be shown</string>
 	<string name="playlist_fetch_count">Playlist preload amount</string>
 	<string name="playlist_fetch_count_summary">Number of playlist tracks which will be loaded from server in one cycle (prevent loading of huge lists)</string>
 	<string name="wifi_poll_interval">WiFi poll interval</string>

@@ -863,7 +863,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 			}
 			
 			if (force || mData.rating != mPreviousData.rating) {
-				if (mData.rating < 1) {
+				if (mData.rating < 1 || !App.isDisplayRating()) {
 					mRating.setVisibility(View.GONE);
 				} else {
 					mRating.setVisibility(View.VISIBLE);

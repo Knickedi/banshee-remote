@@ -127,6 +127,16 @@ public class App extends Application {
 	}
 	
 	/**
+	 * Should track rating be displayed as cover overlay?
+	 * 
+	 * @return {@code true} if track rating should be displayed
+	 */
+	public static boolean isDisplayRating() {
+		return PreferenceManager.getDefaultSharedPreferences(mContext)
+				.getBoolean("displayrating", true);
+	}
+	
+	/**
 	 * Should cover be fetched from server when using mobile network.
 	 * 
 	 * @return {@code true} when cover should be fetched
