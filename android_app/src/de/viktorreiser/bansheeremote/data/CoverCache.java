@@ -12,6 +12,7 @@ import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import de.viktorreiser.bansheeremote.R;
 import de.viktorreiser.toolbox.os.LruCache;
+import de.viktorreiser.toolbox.util.AndroidUtils;
 
 /**
  * Global cover cache pool.<br>
@@ -117,7 +118,7 @@ public class CoverCache {
 		}
 		
 		if (original == null) {
-			return getThumbCover("", size); 
+			return getThumbCover("", size);
 		}
 		
 		float scale = Math.min((float) size / original.getWidth(),
@@ -149,38 +150,70 @@ public class CoverCache {
 	 * @return {@code false} if cover couldn't be persisted on SD card
 	 */
 	public static boolean addCover(final String id, byte [] bitmapData) {
-		Bitmap cover = BitmapFactory.decodeByteArray(bitmapData, 0, bitmapData.length);
+		// we'll scale the image down to screen size
+		// big images waste resources and crash your device
 		
-		if (cover != null) {
-			try {
-				File file = new File(App.CACHE_PATH + id + ".jpg");
-				file.getParentFile().mkdirs();
-				
-				File [] oldCovers = new File(App.CACHE_PATH).listFiles(new FilenameFilter() {
-					@Override
-					public boolean accept(File dir, String filename) {
-						return filename.startsWith(id);
-					}
-				});
-				
-				for (int i = 0; i < oldCovers.length; i++) {
-					oldCovers[i].delete();
-				}
-				
-				for (String k : mCache.getAvailableKeys()) {
-					if (k.startsWith(id)) {
-						mCache.remove(k);
-					}
-				}
-				
-				cover.compress(CompressFormat.JPEG, 80, new FileOutputStream(file));
-				
-				return true;
-			} catch (FileNotFoundException e) {
-				// too bad, we have a valid cover but failed to persist
-			}
+		BitmapFactory.Options o = new BitmapFactory.Options();
+		o.inJustDecodeBounds = true;
+		BitmapFactory.decodeByteArray(bitmapData, 0, bitmapData.length, o);
+		
+		if (o.outHeight < 1 || o.outWidth < 1) {
+			return false;
 		}
 		
-		return false;
+		final int requiredSize = Math.min(AndroidUtils.getDisplayHeight(App.getContext()),
+				AndroidUtils.getDisplayWidth(App.getContext()));
+		
+		int width = o.outWidth;
+		int height = o.outHeight;
+		int scale = 1;
+		
+		while (true) {
+			if (width / 2 < requiredSize || height / 2 < requiredSize) {
+				break;
+			}
+			
+			width /= 2;
+			height /= 2;
+			scale *= 2;
+		}
+		
+		
+		BitmapFactory.Options o2 = new BitmapFactory.Options();
+        o2.inSampleSize = scale;
+        Bitmap cover = BitmapFactory.decodeByteArray(bitmapData, 0, bitmapData.length, o2);
+		
+		if (cover == null) {
+			return false;
+		}
+		
+		try {
+			File file = new File(App.CACHE_PATH + id + ".jpg");
+			file.getParentFile().mkdirs();
+			
+			File [] oldCovers = new File(App.CACHE_PATH).listFiles(new FilenameFilter() {
+				@Override
+				public boolean accept(File dir, String filename) {
+					return filename.startsWith(id);
+				}
+			});
+			
+			for (int i = 0; i < oldCovers.length; i++) {
+				oldCovers[i].delete();
+			}
+			
+			for (String k : mCache.getAvailableKeys()) {
+				if (k.startsWith(id)) {
+					mCache.remove(k);
+				}
+			}
+			
+			cover.compress(CompressFormat.JPEG, 80, new FileOutputStream(file));
+			
+			return true;
+		} catch (FileNotFoundException e) {
+			// too bad, we have a valid cover but failed to persist
+			return false;
+		}
 	}
 }

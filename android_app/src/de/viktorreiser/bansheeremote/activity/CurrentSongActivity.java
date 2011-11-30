@@ -416,7 +416,7 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 				// if the server list activity was left then because the user chose a valid server
 				// get it and use it - we can trust it's valid, activity before checked that
 				mCover1.setImageBitmap(null);
-				mCover2.setImageBitmap(mCoverAnimator.mmDefaultCover);
+				mCover2.setImageResource(R.drawable.no_cover);
 				setupServerConnection(BansheeServer.getDefaultServer());
 			} else if (mConnection == null) {
 				// if user called server list activity from menu he had a valid connection before
@@ -1191,8 +1191,6 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		private Bitmap mmNextCover;
 		private boolean mmDiscard = true;
 		private boolean mmHasCover = false;
-		private Bitmap mmDefaultCover =
-				((BitmapDrawable) getResources().getDrawable(R.drawable.no_cover)).getBitmap();
 		private Handler mmAnimationHandler = new Handler();
 		
 		
@@ -1227,7 +1225,8 @@ public class CurrentSongActivity extends Activity implements OnBansheeServerChec
 		 * Load (animate) default cover.
 		 */
 		public void setDefaultCover() {
-			setCover(mmDefaultCover);
+			setCover(((BitmapDrawable) App.getContext().getResources()
+					.getDrawable(R.drawable.no_cover)).getBitmap());
 		}
 		
 		/**

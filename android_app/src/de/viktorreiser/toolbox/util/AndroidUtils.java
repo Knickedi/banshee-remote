@@ -15,6 +15,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.AbsListView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -31,6 +32,8 @@ public class AndroidUtils {
 	
 	// PRIVATE ====================================================================================
 	
+	private static int mDisplayWidth = 0;
+	private static int mDisplayHeight = 0;
 	private static String mSQLiteVersion = null;
 	private static Boolean mSQLiteSupportsFTS3 = null;
 	private static Boolean mSQLiteSupportsFTS4 = null;
@@ -302,6 +305,24 @@ public class AndroidUtils {
 	 */
 	public static int dipToPixel(Context context, float dip) {
 		return (int) (dip * context.getResources().getDisplayMetrics().density + 0.5f);
+	}
+	
+	public static int getDisplayWidth(Context context) {
+		if (mDisplayWidth < 1) {
+			mDisplayWidth = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE))
+			.getDefaultDisplay().getWidth();
+		}
+		
+		return mDisplayWidth;
+	}
+	
+	public static int getDisplayHeight(Context context) {
+		if (mDisplayHeight < 1) {
+			mDisplayHeight = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE))
+			.getDefaultDisplay().getHeight();
+		}
+		
+		return mDisplayHeight;
 	}
 	
 	/**
